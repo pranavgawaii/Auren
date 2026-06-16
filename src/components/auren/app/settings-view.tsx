@@ -21,9 +21,7 @@ import {
   Camera, 
   Check, 
   Loader2,
-  Lock,
-  ChevronRight,
-  ExternalLink
+  Lock
 } from "lucide-react";
 import { checkConnectionStatus, getConnectUrl, disconnectService } from "@/app/actions/connect";
 import { useUser } from "@clerk/nextjs";
@@ -171,7 +169,6 @@ export function SettingsView() {
     }
   };
 
-  // Smooth scroll handler for left menu scrollspy layout
   const scrollToSection = (id: string) => {
     const element = document.getElementById(id);
     if (element) {
@@ -186,10 +183,7 @@ export function SettingsView() {
       <div className="w-[260px] border-r border-[rgba(36,27,20,0.06)] p-8 shrink-0 flex flex-col justify-between bg-[#FAF8F5]">
         <div className="flex flex-col gap-8">
           <div>
-            <h1 
-              style={{ fontFamily: "var(--font-civane, Georgia, serif)", fontWeight: 400 }}
-              className="text-[26px] text-[#241B14] tracking-tight leading-none"
-            >
+            <h1 className="font-display font-extrabold text-[24px] text-[#241B14] tracking-tight leading-none">
               Settings
             </h1>
             <p className="font-sans text-[11px] text-[rgba(36,27,20,0.4)] mt-1.5 uppercase tracking-wider font-bold">Workspace Configuration</p>
@@ -230,10 +224,7 @@ export function SettingsView() {
         {/* SECTION 1: Preferences */}
         <section id="section-general" className="space-y-6 pt-2">
           <div className="border-b border-[rgba(36,27,20,0.08)] pb-4">
-            <h2 
-              style={{ fontFamily: "var(--font-civane, Georgia, serif)", fontWeight: 400 }}
-              className="text-[22px] text-[#241B14] tracking-tight"
-            >
+            <h2 className="font-display font-extrabold text-[20px] text-[#241B14] tracking-tight">
               General Preferences
             </h2>
             <p className="font-sans text-[13px] text-[rgba(36,27,20,0.45)] mt-0.5">Adjust how your AI Agent operates and represents you.</p>
@@ -342,10 +333,7 @@ export function SettingsView() {
         {/* SECTION 2: Integrations */}
         <section id="section-integrations" className="space-y-6">
           <div className="border-b border-[rgba(36,27,20,0.08)] pb-4">
-            <h2 
-              style={{ fontFamily: "var(--font-civane, Georgia, serif)", fontWeight: 400 }}
-              className="text-[22px] text-[#241B14] tracking-tight"
-            >
+            <h2 className="font-display font-extrabold text-[20px] text-[#241B14] tracking-tight">
               Connected Integrations
             </h2>
             <p className="font-sans text-[13px] text-[rgba(36,27,20,0.45)] mt-0.5">Authorize integrations for email parsing, scheduling, and project logging.</p>
@@ -403,10 +391,7 @@ export function SettingsView() {
         {/* SECTION 3: Notifications */}
         <section id="section-notifications" className="space-y-6">
           <div className="border-b border-[rgba(36,27,20,0.08)] pb-4">
-            <h2 
-              style={{ fontFamily: "var(--font-civane, Georgia, serif)", fontWeight: 400 }}
-              className="text-[22px] text-[#241B14] tracking-tight"
-            >
+            <h2 className="font-display font-extrabold text-[20px] text-[#241B14] tracking-tight">
               Alerts & Notifications
             </h2>
             <p className="font-sans text-[13px] text-[rgba(36,27,20,0.45)] mt-0.5">Manage alert behaviors when executing actions.</p>
@@ -442,10 +427,7 @@ export function SettingsView() {
         {/* SECTION 4: Account Profile */}
         <section id="section-account" className="space-y-6">
           <div className="border-b border-[rgba(36,27,20,0.08)] pb-4">
-            <h2 
-              style={{ fontFamily: "var(--font-civane, Georgia, serif)", fontWeight: 400 }}
-              className="text-[22px] text-[#241B14] tracking-tight"
-            >
+            <h2 className="font-display font-extrabold text-[20px] text-[#241B14] tracking-tight">
               Account Profile
             </h2>
             <p className="font-sans text-[13px] text-[rgba(36,27,20,0.45)] mt-0.5">Customize your display credentials live inside the workspace.</p>
@@ -515,10 +497,7 @@ export function SettingsView() {
         {/* SECTION 5: Subscription Plan */}
         <section id="section-subscription" className="space-y-6 pb-16">
           <div className="border-b border-[rgba(36,27,20,0.08)] pb-4">
-            <h2 
-              style={{ fontFamily: "var(--font-civane, Georgia, serif)", fontWeight: 400 }}
-              className="text-[22px] text-[#241B14] tracking-tight"
-            >
+            <h2 className="font-display font-extrabold text-[20px] text-[#241B14] tracking-tight">
               Subscription Tier
             </h2>
             <p className="font-sans text-[13px] text-[rgba(36,27,20,0.45)] mt-0.5">Control billing schedules and select your agent classification tier.</p>
