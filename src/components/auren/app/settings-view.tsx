@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { Settings, User, Bell, Shield, GitBranch, Mail, Clock, Globe, MessageSquare, Sun, Moon, Volume2, ShieldCheck, MailCheck, Database, Key } from "lucide-react";
+import { Settings, User, Bell, Shield, GitBranch, Mail, Clock, Globe, MessageSquare, Sun, Moon, Volume2, ShieldCheck, MailCheck, Database, Key, CreditCard, Zap } from "lucide-react";
 import { checkConnectionStatus, getConnectUrl, disconnectService } from "@/app/actions/connect";
 import { useUser } from "@clerk/nextjs";
 
@@ -24,6 +24,7 @@ export function SettingsView() {
   const [replyTone, setReplyTone] = useState("formal");
   const [timezone, setTimezone] = useState("Asia/Kolkata");
   const [workingHours, setWorkingHours] = useState({ start: "09:00", end: "18:00" });
+  const [subscriptionTier, setSubscriptionTier] = useState("Auren Pro Dev");
 
   // Notification states
   const [notifications, setNotifications] = useState({
@@ -46,9 +47,11 @@ export function SettingsView() {
       const savedTheme = localStorage.getItem("auren_theme") || "light";
       const savedTone = localStorage.getItem("auren_reply_tone") || "formal";
       const savedTimezone = localStorage.getItem("auren_timezone") || "Asia/Kolkata";
+      const savedTier = localStorage.getItem("auren_subscription_tier") || "Auren Pro Dev";
       setTheme(savedTheme);
       setReplyTone(savedTone);
       setTimezone(savedTimezone);
+      setSubscriptionTier(savedTier);
     }
 
     const handleFocus = () => loadStatus();
@@ -122,6 +125,13 @@ export function SettingsView() {
             >
               <User size={16} />
               Account
+            </button>
+            <button 
+              onClick={() => setActiveTab("subscription")}
+              className={`flex items-center gap-3 px-3 py-2.5 rounded-[8px] font-sans font-semibold text-[13px] transition-colors ${activeTab === "subscription" ? "bg-[rgba(232,89,60,0.08)] text-[#E8593C]" : "text-[rgba(36,27,20,0.6)] hover:bg-[rgba(36,27,20,0.04)] hover:text-[#241B14]"}`}
+            >
+              <CreditCard size={16} />
+              Subscription
             </button>
           </div>
         </div>
@@ -457,22 +467,13 @@ export function SettingsView() {
                 </div>
 
                 {/* Account details grid */}
-                <div className="grid grid-cols-2 gap-4 pt-4 border-t border-[rgba(36,27,20,0.04)]">
-                  <div className="flex items-start gap-2.5 p-3.5 bg-[#FAF8F5] rounded-[12px]">
-                    <Database size={16} className="text-[#E8593C] mt-0.5" />
-                    <div>
-                      <div className="font-bold text-[13px] text-[#241B14]">Database ID</div>
-                      <div className="text-[11px] text-[rgba(36,27,20,0.4)] mt-0.5 font-mono select-all truncate max-w-[200px]" title={user?.id || ""}>
-                        {user?.id || "N/A"}
-                      </div>
-                    </div>
-                  </div>
+                <div className="grid grid-cols-1 gap-4 pt-4 border-t border-[rgba(36,27,20,0.04)]">
                   <div className="flex items-start gap-2.5 p-3.5 bg-[#FAF8F5] rounded-[12px]">
                     <Key size={16} className="text-[#E8593C] mt-0.5" />
                     <div>
                       <div className="font-bold text-[13px] text-[#241B14]">Subscription tier</div>
                       <div className="text-[11px] text-[#085041] mt-0.5 font-semibold bg-[#E1F5EE] px-1.5 py-0.5 rounded-full uppercase tracking-wider inline-block">
-                        Auren Pro Dev
+                        {subscriptionTier}
                       </div>
                     </div>
                   </div>
@@ -489,6 +490,107 @@ export function SettingsView() {
                 </div>
               </div>
 
+            </div>
+          )}
+
+          {/* SUBSCRIPTION TAB */}
+          {activeTab === "subscription" && (
+            <div className="flex flex-col gap-6 animate-in fade-in duration-300">
+              <div>
+                <h1 className="font-sans font-bold text-[24px] text-[#241B14] mb-2 tracking-tight">Subscription plans</h1>
+                <p className="font-sans text-[14px] text-[rgba(36,27,20,0.6)]">Select the plan that fits your email workflow and AI needs.</p>
+              </div>
+
+              <div className="grid grid-cols-3 gap-6">
+                {/* Free Plan */}
+                <div className={`bg-white rounded-[16px] border p-6 flex flex-col justify-between min-h-[360px] relative ${subscriptionTier === "Auren Starter" ? "border-[#E8593C] ring-1 ring-[#E8593C]" : "border-[rgba(36,27,20,0.08)]"}`}>
+                  <div>
+                    <h3 className="font-sans font-bold text-[16px] text-[#241B14]">Auren Starter</h3>
+                    <p className="font-sans text-[12px] text-[rgba(36,27,20,0.5)] mt-1">Perfect for trying out Auren&apos;s core features.</p>
+                    <div className="mt-4 flex items-baseline gap-1">
+                      <span className="font-sans font-bold text-[28px] text-[#241B14]">₹0</span>
+                      <span className="font-sans text-[12px] text-[rgba(36,27,20,0.5)]">/ month</span>
+                    </div>
+                    <ul className="mt-6 flex flex-col gap-3 font-sans text-[12px] text-[rgba(36,27,20,0.6)]">
+                      <li className="flex items-center gap-2">✓ 20 manual email syncs / day</li>
+                      <li className="flex items-center gap-2">✓ Standard AI sorting</li>
+                      <li className="flex items-center gap-2">✓ Basic priority routing</li>
+                    </ul>
+                  </div>
+                  <button 
+                    onClick={() => {
+                      localStorage.setItem("auren_subscription_tier", "Auren Starter");
+                      setSubscriptionTier("Auren Starter");
+                      alert("Downgraded to Auren Starter plan!");
+                    }}
+                    className={`w-full py-2.5 rounded-[8px] font-sans font-semibold text-[13px] transition-colors mt-6 ${subscriptionTier === "Auren Starter" ? "bg-[rgba(36,27,20,0.06)] text-[rgba(36,27,20,0.4)] cursor-default" : "bg-[#241B14] text-white hover:bg-[#3E2F23]"}`}
+                    disabled={subscriptionTier === "Auren Starter"}
+                  >
+                    {subscriptionTier === "Auren Starter" ? "Current Plan" : "Choose Starter"}
+                  </button>
+                </div>
+
+                {/* Pro Plan */}
+                <div className={`bg-white rounded-[16px] border p-6 flex flex-col justify-between min-h-[360px] relative ${subscriptionTier === "Auren Pro" || subscriptionTier === "Auren Pro Dev" ? "border-[#E8593C] ring-1 ring-[#E8593C]" : "border-[rgba(36,27,20,0.08)]"}`}>
+                  <div className="absolute top-3 right-3 bg-[#E8593C]/10 text-[#E8593C] px-2 py-0.5 rounded-full font-sans font-bold text-[9px] uppercase tracking-wide">
+                    Popular
+                  </div>
+                  <div>
+                    <h3 className="font-sans font-bold text-[16px] text-[#241B14]">Auren Pro</h3>
+                    <p className="font-sans text-[12px] text-[rgba(36,27,20,0.5)] mt-1">For professionals who need real-time automation.</p>
+                    <div className="mt-4 flex items-baseline gap-1">
+                      <span className="font-sans font-bold text-[28px] text-[#241B14]">₹799</span>
+                      <span className="font-sans text-[12px] text-[rgba(36,27,20,0.5)]">/ month</span>
+                    </div>
+                    <ul className="mt-6 flex flex-col gap-3 font-sans text-[12px] text-[rgba(36,27,20,0.6)]">
+                      <li className="flex items-center gap-2">✓ Unlimited real-time sync</li>
+                      <li className="flex items-center gap-2">✓ Advanced AI agent reasoning</li>
+                      <li className="flex items-center gap-2">✓ Action request confirmations</li>
+                      <li className="flex items-center gap-2">✓ Calendar zoom summaries</li>
+                    </ul>
+                  </div>
+                  <button 
+                    onClick={() => {
+                      localStorage.setItem("auren_subscription_tier", "Auren Pro");
+                      setSubscriptionTier("Auren Pro");
+                      alert("Upgraded to Auren Pro plan!");
+                    }}
+                    className={`w-full py-2.5 rounded-[8px] font-sans font-semibold text-[13px] transition-colors mt-6 ${subscriptionTier === "Auren Pro" || subscriptionTier === "Auren Pro Dev" ? "bg-[rgba(36,27,20,0.06)] text-[rgba(36,27,20,0.4)] cursor-default" : "bg-[#E8593C] text-white hover:bg-[#D14F31]"}`}
+                    disabled={subscriptionTier === "Auren Pro" || subscriptionTier === "Auren Pro Dev"}
+                  >
+                    {subscriptionTier === "Auren Pro" || subscriptionTier === "Auren Pro Dev" ? "Current Plan" : "Upgrade to Pro"}
+                  </button>
+                </div>
+
+                {/* Business Plan */}
+                <div className={`bg-white rounded-[16px] border p-6 flex flex-col justify-between min-h-[360px] relative ${subscriptionTier === "Auren Business" ? "border-[#E8593C] ring-1 ring-[#E8593C]" : "border-[rgba(36,27,20,0.08)]"}`}>
+                  <div>
+                    <h3 className="font-sans font-bold text-[16px] text-[#241B14]">Auren Business</h3>
+                    <p className="font-sans text-[12px] text-[rgba(36,27,20,0.5)] mt-1">For organizations and high-volume workloads.</p>
+                    <div className="mt-4 flex items-baseline gap-1">
+                      <span className="font-sans font-bold text-[28px] text-[#241B14]">₹2,499</span>
+                      <span className="font-sans text-[12px] text-[rgba(36,27,20,0.5)]">/ month</span>
+                    </div>
+                    <ul className="mt-6 flex flex-col gap-3 font-sans text-[12px] text-[rgba(36,27,20,0.6)]">
+                      <li className="flex items-center gap-2">✓ Multi-account sync integration</li>
+                      <li className="flex items-center gap-2">✓ Team shared collaborative inbox</li>
+                      <li className="flex items-center gap-2">✓ Compliance filters & logs</li>
+                      <li className="flex items-center gap-2">✓ Dedicated SLA support</li>
+                    </ul>
+                  </div>
+                  <button 
+                    onClick={() => {
+                      localStorage.setItem("auren_subscription_tier", "Auren Business");
+                      setSubscriptionTier("Auren Business");
+                      alert("Upgraded to Auren Business plan!");
+                    }}
+                    className={`w-full py-2.5 rounded-[8px] font-sans font-semibold text-[13px] transition-colors mt-6 ${subscriptionTier === "Auren Business" ? "bg-[rgba(36,27,20,0.06)] text-[rgba(36,27,20,0.4)] cursor-default" : "bg-[#241B14] text-white hover:bg-[#3E2F23]"}`}
+                    disabled={subscriptionTier === "Auren Business"}
+                  >
+                    {subscriptionTier === "Auren Business" ? "Current Plan" : "Choose Business"}
+                  </button>
+                </div>
+              </div>
             </div>
           )}
 

@@ -1,5 +1,32 @@
-import { auth } from "@clerk/nextjs/server";
+import { auth, currentUser } from "@clerk/nextjs/server";
 import { createHash } from "crypto";
+import { createServerSupabaseClient } from "@/lib/supabase";
+
+/**
+ * Ensures a corresponding user exists in Supabase Auth so that any table rows
+ * referencing auth.users do not violate foreign key constraints.
+ */
+async function ensureSupabaseUser(userId: string): Promise<void> {
+  try {
+    const user = await currentUser();
+    if (!user) return;
+    
+    const email = user.emailAddresses[0]?.emailAddress;
+    if (!email) return;
+
+    const supabase = createServerSupabaseClient();
+    
+    // Attempt to create the user in Supabase Auth
+    await supabase.auth.admin.createUser({
+      id: userId,
+      email: email,
+      email_confirm: true,
+      user_metadata: { source: "clerk_sync" }
+    });
+  } catch (err) {
+    // Ignore if user already exists
+  }
+}
 
 /**
  * Returns the user_id to use for database queries.
@@ -21,7 +48,12 @@ export async function getUserId(): Promise<string> {
   }
 
   const hash = createHash("sha1").update(clerkUserId).digest("hex");
-  return `${hash.slice(0, 8)}-${hash.slice(8, 12)}-${hash.slice(12, 16)}-${hash.slice(16, 20)}-${hash.slice(20, 32)}`;
+  const userId = `${hash.slice(0, 8)}-${hash.slice(8, 12)}-${hash.slice(12, 16)}-${hash.slice(16, 20)}-${hash.slice(20, 32)}`;
+
+  // Provision in Supabase Auth in the background to ensure FK checks pass
+  ensureSupabaseUser(userId).catch(() => {});
+
+  return userId;
 }
 
 /**
