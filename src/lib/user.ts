@@ -1,21 +1,11 @@
 import { auth } from "@clerk/nextjs/server";
-import { DEMO_USER_ID } from "@/lib/constants";
+import { createHash } from "crypto";
 
 /**
  * Returns the user_id to use for database queries.
  *
- * CURRENT ARCHITECTURE:
- * The Supabase `emails` and `calendar_events` tables use a UUID column for user_id.
- * Clerk returns string IDs like "user_3FBQjSir3vCqKmnAXshjgSBgDF1" which are not UUIDs.
- *
- * For now we map the authenticated user to DEMO_USER_ID so the app functions.
- * To support true multi-user isolation, the DB schema's user_id column must be
- * changed from UUID → TEXT (or VARCHAR), then this function can return userId directly.
- *
- * Schema migration needed:
- *   ALTER TABLE emails ALTER COLUMN user_id TYPE TEXT;
- *   ALTER TABLE calendar_events ALTER COLUMN user_id TYPE TEXT;
- *   ALTER TABLE contacts ALTER COLUMN user_id TYPE TEXT;
+ * We hash the Clerk user ID (e.g., "user_xxx") into a deterministic UUIDv5-like format
+ * to fit into the database's UUID column type. This ensures perfect multi-user isolation.
  */
 export async function getUserId(): Promise<string> {
   let clerkUserId: string | null = null;
@@ -30,7 +20,8 @@ export async function getUserId(): Promise<string> {
     throw new Error("Unauthorized: You must be logged in to execute this action.");
   }
 
-  return DEMO_USER_ID;
+  const hash = createHash("sha1").update(clerkUserId).digest("hex");
+  return `${hash.slice(0, 8)}-${hash.slice(8, 12)}-${hash.slice(12, 16)}-${hash.slice(16, 20)}-${hash.slice(20, 32)}`;
 }
 
 /**
