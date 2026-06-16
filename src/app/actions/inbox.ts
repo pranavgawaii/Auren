@@ -5,14 +5,14 @@ import { syncInboxEmails } from "./sync-emails";
 import { getUserId } from "@/lib/user";
 import type { GmailMessage } from "@/types";
 
-export async function getInboxEmails(shouldSync: boolean = false): Promise<{ success: boolean; data?: GmailMessage[]; error?: string }> {
+export async function getInboxEmails(shouldSync: boolean = false, maxResults: number = 20): Promise<{ success: boolean; data?: GmailMessage[]; error?: string }> {
   try {
     const supabase = createServerSupabaseClient();
     const userId = await getUserId();
 
     // If sync is requested, sync first
     if (shouldSync) {
-      const syncResult = await syncInboxEmails();
+      const syncResult = await syncInboxEmails(maxResults);
       if (!syncResult.success) {
         console.error("Failed to sync emails:", syncResult.error);
         // Continue to query from DB anyway so we don't crash
@@ -33,7 +33,7 @@ export async function getInboxEmails(shouldSync: boolean = false): Promise<{ suc
 
     // If DB is empty and shouldSync wasn't run, trigger an initial sync automatically
     if ((!dbEmails || dbEmails.length === 0) && !shouldSync) {
-      const syncResult = await syncInboxEmails();
+      const syncResult = await syncInboxEmails(maxResults);
       if (syncResult.success) {
         // Fetch again after initial sync
         const { data: refetchedEmails, error: refetchError } = await supabase

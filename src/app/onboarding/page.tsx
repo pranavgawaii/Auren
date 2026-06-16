@@ -56,8 +56,17 @@ export default function OnboardingPage() {
     }
   };
 
+  const [syncLimit, setSyncLimit] = useState(20);
+
   // Google is required; GitHub is optional
   const canEnter = connected.google;
+
+  const handleEnterDashboard = () => {
+    if (user) {
+      localStorage.setItem(`auren_${user.id}_sync_limit`, String(syncLimit));
+    }
+    router.push("/app");
+  };
 
   return (
     <div className="min-h-screen bg-[#FBF3EC] font-sans selection:bg-[#E8593C] selection:text-white flex items-center justify-center p-6 relative overflow-hidden">
@@ -207,9 +216,33 @@ export default function OnboardingPage() {
           </div>
         </div>
 
+        {/* Sync Limit Selector */}
+        {canEnter && (
+          <div className="bg-white rounded-[18px] border border-[rgba(36,27,20,0.08)] p-5 mb-6 animate-in fade-in duration-300">
+            <div className="font-semibold text-[14px] text-[#241B14] mb-3">How many emails would you like to sync first?</div>
+            <div className="grid grid-cols-3 gap-2">
+              {[20, 50, 100].map((limit) => (
+                <button
+                  key={limit}
+                  onClick={() => setSyncLimit(limit)}
+                  className={cn(
+                    "py-2 px-3 rounded-[10px] font-semibold text-[13px] border transition-all",
+                    syncLimit === limit
+                      ? "border-[#E8593C] bg-[rgba(232,89,60,0.04)] text-[#E8593C]"
+                      : "border-[rgba(36,27,20,0.08)] bg-white text-[rgba(36,27,20,0.6)] hover:border-[rgba(36,27,20,0.15)]"
+                  )}
+                >
+                  {limit} Emails
+                </button>
+              ))}
+            </div>
+            <div className="text-[11px] text-[rgba(36,27,20,0.4)] mt-2">More emails may take slightly longer to sync initially.</div>
+          </div>
+        )}
+
         {/* CTA */}
         <button
-          onClick={() => router.push("/app")}
+          onClick={handleEnterDashboard}
           disabled={!canEnter}
           className={cn(
             "w-full h-[52px] rounded-[14px] flex items-center justify-center gap-2 font-semibold text-[15px] transition-all",
@@ -224,7 +257,7 @@ export default function OnboardingPage() {
 
         {/* Skip entirely for returning users */}
         <button
-          onClick={() => router.push("/app")}
+          onClick={handleEnterDashboard}
           className="w-full text-center mt-3 text-[12px] text-[rgba(36,27,20,0.4)] hover:text-[rgba(36,27,20,0.6)] transition-colors py-2"
         >
           Already set up? Go straight to dashboard <ChevronRight size={12} className="inline" />

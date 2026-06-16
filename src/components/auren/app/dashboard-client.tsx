@@ -107,7 +107,12 @@ export function DashboardClient() {
 
   const fetchEmails = useCallback(async (shouldSync: boolean = false) => {
     setIsLoading(true);
-    const res = await getInboxEmails(shouldSync);
+    let limit = 20;
+    if (typeof window !== "undefined" && user) {
+      const savedLimit = localStorage.getItem(`auren_${user.id}_sync_limit`);
+      if (savedLimit) limit = parseInt(savedLimit, 10);
+    }
+    const res = await getInboxEmails(shouldSync, limit);
     if (res.success && res.data) {
       setEmails(res.data);
       if (res.data.length > 0 && !selectedEmailId) {
@@ -115,7 +120,7 @@ export function DashboardClient() {
       }
     }
     setIsLoading(false);
-  }, [selectedEmailId]);
+  }, [selectedEmailId, user]);
 
   useEffect(() => {
     fetchEmails();
