@@ -17,6 +17,7 @@ import { TerminalDrawer } from "./terminal-drawer";
 import { getInboxEmails } from "@/app/actions/inbox";
 import { processCommand } from "@/app/actions/agent";
 import { executePlan } from "@/app/actions/execute";
+import { checkConnectionStatus } from "@/app/actions/connect";
 import type { GmailMessage, AgentReasoningResult } from "@/types";
 
 export function DashboardClient() {
@@ -24,16 +25,19 @@ export function DashboardClient() {
   const router = useRouter();
 
   useEffect(() => {
-    if (isLoaded) {
-      if (!user) {
-        router.push("/sign-in");
-        return;
-      }
-      const isGoogleConnected = localStorage.getItem(`auren_${user.id}_google_connected`) === "true";
-      if (!isGoogleConnected) {
-        router.push("/onboarding");
+    async function verifyConnection() {
+      if (isLoaded) {
+        if (!user) {
+          router.push("/sign-in");
+          return;
+        }
+        const status = await checkConnectionStatus();
+        if (!status.google) {
+          router.push("/onboarding");
+        }
       }
     }
+    verifyConnection();
   }, [user, isLoaded, router]);
 
   const [view, setView] = useState<"inbox" | "search" | "calendar" | "settings" | "history">("inbox");

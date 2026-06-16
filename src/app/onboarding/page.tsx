@@ -6,6 +6,7 @@ import { ArrowRight, CheckCircle2, ChevronRight, Mail, CalendarDays, GitBranch, 
 import { cn } from "@/lib/utils";
 import { useRouter } from "next/navigation";
 import { useUser } from "@clerk/nextjs";
+import { getConnectUrl, checkConnectionStatus } from "@/app/actions/connect";
 
 export default function OnboardingPage() {
   const router = useRouter();
@@ -19,24 +20,28 @@ export default function OnboardingPage() {
     github: false,
   });
 
+  const loadStatus = React.useCallback(async () => {
+    const status = await checkConnectionStatus();
+    setConnected(status);
+  }, []);
+
   React.useEffect(() => {
     if (isLoaded && user) {
-      setConnected({
-        google: localStorage.getItem(`auren_${user.id}_google_connected`) === "true",
-        github: localStorage.getItem(`auren_${user.id}_github_connected`) === "true",
-      });
+      loadStatus();
     }
-  }, [user, isLoaded]);
+  }, [user, isLoaded, loadStatus]);
 
-  const handleConnect = (service: "google" | "github") => {
+  const handleConnect = async (service: "google" | "github") => {
     if (!user) return;
     setConnecting((prev) => ({ ...prev, [service]: true }));
-    // Simulates the Corsair OAuth flow completing
-    setTimeout(() => {
-      setConnected((prev) => ({ ...prev, [service]: true }));
+    const res = await getConnectUrl(service);
+    if (res.success && res.url) {
+      // Redirect to the real Google/GitHub OAuth consent screen
+      window.location.href = res.url;
+    } else {
+      alert(res.error || "Failed to connect.");
       setConnecting((prev) => ({ ...prev, [service]: false }));
-      localStorage.setItem(`auren_${user.id}_${service}_connected`, "true");
-    }, 1200);
+    }
   };
 
   // Google is required; GitHub is optional

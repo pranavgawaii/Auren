@@ -3,7 +3,7 @@ import { getTenant } from "@/lib/corsair";
 
 export async function GET() {
   try {
-    const tenant = getTenant();
+    const tenant = await getTenant();
     const results: any = {};
     
     // Attempt 1: insert WITH requestBody

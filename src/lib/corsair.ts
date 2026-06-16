@@ -12,10 +12,16 @@ import type {
   CorsairResponse,
 } from "@/types";
 
-export function getTenant() {
+export async function getTenant() {
   const devKey = process.env.CORSAIR_DEV_KEY;
   const instanceId = process.env.CORSAIR_INSTANCE_ID;
-  const tenantId = process.env.CORSAIR_TENANT_ID;
+  
+  let tenantId = process.env.CORSAIR_TENANT_ID;
+  try {
+    tenantId = await getUserId();
+  } catch {
+    // Fallback if getUserId() throws outside request context
+  }
 
   if (!devKey || !instanceId || !tenantId) {
     throw new Error("Missing Corsair environment variables");
@@ -25,9 +31,21 @@ export function getTenant() {
   return app.instance(instanceId).tenant(tenantId);
 }
 
+export function getCorsairInstance() {
+  const devKey = process.env.CORSAIR_DEV_KEY;
+  const instanceId = process.env.CORSAIR_INSTANCE_ID;
+
+  if (!devKey || !instanceId) {
+    throw new Error("Missing Corsair environment variables");
+  }
+
+  const app = createApp({ apiKey: devKey });
+  return app.instance(instanceId);
+}
+
 export async function gmailRead(): Promise<CorsairResponse<GmailMessage[]>> {
   try {
-    const tenant = getTenant();
+    const tenant = await getTenant();
     
     // Fetch inbox emails from the live Gmail API via Corsair
     const listResult = await tenant.run("gmail.api.messages.list", {
@@ -124,7 +142,7 @@ export async function gmailSearch(
   query: string
 ): Promise<CorsairResponse<GmailSearchResult>> {
   try {
-    const tenant = getTenant();
+    const tenant = await getTenant();
     const result = await tenant.run("gmail.db.messages.search", { query, limit: 10 });
     const rows = (result as unknown as Record<string, unknown>).data as Record<string, unknown>[] || [];
 
@@ -158,7 +176,7 @@ export async function gmailSend(
   payload: GmailSendPayload
 ): Promise<CorsairResponse<string>> {
   try {
-    const tenant = getTenant();
+    const tenant = await getTenant();
 
     // Construct raw RFC 2822 email and base64url encode it
     const emailLines = [
@@ -202,7 +220,7 @@ export async function gmailCreateDraft(
   payload: GmailSendPayload
 ): Promise<CorsairResponse<string>> {
   try {
-    const tenant = getTenant();
+    const tenant = await getTenant();
 
     // Construct raw RFC 2822 email and base64url encode it
     const emailLines = [
@@ -251,7 +269,7 @@ export async function gmailCreateDraft(
 
 export async function googleCalendarList(): Promise<CorsairResponse<CalendarEventResult[]>> {
   try {
-    const tenant = getTenant();
+    const tenant = await getTenant();
     const now = new Date().toISOString();
 
     const result = await tenant.run("googlecalendar.db.events.search", {
@@ -292,7 +310,7 @@ export async function googleCalendarCreate(
   payload: CalendarEventPayload
 ): Promise<CorsairResponse<CalendarEventResult>> {
   try {
-    const tenant = getTenant();
+    const tenant = await getTenant();
     const description = payload.description;
 
     const attendees = payload.attendees && payload.attendees.length > 0 
@@ -396,7 +414,7 @@ export async function githubCreateIssue(
   payload: GitHubIssuePayload
 ): Promise<CorsairResponse<GitHubIssueResult>> {
   try {
-    const tenant = getTenant();
+    const tenant = await getTenant();
     
     let owner = payload.owner;
     let repo = payload.repo;
