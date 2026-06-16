@@ -23,11 +23,23 @@ export default function OnboardingPage() {
   const loadStatus = React.useCallback(async () => {
     const status = await checkConnectionStatus();
     setConnected(status);
+    return status;
   }, []);
 
+  // Polling connection status in background when connecting
   React.useEffect(() => {
     if (isLoaded && user) {
       loadStatus();
+      
+      const interval = setInterval(async () => {
+        const status = await loadStatus();
+        // If both/required Google is connected, we can stop polling
+        if (status.google) {
+          setConnecting({ google: false, github: false });
+        }
+      }, 2000);
+
+      return () => clearInterval(interval);
     }
   }, [user, isLoaded, loadStatus]);
 
@@ -36,8 +48,8 @@ export default function OnboardingPage() {
     setConnecting((prev) => ({ ...prev, [service]: true }));
     const res = await getConnectUrl(service);
     if (res.success && res.url) {
-      // Redirect to the real Google/GitHub OAuth consent screen
-      window.location.href = res.url;
+      // Open the OAuth screen in a new tab so the main app page stays open
+      window.open(res.url, "_blank");
     } else {
       alert(res.error || "Failed to connect.");
       setConnecting((prev) => ({ ...prev, [service]: false }));
