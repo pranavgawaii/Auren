@@ -313,26 +313,17 @@ export function ActionConfirmation({
 
                         {action.tool === "github_create_issue" && (
                           <>
-                            <div className="grid grid-cols-2 gap-2">
-                              <div className="flex flex-col gap-1">
-                                <label className="font-sans text-[10px] font-semibold text-[rgba(36,27,20,0.45)]">Owner</label>
-                                <input 
-                                  type="text"
-                                  className="border border-[rgba(36,27,20,0.08)] bg-[#FAF8F5] rounded-[6px] px-2.5 py-1 text-[12px] font-sans text-[#241B14] focus:outline-[#E8593C]"
-                                  value={String(action.parameters.owner || "")}
-                                  onChange={(e) => updateParam(i, "owner", e.target.value)}
-                                />
-                              </div>
-                              <div className="flex flex-col gap-1">
-                                <label className="font-sans text-[10px] font-semibold text-[rgba(36,27,20,0.45)]">Repository</label>
-                                <input 
-                                  type="text"
-                                  className="border border-[rgba(36,27,20,0.08)] bg-[#FAF8F5] rounded-[6px] px-2.5 py-1 text-[12px] font-sans text-[#241B14] focus:outline-[#E8593C]"
-                                  value={String(action.parameters.repo || "")}
-                                  onChange={(e) => updateParam(i, "repo", e.target.value)}
-                                />
-                              </div>
+                            <div className="flex flex-col gap-1">
+                              <label className="font-sans text-[10px] font-semibold text-[rgba(36,27,20,0.45)]">Repository URL or Name</label>
+                              <input 
+                                type="text"
+                                className="border border-[rgba(36,27,20,0.08)] bg-[#FAF8F5] rounded-[6px] px-2.5 py-1 text-[12px] font-sans text-[#241B14] focus:outline-[#E8593C]"
+                                placeholder="e.g. https://github.com/pranavgawaii/Auren"
+                                value={String(action.parameters.repoUrl || "")}
+                                onChange={(e) => updateParam(i, "repoUrl", e.target.value)}
+                              />
                             </div>
+
                             <div className="flex flex-col gap-1">
                               <label className="font-sans text-[10px] font-semibold text-[rgba(36,27,20,0.45)]">Issue Title</label>
                               <input 

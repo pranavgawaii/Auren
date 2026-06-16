@@ -103,9 +103,19 @@ export interface InboxPanelProps {
   onSelectEmail: (id: string) => void;
   onRefresh: (shouldSync?: boolean) => void;
   isLoading: boolean;
+  folderType: "INBOX" | "SENT" | "DRAFT";
+  onFolderChange: (folder: "INBOX" | "SENT" | "DRAFT") => void;
 }
 
-export function InboxPanel({ emails, selectedEmailId, onSelectEmail, onRefresh, isLoading }: InboxPanelProps) {
+export function InboxPanel({ 
+  emails, 
+  selectedEmailId, 
+  onSelectEmail, 
+  onRefresh, 
+  isLoading, 
+  folderType, 
+  onFolderChange 
+}: InboxPanelProps) {
   const [activeTab, setActiveTab] = useState("All");
 
   const priorityMap: Record<string, "urgent" | "normal" | "fyi"> = {
@@ -121,45 +131,62 @@ export function InboxPanel({ emails, selectedEmailId, onSelectEmail, onRefresh, 
     const p = email.priority || "nrm";
     if (activeTab === "Urgent") return p === "urg" || p === "urgent";
     if (activeTab === "Normal") return p === "nrm" || p === "normal";
-    if (activeTab === "FYI") return p === "fyi";
     return true;
   });
 
   const countAll = emails.length;
   const countUrgent = emails.filter(e => e.priority === "urg" || e.priority === "urgent").length;
   const countNormal = emails.filter(e => e.priority === "nrm" || e.priority === "normal" || !e.priority).length;
-  const countFYI = emails.filter(e => e.priority === "fyi").length;
 
   const tabs = [
-    { name: "All", count: countAll, color: "bg-[rgba(36,27,20,0.4)]", desc: "All incoming emails" },
+    { name: "All", count: countAll, color: "bg-[rgba(36,27,20,0.4)]", desc: "All emails in folder" },
     { name: "Urgent", count: countUrgent, color: "bg-[#EF4444]", desc: "Immediate attention required" },
     { name: "Normal", count: countNormal, color: "bg-[#6366F1]", desc: "Regular priority correspondence" },
-    { name: "FYI", count: countFYI, color: "bg-[#D1D5DB]", desc: "For Your Information (Newsletters & CCs)" },
   ];
 
   return (
     <div className="w-full flex-1 flex flex-col bg-white h-full overflow-hidden">
       
-      {/* Header */}
-      <div className="h-[56px] px-6 flex items-center justify-between border-b border-[rgba(36,27,20,0.08)] shrink-0">
-        <div className="flex items-center gap-2">
-          <h2 style={{ fontFamily: "var(--font-civane, Georgia, serif)" }} className="text-[20px] text-[#241B14] tracking-tight">
-            Inbox
-          </h2>
-          <div className="bg-[#FBF3EC] border border-[rgba(36,27,20,0.08)] rounded-full px-2 py-[2px] font-sans text-[11px] text-[rgba(36,27,20,0.5)] leading-none flex items-center">
-            {filteredEmails.length}
+      {/* Header & Folder Navigation */}
+      <div className="flex flex-col border-b border-[rgba(36,27,20,0.08)] shrink-0">
+        <div className="h-[56px] px-6 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <h2 style={{ fontFamily: "var(--font-civane, Georgia, serif)" }} className="text-[20px] text-[#241B14] tracking-tight">
+              Mailbox
+            </h2>
+            <div className="bg-[#FBF3EC] border border-[rgba(36,27,20,0.08)] rounded-full px-2 py-[2px] font-sans text-[11px] text-[rgba(36,27,20,0.5)] leading-none flex items-center">
+              {filteredEmails.length}
+            </div>
           </div>
+          <button 
+            onClick={() => onRefresh(true)}
+            disabled={isLoading}
+            className="h-[28px] px-3 border border-[rgba(36,27,20,0.08)] rounded-[8px] font-sans text-[11px] text-[#241B14] hover:bg-[#FBF3EC] transition-colors disabled:opacity-50"
+          >
+            {isLoading ? "Syncing..." : "Sync"}
+          </button>
         </div>
-        <button 
-          onClick={() => onRefresh(true)}
-          disabled={isLoading}
-          className="h-[28px] px-3 border border-[rgba(36,27,20,0.08)] rounded-[8px] font-sans text-[11px] text-[#241B14] hover:bg-[#FBF3EC] transition-colors disabled:opacity-50"
-        >
-          {isLoading ? "Syncing..." : "Sync"}
-        </button>
+
+        {/* Folders */}
+        <div className="flex px-4 gap-2 pb-2">
+          {(["INBOX", "SENT", "DRAFT"] as const).map(folder => (
+            <button
+              key={folder}
+              onClick={() => onFolderChange(folder)}
+              className={cn(
+                "px-3 py-1.5 rounded-md font-sans text-[12px] font-medium transition-colors",
+                folderType === folder
+                  ? "bg-[#241B14] text-white"
+                  : "bg-[rgba(36,27,20,0.04)] text-[rgba(36,27,20,0.6)] hover:bg-[rgba(36,27,20,0.08)]"
+              )}
+            >
+              {folder === "INBOX" ? "Inbox" : folder === "SENT" ? "Sent" : folder === "DRAFT" ? "Drafts" : "Spam"}
+            </button>
+          ))}
+        </div>
       </div>
 
-      {/* Tabs */}
+      {/* Priority Tabs */}
       <div className="flex px-4 border-b border-[rgba(36,27,20,0.08)] bg-[#FAF8F5] shrink-0 gap-1 select-none">
         {tabs.map(tab => (
           <button
@@ -212,7 +239,7 @@ export function InboxPanel({ emails, selectedEmailId, onSelectEmail, onRefresh, 
         ))}
         {filteredEmails.length === 0 && !isLoading && (
           <div className="p-8 text-center text-[rgba(36,27,20,0.5)] font-sans text-[13px]">
-            No emails found.
+            No emails found in this folder.
           </div>
         )}
       </div>

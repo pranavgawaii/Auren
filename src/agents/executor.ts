@@ -11,7 +11,7 @@ Your job is to read the user's natural language command, consider the context of
 AVAILABLE TOOLS:
 1. "gmail_send": Sends an email. Requires 'to', 'subject', 'body'.
 2. "calendar_create": Creates a calendar event. Requires 'title', 'startAt' (ISO 8601), 'endAt' (ISO 8601), 'attendees' (array of emails).
-3. "github_create_issue": Creates a GitHub issue. Requires 'owner', 'repo', 'title', 'body'.
+3. "github_create_issue": Creates a GitHub issue. Requires 'repoUrl', 'title', 'body'. Extract 'repoUrl' only if explicitly specified (can be a full URL or owner/repo format); otherwise leave it as an empty string "" so the server can use the configured default repository automatically. Never guess or invent a repo URL.
 
 CURRENT CONTEXT:
 ${emailContext ? `Currently reading email from: ${emailContext.from}

@@ -3,28 +3,62 @@
 import { createServerSupabaseClient } from "@/lib/supabase";
 import { syncInboxEmails } from "./sync-emails";
 import { getUserId } from "@/lib/user";
+import { checkSyncRateLimit } from "@/lib/rate-limit";
 import type { GmailMessage } from "@/types";
 
-export async function getInboxEmails(shouldSync: boolean = false, maxResults: number = 20): Promise<{ success: boolean; data?: GmailMessage[]; error?: string }> {
+export async function getInboxEmails(
+  shouldSync: boolean = false, 
+  maxResults: number = 20,
+  folderType: "INBOX" | "SENT" | "DRAFT" = "INBOX"
+): Promise<{ success: boolean; data?: GmailMessage[]; error?: string }> {
   try {
     const supabase = createServerSupabaseClient();
     const userId = await getUserId();
 
     // If sync is requested, sync first
     if (shouldSync) {
-      const syncResult = await syncInboxEmails(maxResults);
-      if (!syncResult.success) {
-        console.error("Failed to sync emails:", syncResult.error);
+      const rateLimit = await checkSyncRateLimit();
+      if (!rateLimit.success) {
+        console.warn("Sync rate limit exceeded:", rateLimit.error);
         // Continue to query from DB anyway so we don't crash
+      } else {
+        const syncResult = await syncInboxEmails(maxResults, folderType as "INBOX" | "SENT" | "DRAFT");
+        if (!syncResult.success) {
+          console.error("Failed to sync emails:", syncResult.error);
+        }
       }
     }
 
     // Fetch emails from Supabase for this specific user
-    const { data: dbEmails, error: dbError } = await supabase
+    let query = supabase
       .from("emails")
       .select("*")
       .eq("user_id", userId)
       .order("received_at", { ascending: false });
+
+    // Apply folder filter
+    if (folderType === "INBOX") {
+      query = query.contains("labels", ["INBOX"]);
+    } else if (folderType === "SENT") {
+      query = query.contains("labels", ["SENT"]);
+    } else if (folderType === "DRAFT") {
+      query = query.contains("labels", ["DRAFT"]);
+    }
+
+    let { data: dbEmails, error: dbError } = await query;
+
+    // Fallback if the 'labels' column doesn't exist yet (user didn't run SQL migration)
+    if (dbError && dbError.message.includes("Could not find the 'labels' column")) {
+      console.warn("Labels column missing. Falling back to fetching all emails.");
+      const fallbackQuery = await supabase
+        .from("emails")
+        .select("*")
+        .eq("user_id", userId)
+        .order("received_at", { ascending: false });
+      
+      dbEmails = fallbackQuery.data;
+      dbError = fallbackQuery.error;
+    }
 
     if (dbError) {
       console.error("Failed to fetch emails from DB:", dbError);
@@ -33,17 +67,17 @@ export async function getInboxEmails(shouldSync: boolean = false, maxResults: nu
 
     // If DB is empty and shouldSync wasn't run, trigger an initial sync automatically
     if ((!dbEmails || dbEmails.length === 0) && !shouldSync) {
-      const syncResult = await syncInboxEmails(maxResults);
+      const syncResult = await syncInboxEmails(maxResults, folderType as "INBOX" | "SENT" | "DRAFT");
       if (syncResult.success) {
         // Fetch again after initial sync
-        const { data: refetchedEmails, error: refetchError } = await supabase
+        const refetch = await supabase
           .from("emails")
           .select("*")
           .eq("user_id", userId)
           .order("received_at", { ascending: false });
         
-        if (!refetchError && refetchedEmails) {
-          return { success: true, data: mapDbEmailsToGmailMessages(refetchedEmails) };
+        if (!refetch.error && refetch.data) {
+          return { success: true, data: mapDbEmailsToGmailMessages(refetch.data) };
         }
       }
     }
@@ -54,6 +88,7 @@ export async function getInboxEmails(shouldSync: boolean = false, maxResults: nu
     return { success: false, error: error instanceof Error ? error.message : "Unknown error" };
   }
 }
+
 
 function mapDbEmailsToGmailMessages(dbEmails: any[]): GmailMessage[] {
   return dbEmails

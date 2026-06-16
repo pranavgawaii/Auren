@@ -12,21 +12,8 @@ interface CreateGithubIssuePayload {
 
 export async function createGithubIssue(payload: CreateGithubIssuePayload) {
   try {
-    let owner = "";
-    let repoName = "";
-
-    const repoStr = payload.repo || process.env.GITHUB_DEFAULT_REPO || "";
-    if (repoStr) {
-      const parts = repoStr.split("/");
-      if (parts.length === 2) {
-        owner = parts[0];
-        repoName = parts[1];
-      }
-    }
-
     const result = await githubCreateIssue({
-      owner,
-      repo: repoName,
+      repoUrl: payload.repo || "",
       title: payload.title,
       body: payload.body,
     });
@@ -45,7 +32,7 @@ export async function createGithubIssue(payload: CreateGithubIssuePayload) {
       actions_taken: [
         {
           tool: "github_create_issue",
-          input: { title: payload.title, body: payload.body, repo: repoStr },
+          input: { title: payload.title, body: payload.body, repoUrl: payload.repo || "" },
           output: { issueUrl: issue.htmlUrl, issueNumber: issue.number },
           executedAt: new Date().toISOString(),
         },

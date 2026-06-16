@@ -41,6 +41,7 @@ export function DashboardClient() {
   }, [user, isLoaded, router]);
 
   const [view, setView] = useState<"inbox" | "search" | "calendar" | "settings" | "history">("inbox");
+  const [folderType, setFolderType] = useState<"INBOX" | "SENT" | "DRAFT">("INBOX");
   const [isCalendarOpen, setIsCalendarOpen] = useState(true);
   const [isConsoleOpen, setIsConsoleOpen] = useState(false);
   const [selectedEmailId, setSelectedEmailId] = useState<string>("");
@@ -112,7 +113,7 @@ export function DashboardClient() {
       const savedLimit = localStorage.getItem(`auren_${user.id}_sync_limit`);
       if (savedLimit) limit = parseInt(savedLimit, 10);
     }
-    const res = await getInboxEmails(shouldSync, limit);
+    const res = await getInboxEmails(shouldSync, limit, folderType);
     if (res.success && res.data) {
       setEmails(res.data);
       if (res.data.length > 0 && !selectedEmailId) {
@@ -120,7 +121,7 @@ export function DashboardClient() {
       }
     }
     setIsLoading(false);
-  }, [selectedEmailId, user]);
+  }, [selectedEmailId, user, folderType]);
 
   useEffect(() => {
     fetchEmails();
@@ -165,6 +166,8 @@ export function DashboardClient() {
               onSelectEmail={setSelectedEmailId} 
               onRefresh={fetchEmails}
               isLoading={isLoading}
+              folderType={folderType}
+              onFolderChange={setFolderType}
             />
             {/* Horizontal Resize handle (Inbox list) */}
             <div 

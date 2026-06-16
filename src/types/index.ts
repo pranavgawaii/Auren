@@ -122,6 +122,7 @@ export interface GmailMessage {
   date: string;
   isRead: boolean;
   priority?: string;
+  labels?: string[];
 }
 
 export interface GmailSendPayload {
@@ -157,8 +158,7 @@ export interface CalendarEventResult {
 }
 
 export interface GitHubIssuePayload {
-  owner: string;
-  repo: string;
+  repoUrl: string;
   title: string;
   body: string;
   labels?: string[];

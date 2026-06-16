@@ -29,17 +29,18 @@ function classifyPriorityLocal(subject: string, snippet: string): EmailPriority 
   return EMAIL_PRIORITY.NORMAL;
 }
 
-export async function syncInboxEmails(maxResults: number = 20) {
+export async function syncInboxEmails(maxResults: number = 20, folderType?: "INBOX" | "SENT" | "DRAFT"): Promise<{ success: boolean; count?: number; error?: string }> {
   try {
     const userId = await getUserId();
+    const supabase = createServerSupabaseClient();
 
 
     console.log(`[Sync] Fetching ${maxResults} emails from Gmail via Corsair...`);
-    const corsairRes = await gmailRead(maxResults);
+    const corsairRes = await gmailRead(maxResults, folderType);
 
     if (!corsairRes.success) {
       console.error("[Sync] Corsair fetch failed:", corsairRes.error);
-      return { success: false, error: corsairRes.error };
+      return { success: false, error: corsairRes.error.message };
     }
 
     const emails = corsairRes.data;
@@ -49,7 +50,6 @@ export async function syncInboxEmails(maxResults: number = 20) {
       return { success: true, count: 0 };
     }
 
-    const supabase = createServerSupabaseClient();
     let syncCount = 0;
     let skipCount = 0;
 
@@ -89,6 +89,7 @@ export async function syncInboxEmails(maxResults: number = 20) {
             priority,
             is_read: email.isRead || false,
             received_at: email.date || new Date().toISOString(),
+            labels: email.labels || [],
           },
           { onConflict: "gmail_id" }
         )
@@ -129,10 +130,7 @@ export async function syncInboxEmails(maxResults: number = 20) {
     console.error("[Sync] Unexpected error:", error);
     return {
       success: false,
-      error: {
-        code: "SYNC_ERROR",
-        message: error instanceof Error ? error.message : "Unknown sync error",
-      },
+      error: error instanceof Error ? error.message : "Unknown sync error",
     };
   }
 }

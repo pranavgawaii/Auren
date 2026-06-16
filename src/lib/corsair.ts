@@ -27,6 +27,7 @@ export async function getTenant() {
     throw new Error("Missing Corsair environment variables");
   }
 
+  console.log("[Corsair] Tenant ID is:", tenantId);
   const app = createApp({ apiKey: devKey });
   return app.instance(instanceId).tenant(tenantId);
 }
@@ -43,15 +44,34 @@ export function getCorsairInstance() {
   return app.instance(instanceId);
 }
 
-export async function gmailRead(maxResults: number = 20): Promise<CorsairResponse<GmailMessage[]>> {
+export async function gmailRead(
+  maxResults: number = 20,
+  folderType?: "INBOX" | "SENT" | "DRAFT"
+): Promise<CorsairResponse<GmailMessage[]>> {
   try {
     const tenant = await getTenant();
     
-    // Fetch inbox emails from the live Gmail API via Corsair
-    const listResult = await tenant.run("gmail.api.messages.list", {
+    // Fetch emails from the live Gmail API via Corsair
+    const params: any = {
       userId: "me",
       maxResults,
-    });
+    };
+
+    if (folderType === "INBOX") {
+      // Only real inbox messages — exclude spam, trash, promotions, social
+      params.labelIds = ["INBOX"];
+      params.q = "-in:spam -in:trash";
+    } else if (folderType === "SENT") {
+      params.labelIds = ["SENT"];
+    } else if (folderType === "DRAFT") {
+      params.labelIds = ["DRAFT"];
+    } else {
+      // Default: main inbox only, no spam or trash
+      params.labelIds = ["INBOX"];
+      params.q = "-in:spam -in:trash";
+    }
+
+    const listResult = await tenant.run("gmail.api.messages.list", params);
 
     const listResultData = listResult as any;
     if (listResultData && listResultData.success === false) {
@@ -102,8 +122,13 @@ export async function gmailRead(maxResults: number = 20): Promise<CorsairRespons
         let body = detail.snippet || "";
         const parts = payload.parts || [];
         
+        // Prefer HTML to look exactly like Gmail
+        const htmlPart = parts.find((p: any) => p.mimeType === "text/html");
         const plainTextPart = parts.find((p: any) => p.mimeType === "text/plain");
-        if (plainTextPart && plainTextPart.body?.data) {
+
+        if (htmlPart && htmlPart.body?.data) {
+          body = Buffer.from(htmlPart.body.data, "base64").toString("utf-8");
+        } else if (plainTextPart && plainTextPart.body?.data) {
           body = Buffer.from(plainTextPart.body.data, "base64").toString("utf-8");
         } else if (payload.body?.data) {
           body = Buffer.from(payload.body.data, "base64").toString("utf-8");
@@ -119,7 +144,9 @@ export async function gmailRead(maxResults: number = 20): Promise<CorsairRespons
           snippet: detail.snippet || body.slice(0, 100),
           body: body,
           date: String(detail.internalDate ? new Date(Number(detail.internalDate)).toISOString() : new Date().toISOString()),
-          isRead: false,
+          // UNREAD label present means it's unread; absence means it's been read
+          isRead: Array.isArray(detail.labelIds) ? !detail.labelIds.includes("UNREAD") : true,
+          labels: detail.labelIds || (folderType ? [folderType] : []),
         });
       } catch (err) {
         console.error(`Failed to fetch message details for ${summary.id}:`, err);
@@ -366,9 +393,10 @@ export async function googleCalendarCreate(
     const tenant = await getTenant();
     const description = payload.description;
 
-    const attendees = payload.attendees && payload.attendees.length > 0 
-      ? payload.attendees.map((email) => ({ email }))
-      : undefined;
+    const attendees: import("@/types").CalendarAttendee[] | undefined =
+      payload.attendees && payload.attendees.length > 0
+        ? payload.attendees.map((email) => ({ email, name: null, responseStatus: "needsAction" }))
+        : undefined;
 
     // Server-side default for missing dates
     let startIso = payload.startAt;
@@ -385,30 +413,34 @@ export async function googleCalendarCreate(
       endIso = end.toISOString();
     }
 
-    const runParams: any = {
+    const runParams = {
       calendarId: "primary",
-      requestBody: {
+      event: {
         summary: payload.title,
         description,
         start: { dateTime: startIso },
         end: { dateTime: endIso },
+        ...(attendees && { attendees }),
       }
     };
-    
-    if (attendees) {
-      runParams.requestBody.attendees = attendees;
-    }
-
-    console.log("[Corsair] Calendar Create Payload:", JSON.stringify(runParams, null, 2));
     
     let resultData: Record<string, unknown> = {};
     
     try {
+      console.log("[Corsair] Creating event...");
       const result = await tenant.run("googlecalendar.api.events.create", runParams);
       resultData = result as unknown as Record<string, unknown>;
-    } catch (apiError) {
-      console.warn("[Corsair] Calendar API Create failed (Auth/Scopes). Falling back to DB insert:", apiError);
+    } catch (err: any) {
+      let msg = err.message;
+      if (err.details) {
+        msg += " | Details: " + (typeof err.details === 'object' ? JSON.stringify(err.details) : err.details);
+      }
+      console.warn("[Corsair] Event creation failed:", msg);
+      // Fall through to DB insert
+    }
       
+    if (!resultData || (!resultData.id && !resultData.htmlLink)) {
+      console.warn("[Corsair] All Calendar API Create attempts failed. Falling back to DB insert.");
       const supabase = createServerSupabaseClient();
       const userId = await getUserId();
       
@@ -428,15 +460,21 @@ export async function googleCalendarCreate(
       const { data, error } = await supabase.from("calendar_events").insert(newEvent).select().single();
       
       if (error) {
-        throw new Error(`DB Fallback failed: ${error.message}`);
+        throw new Error("Failed to fallback save to DB: " + error.message);
       }
       
-      resultData = {
-        id: data.gcal_id,
-        summary: data.title,
-        start: { dateTime: data.start_at },
-        end: { dateTime: data.end_at },
-        attendees: data.attendees
+      return {
+        success: true,
+        data: {
+          id: newEvent.gcal_id,
+          title: newEvent.title,
+          startAt: newEvent.start_at,
+          endAt: newEvent.end_at,
+          attendees: newEvent.attendees,
+          htmlLink: "",
+          description: newEvent.description || undefined,
+          location: newEvent.location || undefined,
+        }
       };
     }
     
@@ -469,17 +507,35 @@ export async function githubCreateIssue(
   try {
     const tenant = await getTenant();
     
-    let owner = payload.owner;
-    let repo = payload.repo;
+    let owner = "";
+    let repo = "";
+    const repoInput = payload.repoUrl?.trim() ?? "";
 
-    if (!owner || !repo) {
+    // Parse: if it's a full GitHub URL, extract owner/repo
+    const urlMatch = repoInput.match(/github\.com\/([^/\s]+)\/([^/\s]+)/i);
+    if (urlMatch) {
+      owner = urlMatch[1];
+      repo = urlMatch[2].replace(/\.git$/, "");
+    } 
+    // Parse: if it looks like "owner/repo" directly
+    else if (repoInput.includes("/")) {
+      const parts = repoInput.split("/");
+      owner = parts[0];
+      repo = parts[1];
+    }
+
+    // Fall back to GITHUB_DEFAULT_REPO when owner or repo are missing/empty/not a simple slug
+    const isValidSlug = (s: string) => /^[a-zA-Z0-9_.\-]+$/.test(s);
+    if (!isValidSlug(owner) || !isValidSlug(repo)) {
       const defaultRepo = process.env.GITHUB_DEFAULT_REPO;
-      if (defaultRepo) {
+      if (defaultRepo && defaultRepo.includes("/")) {
         const parts = defaultRepo.split("/");
         owner = parts[0];
         repo = parts[1];
       } else {
-        throw new Error("Missing repository information and GITHUB_DEFAULT_REPO is not set");
+        throw new Error(
+          "Cannot determine GitHub owner/repo. Set GITHUB_DEFAULT_REPO=owner/repo in your .env"
+        );
       }
     }
 

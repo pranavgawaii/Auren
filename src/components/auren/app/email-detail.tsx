@@ -127,8 +127,30 @@ export function EmailDetail({ email, thread = [], onAction, isAgentLoading }: Em
                 </div>
 
                 {/* Body */}
-                <div className="font-sans text-[14px] text-[rgba(36,27,20,0.7)] leading-[1.7] whitespace-pre-wrap ml-[56px]">
-                  {msg.body}
+                <div 
+                  className="font-sans text-[14px] text-[#241B14] leading-[1.6] ml-[56px] overflow-hidden"
+                >
+                  {(msg.body.includes('<html') || msg.body.includes('<body') || msg.body.includes('<div') || msg.body.includes('<style>') || msg.body.includes('<p>') || msg.body.includes('<br>')) ? (
+                    <iframe 
+                      srcDoc={msg.body} 
+                      className="w-full border-none"
+                      sandbox="allow-popups allow-popups-to-escape-sandbox allow-same-origin"
+                      scrolling="no"
+                      onLoad={(e) => {
+                        const iframe = e.target as HTMLIFrameElement;
+                        if (iframe.contentWindow?.document) {
+                          const doc = iframe.contentWindow.document;
+                          // Reset height temporarily to allow shrinking
+                          iframe.style.height = '10px';
+                          // Use documentElement for more accurate measurement and add safety padding
+                          const newHeight = Math.max(doc.body.scrollHeight, doc.documentElement.scrollHeight);
+                          iframe.style.height = `${newHeight + 20}px`;
+                        }
+                      }}
+                    />
+                  ) : (
+                    <div className="whitespace-pre-wrap">{msg.body}</div>
+                  )}
                 </div>
 
                 {/* Divider between messages, but not after the last one */}

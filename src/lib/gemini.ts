@@ -1,11 +1,15 @@
 export async function reasonWithGemini(
   systemInstruction: string,
   userMessage: string,
-  responseMimeType: "application/json" | "text/plain" = "application/json",
+  _responseMimeType: "application/json" | "text/plain" = "application/json",
   maxRetries = 3
 ): Promise<string> {
   const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY;
   
+  if (!OPENROUTER_API_KEY) {
+    throw new Error("OPENROUTER_API_KEY environment variable is missing.");
+  }
+
   let lastError: Error | null = null;
 
   for (let attempt = 1; attempt <= maxRetries; attempt++) {
@@ -14,10 +18,12 @@ export async function reasonWithGemini(
         method: "POST",
         headers: {
           "Authorization": `Bearer ${OPENROUTER_API_KEY}`,
-          "Content-Type": "application/json"
+          "Content-Type": "application/json",
+          "HTTP-Referer": "https://auren.app",
+          "X-Title": "Auren",
         },
         body: JSON.stringify({
-          model: "openrouter/free", // Using free model on OpenRouter
+          model: "openrouter/auto", // Free model routing on OpenRouter
           messages: [
             { role: "system", content: systemInstruction + "\nIMPORTANT: RETURN ONLY VALID JSON. Do not include markdown codeblocks." },
             { role: "user", content: userMessage }
@@ -31,9 +37,9 @@ export async function reasonWithGemini(
       }
 
       const data = await response.json();
-      let text = data.choices[0].message.content;
+      let text: string = data.choices?.[0]?.message?.content ?? "";
       
-      // Highly robust JSON extractor for free models that often include conversational wrapper text
+      // Robust JSON extractor — free models often wrap output in prose
       const firstBrace = text.indexOf('{');
       const lastBrace = text.lastIndexOf('}');
       if (firstBrace !== -1 && lastBrace !== -1 && lastBrace >= firstBrace) {
