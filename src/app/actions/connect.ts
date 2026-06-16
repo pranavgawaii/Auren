@@ -38,3 +38,19 @@ export async function checkConnectionStatus(): Promise<{ google: boolean; github
     return { google: false, github: false };
   }
 }
+
+export async function disconnectService(service: "google" | "github"): Promise<{ success: boolean; error?: string }> {
+  try {
+    const tenant = await getTenant();
+    if (service === "google") {
+      await tenant.plugins.credentials.clear("gmail", "access_token");
+      await tenant.plugins.credentials.clear("googlecalendar", "access_token");
+    } else {
+      await tenant.plugins.credentials.clear("github", "access_token");
+    }
+    return { success: true };
+  } catch (error: any) {
+    console.error(`Failed to disconnect ${service}:`, error);
+    return { success: false, error: error.message || "Unknown error" };
+  }
+}

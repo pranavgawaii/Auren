@@ -1,4 +1,6 @@
 import Link from "next/link";
+import { auth } from "@clerk/nextjs/server";
+import { redirect } from "next/navigation";
 
 import { HeroWidget } from "@/components/auren/hero-widget";
 import { Topbar } from "@/components/auren/topbar";
@@ -18,6 +20,16 @@ const FONT_BODY = "var(--font-sans)";
 const FONT_SUBHEAD = "var(--font-sans)";
 
 export default async function LandingPage() {
+  let clerkUserId: string | null = null;
+  try {
+    const { userId } = auth();
+    clerkUserId = userId;
+  } catch {}
+
+  if (clerkUserId) {
+    redirect("/app");
+  }
+
   const waitlistCount = await getWaitlistCount();
 
   return (
