@@ -1,0 +1,138 @@
+@import url('https://api.fontshare.com/v2/css?f[]=switzer@400,500,600,700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/*
+  AUREN — GLOBAL STYLES
+  Font stack (per DESIGN.md):
+    --font-display  → Plus Jakarta Sans 300  (Civane Norm Light substitute, hero H1)
+    --font-ui       → Switzer 500            (buttons, tabs, badges — loaded via Fontshare)
+    --font-sans     → Inter 400              (body, paragraphs)
+    --font-mono     → JetBrains Mono         (code)
+*/
+
+:root {
+  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+  --font-display: 'Plus Jakarta Sans', sans-serif;
+}
+
+
+@layer base {
+  :root {
+    /* ── Landing page palette ── */
+    --bg:          #FBF3EC;
+    --text:        #241B14;
+    --accent:      #E8593C;
+    --accent-dark: #C44730;
+    --card-bg:     #FFFFFF;
+    --muted:       rgba(36,27,20,0.50);
+    --border:      rgba(36,27,20,0.08);
+    --border-md:   rgba(36,27,20,0.15);
+
+    /* ── App palette (Matched to Landing Page) ── */
+    --bg-page:     #FBF3EC;
+    --bg-app:      #FBF3EC;
+    --bg-surface:  #FFFFFF;
+    --bg-hover:    #F5EFE8;
+    --bg-selected: #F5EFE8;
+    --border-strong: #CDD1CB;
+    --text-900:    #0D0F0C;
+    --text-600:    #4A5249;
+    --text-400:    #8F9B8D;
+    --accent-light: #F0FDF8;
+    --accent-muted: #A7C4BB;
+    --urgent:      #DC2626;
+    --normal:      #6366F1;
+    --fyi:         #CBD5C0;
+    --radius:      10px;
+    --radius-sm:   6px;
+
+    /* ── shadcn / Tailwind HSL fallbacks ── */
+    --background:         105 15% 94.5%;
+    --foreground:         100 13% 5%;
+    --card:               0 0% 100%;
+    --card-foreground:    100 13% 5%;
+    --popover:            0 0% 100%;
+    --popover-foreground: 100 13% 5%;
+    --primary:            165 83% 24%;
+    --primary-foreground: 0 0% 100%;
+    --secondary:          105 15% 94.5%;
+    --secondary-foreground: 100 13% 5%;
+    --muted:              105 15% 94.5%;
+    --muted-foreground:   110 5% 58%;
+    --destructive:        0 72% 51%;
+    --destructive-foreground: 0 0% 100%;
+    --border-hsl:         105 10% 90%;
+    --input:              105 10% 90%;
+    --ring:               165 83% 24%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+    box-sizing: border-box;
+  }
+
+  body {
+    background-color: var(--bg);
+    color: var(--text);
+    /* Inter 400 — body default */
+    font-family: var(--font-sans);
+    font-weight: 400;
+    font-size: 14px;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  input, select, button, textarea {
+    font-family: inherit;
+  }
+
+  code, pre, .font-mono {
+    font-family: var(--font-mono);
+  }
+
+  /* Hero headline utility */
+  .font-display {
+    font-family: var(--font-display);
+  }
+
+  /* Switzer UI utility */
+  .font-ui {
+    font-family: 'Switzer', var(--font-sans, 'Inter', sans-serif);
+  }
+
+  /* GitHub nav icon hover (used in server component navbars) */
+  .nav-github-link {
+    color: rgba(36,27,20,0.6);
+    transition: color 0.15s ease;
+  }
+  .nav-github-link:hover {
+    color: #241B14;
+  }
+
+  /* Nav sign-in link hover */
+  .nav-signin-link {
+    color: rgba(36,27,20,0.6);
+    transition: color 0.15s ease;
+  }
+  .nav-signin-link:hover {
+    color: #241B14;
+  }
+
+  /* Docs sidebar nav link */
+  .nav-sidebar-link {
+    color: rgba(36,27,20,0.55);
+    transition: background 0.15s ease, color 0.15s ease;
+  }
+  .nav-sidebar-link:hover {
+    background: rgba(36,27,20,0.04);
+    color: #241B14;
+  }
+}
