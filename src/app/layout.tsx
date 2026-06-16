@@ -25,6 +25,13 @@ const jetbrainsMono = JetBrains_Mono({
 
 
 
+const civane = localFont({
+  src: "./fonts/Civane-Norm-Regular.otf",
+  variable: "--font-civane",
+  weight: "400",
+  display: "swap",
+});
+
 export const metadata: Metadata = {
   title: {
     template: "%s — Auren",
@@ -54,6 +61,7 @@ export default function RootLayout({
       >
         <body
           className={cn(
+            civane.variable,
             inter.variable,
             plusJakartaSans.variable,
             jetbrainsMono.variable,

@@ -67,7 +67,7 @@ export function AppShell({
                 <Image src="/auren_logo.webp" alt="Auren Logo" fill style={{ objectFit: "cover" }} />
               </div>
               <div className="flex items-center gap-3">
-                <span className="font-display font-extrabold text-[20px] tracking-tight text-[#241B14]">
+                <span style={{ fontFamily: "var(--font-civane, Georgia, serif)", fontWeight: 400, fontSize: "22px", letterSpacing: "-0.02em", color: "#241B14" }}>
                   Auren
                 </span>
               </div>
