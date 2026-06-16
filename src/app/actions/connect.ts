@@ -44,7 +44,17 @@ export async function disconnectService(service: "google" | "github"): Promise<{
     const tenant = await getTenant();
     if (service === "google") {
       await tenant.plugins.credentials.clear("gmail", "access_token");
+      try {
+        await tenant.plugins.credentials.clear("gmail", "refresh_token");
+      } catch (e) {
+        console.warn("Failed to clear gmail refresh_token:", e);
+      }
       await tenant.plugins.credentials.clear("googlecalendar", "access_token");
+      try {
+        await tenant.plugins.credentials.clear("googlecalendar", "refresh_token");
+      } catch (e) {
+        console.warn("Failed to clear googlecalendar refresh_token:", e);
+      }
     } else {
       await tenant.plugins.credentials.clear("github", "access_token");
     }

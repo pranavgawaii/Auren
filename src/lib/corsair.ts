@@ -53,8 +53,19 @@ export async function gmailRead(maxResults: number = 20): Promise<CorsairRespons
       maxResults,
     });
 
-    // @ts-expect-error Data structure from Corsair SDK is dynamic
-    const messageSummaries = listResult.data?.messages || listResult.messages || [];
+    const listResultData = listResult as any;
+    if (listResultData && listResultData.success === false) {
+      return {
+        success: false,
+        error: {
+          code: "UNAUTHENTICATED",
+          message: listResultData.message || "Gmail is not authenticated or disconnected.",
+          statusCode: 401,
+        },
+      };
+    }
+
+    const messageSummaries = listResultData.data?.messages || listResultData.messages || [];
     
     const messages: GmailMessage[] = [];
 
@@ -144,7 +155,18 @@ export async function gmailSearch(
   try {
     const tenant = await getTenant();
     const result = await tenant.run("gmail.db.messages.search", { query, limit: 10 });
-    const rows = (result as unknown as Record<string, unknown>).data as Record<string, unknown>[] || [];
+    const resultData = result as any;
+    if (resultData && resultData.success === false) {
+      return {
+        success: false,
+        error: {
+          code: "UNAUTHENTICATED",
+          message: resultData.message || "Gmail search is unauthenticated or disconnected.",
+          statusCode: 401,
+        },
+      };
+    }
+    const rows = resultData.data as Record<string, unknown>[] || [];
 
     const messages: GmailMessage[] = rows.map((msg) => ({
       id: String(msg.id || ""),
@@ -198,9 +220,19 @@ export async function gmailSend(
     }
 
     const result = await tenant.run("gmail.api.messages.send", runParams);
+    const resultData = result as any;
+    if (resultData && resultData.success === false) {
+      return {
+        success: false,
+        error: {
+          code: "UNAUTHENTICATED",
+          message: resultData.message || "Gmail send is unauthenticated or disconnected.",
+          statusCode: 401,
+        },
+      };
+    }
     
-    // @ts-expect-error Data structure from Corsair SDK is dynamic
-    const messageId = result.id || "unknown";
+    const messageId = resultData.id || "unknown";
 
     return { success: true, data: messageId };
   } catch (error: unknown) {
@@ -249,8 +281,18 @@ export async function gmailCreateDraft(
 
     // e.g. gmail.api.drafts.create
     const result = await tenant.run("gmail.api.drafts.create", runParams);
+    const resultData = result as any;
+    if (resultData && resultData.success === false) {
+      return {
+        success: false,
+        error: {
+          code: "UNAUTHENTICATED",
+          message: resultData.message || "Gmail draft creation is unauthenticated or disconnected.",
+          statusCode: 401,
+        },
+      };
+    }
     
-    const resultData = result as unknown as Record<string, unknown>;
     const draftId = String(resultData.id || "unknown");
 
     return { success: true, data: draftId };
@@ -279,8 +321,19 @@ export async function googleCalendarList(): Promise<CorsairResponse<CalendarEven
       limit: 50,
     });
 
-    // @ts-expect-error Data structure from Corsair SDK is dynamic
-    const rows = result.data || [];
+    const resultData = result as any;
+    if (resultData && resultData.success === false) {
+      return {
+        success: false,
+        error: {
+          code: "UNAUTHENTICATED",
+          message: resultData.message || "Google Calendar is not authenticated or disconnected.",
+          statusCode: 401,
+        },
+      };
+    }
+
+    const rows = resultData.data || [];
 
     const events: CalendarEventResult[] = rows.map((evt: Record<string, unknown>) => ({
       id: String(evt.id || ""),
@@ -440,9 +493,17 @@ export async function githubCreateIssue(
     };
 
     const result = await tenant.run("github.api.issues.create", runParams);
-
-    
-    const resultData = result as unknown as Record<string, unknown>;
+    const resultData = result as any;
+    if (resultData && resultData.success === false) {
+      return {
+        success: false,
+        error: {
+          code: "UNAUTHENTICATED",
+          message: resultData.message || "GitHub integration is unauthenticated or disconnected.",
+          statusCode: 401,
+        },
+      };
+    }
     
     const issueResult: GitHubIssueResult = {
       id: Number(resultData.id || 0),

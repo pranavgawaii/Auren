@@ -1,13 +1,15 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { Settings, User, Bell, Shield, GitBranch, Calendar, Mail, Key } from "lucide-react";
+import { Settings, User, Bell, Shield, GitBranch, Mail, Clock, Globe, MessageSquare, Sun, Moon, Volume2, ShieldCheck, MailCheck, Database, Key } from "lucide-react";
 import { checkConnectionStatus, getConnectUrl, disconnectService } from "@/app/actions/connect";
 import { useUser } from "@clerk/nextjs";
 
 export function SettingsView() {
   const [activeTab, setActiveTab] = useState("integrations");
   const { user } = useUser();
+  
+  // Connection states
   const [connected, setConnected] = useState({
     google: false,
     github: false,
@@ -15,6 +17,20 @@ export function SettingsView() {
   const [loading, setLoading] = useState({
     google: false,
     github: false,
+  });
+
+  // Local preferences states
+  const [theme, setTheme] = useState("light");
+  const [replyTone, setReplyTone] = useState("formal");
+  const [timezone, setTimezone] = useState("Asia/Kolkata");
+  const [workingHours, setWorkingHours] = useState({ start: "09:00", end: "18:00" });
+
+  // Notification states
+  const [notifications, setNotifications] = useState({
+    emailAlerts: true,
+    weeklyDigest: false,
+    soundEffects: true,
+    pushAlerts: true,
   });
 
   const loadStatus = async () => {
@@ -25,7 +41,16 @@ export function SettingsView() {
   useEffect(() => {
     loadStatus();
     
-    // Polling connection status in background when window gets focus
+    // Load local settings from localStorage
+    if (typeof window !== "undefined") {
+      const savedTheme = localStorage.getItem("auren_theme") || "light";
+      const savedTone = localStorage.getItem("auren_reply_tone") || "formal";
+      const savedTimezone = localStorage.getItem("auren_timezone") || "Asia/Kolkata";
+      setTheme(savedTheme);
+      setReplyTone(savedTone);
+      setTimezone(savedTimezone);
+    }
+
     const handleFocus = () => loadStatus();
     window.addEventListener("focus", handleFocus);
     return () => window.removeEventListener("focus", handleFocus);
@@ -56,8 +81,15 @@ export function SettingsView() {
     setLoading((prev) => ({ ...prev, [service]: false }));
   };
 
+  const saveGeneralSettings = () => {
+    localStorage.setItem("auren_theme", theme);
+    localStorage.setItem("auren_reply_tone", replyTone);
+    localStorage.setItem("auren_timezone", timezone);
+    alert("Settings saved successfully!");
+  };
+
   return (
-    <div className="flex-1 flex bg-[#FAF8F5] overflow-hidden">
+    <div className="flex-1 flex bg-[#FAF8F5] overflow-hidden selection:bg-[#E8593C] selection:text-white">
       {/* Settings Sidebar */}
       <div className="w-[260px] bg-white border-r border-[rgba(36,27,20,0.08)] p-6 shrink-0 flex flex-col gap-8">
         <div>
@@ -65,28 +97,28 @@ export function SettingsView() {
           <div className="flex flex-col gap-1">
             <button 
               onClick={() => setActiveTab("general")}
-              className={`flex items-center gap-3 px-3 py-2 rounded-[8px] font-sans font-semibold text-[13px] transition-colors ${activeTab === "general" ? "bg-[rgba(232,89,60,0.08)] text-[#E8593C]" : "text-[rgba(36,27,20,0.6)] hover:bg-[rgba(36,27,20,0.04)] hover:text-[#241B14]"}`}
+              className={`flex items-center gap-3 px-3 py-2.5 rounded-[8px] font-sans font-semibold text-[13px] transition-colors ${activeTab === "general" ? "bg-[rgba(232,89,60,0.08)] text-[#E8593C]" : "text-[rgba(36,27,20,0.6)] hover:bg-[rgba(36,27,20,0.04)] hover:text-[#241B14]"}`}
             >
               <Settings size={16} />
               General
             </button>
             <button 
               onClick={() => setActiveTab("integrations")}
-              className={`flex items-center gap-3 px-3 py-2 rounded-[8px] font-sans font-semibold text-[13px] transition-colors ${activeTab === "integrations" ? "bg-[rgba(232,89,60,0.08)] text-[#E8593C]" : "text-[rgba(36,27,20,0.6)] hover:bg-[rgba(36,27,20,0.04)] hover:text-[#241B14]"}`}
+              className={`flex items-center gap-3 px-3 py-2.5 rounded-[8px] font-sans font-semibold text-[13px] transition-colors ${activeTab === "integrations" ? "bg-[rgba(232,89,60,0.08)] text-[#E8593C]" : "text-[rgba(36,27,20,0.6)] hover:bg-[rgba(36,27,20,0.04)] hover:text-[#241B14]"}`}
             >
               <Shield size={16} />
               Integrations
             </button>
             <button 
               onClick={() => setActiveTab("notifications")}
-              className={`flex items-center gap-3 px-3 py-2 rounded-[8px] font-sans font-semibold text-[13px] transition-colors ${activeTab === "notifications" ? "bg-[rgba(232,89,60,0.08)] text-[#E8593C]" : "text-[rgba(36,27,20,0.6)] hover:bg-[rgba(36,27,20,0.04)] hover:text-[#241B14]"}`}
+              className={`flex items-center gap-3 px-3 py-2.5 rounded-[8px] font-sans font-semibold text-[13px] transition-colors ${activeTab === "notifications" ? "bg-[rgba(232,89,60,0.08)] text-[#E8593C]" : "text-[rgba(36,27,20,0.6)] hover:bg-[rgba(36,27,20,0.04)] hover:text-[#241B14]"}`}
             >
               <Bell size={16} />
               Notifications
             </button>
             <button 
               onClick={() => setActiveTab("account")}
-              className={`flex items-center gap-3 px-3 py-2 rounded-[8px] font-sans font-semibold text-[13px] transition-colors ${activeTab === "account" ? "bg-[rgba(232,89,60,0.08)] text-[#E8593C]" : "text-[rgba(36,27,20,0.6)] hover:bg-[rgba(36,27,20,0.04)] hover:text-[#241B14]"}`}
+              className={`flex items-center gap-3 px-3 py-2.5 rounded-[8px] font-sans font-semibold text-[13px] transition-colors ${activeTab === "account" ? "bg-[rgba(232,89,60,0.08)] text-[#E8593C]" : "text-[rgba(36,27,20,0.6)] hover:bg-[rgba(36,27,20,0.04)] hover:text-[#241B14]"}`}
             >
               <User size={16} />
               Account
@@ -97,7 +129,125 @@ export function SettingsView() {
 
       {/* Main Settings Content */}
       <div className="flex-1 p-10 overflow-y-auto">
-        <div className="max-w-[800px]">
+        <div className="max-w-[700px]">
+          
+          {/* GENERAL TAB */}
+          {activeTab === "general" && (
+            <div className="flex flex-col gap-6 animate-in fade-in duration-300">
+              <div>
+                <h1 className="font-sans font-bold text-[24px] text-[#241B14] mb-2 tracking-tight">General settings</h1>
+                <p className="font-sans text-[14px] text-[rgba(36,27,20,0.6)]">Configure your workspace defaults and agent behaviors.</p>
+              </div>
+
+              <div className="bg-white rounded-[16px] border border-[rgba(36,27,20,0.08)] shadow-[0_4px_24px_rgba(36,27,20,0.02)] p-6 flex flex-col gap-6">
+                
+                {/* Tone Selector */}
+                <div className="flex flex-col gap-2">
+                  <label className="font-sans font-semibold text-[13px] text-[#241B14] flex items-center gap-2">
+                    <MessageSquare size={15} className="text-[#E8593C]" />
+                    AI Agent Reply Tone
+                  </label>
+                  <select 
+                    value={replyTone}
+                    onChange={(e) => setReplyTone(e.target.value)}
+                    className="w-full h-10 px-3 bg-[#FAF8F5] border border-[rgba(36,27,20,0.08)] rounded-[10px] font-sans text-[13px] text-[#241B14] focus:outline-none focus:border-[#E8593C] transition-colors"
+                  >
+                    <option value="formal">Formal & Professional</option>
+                    <option value="casual">Casual & Friendly</option>
+                    <option value="friendly">Warm & Empathetic</option>
+                    <option value="professional">Direct & Concise</option>
+                  </select>
+                </div>
+
+                {/* Timezone */}
+                <div className="flex flex-col gap-2">
+                  <label className="font-sans font-semibold text-[13px] text-[#241B14] flex items-center gap-2">
+                    <Globe size={15} className="text-[#E8593C]" />
+                    Default Timezone
+                  </label>
+                  <select 
+                    value={timezone}
+                    onChange={(e) => setTimezone(e.target.value)}
+                    className="w-full h-10 px-3 bg-[#FAF8F5] border border-[rgba(36,27,20,0.08)] rounded-[10px] font-sans text-[13px] text-[#241B14] focus:outline-none focus:border-[#E8593C] transition-colors"
+                  >
+                    <option value="Asia/Kolkata">Kolkata, India (IST)</option>
+                    <option value="America/New_York">New York, USA (EST)</option>
+                    <option value="Europe/London">London, UK (GMT)</option>
+                    <option value="Asia/Tokyo">Tokyo, Japan (JST)</option>
+                  </select>
+                </div>
+
+                {/* Working hours */}
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="flex flex-col gap-2">
+                    <label className="font-sans font-semibold text-[13px] text-[#241B14] flex items-center gap-2">
+                      <Clock size={15} className="text-[#E8593C]" />
+                      Working Hours Start
+                    </label>
+                    <input 
+                      type="time" 
+                      value={workingHours.start}
+                      onChange={(e) => setWorkingHours(prev => ({ ...prev, start: e.target.value }))}
+                      className="w-full h-10 px-3 bg-[#FAF8F5] border border-[rgba(36,27,20,0.08)] rounded-[10px] font-sans text-[13px] text-[#241B14] focus:outline-none focus:border-[#E8593C] transition-colors"
+                    />
+                  </div>
+                  <div className="flex flex-col gap-2">
+                    <label className="font-sans font-semibold text-[13px] text-[#241B14] flex items-center gap-2">
+                      <Clock size={15} className="text-[#E8593C]" />
+                      Working Hours End
+                    </label>
+                    <input 
+                      type="time" 
+                      value={workingHours.end}
+                      onChange={(e) => setWorkingHours(prev => ({ ...prev, end: e.target.value }))}
+                      className="w-full h-10 px-3 bg-[#FAF8F5] border border-[rgba(36,27,20,0.08)] rounded-[10px] font-sans text-[13px] text-[#241B14] focus:outline-none focus:border-[#E8593C] transition-colors"
+                    />
+                  </div>
+                </div>
+
+                {/* Theme Mode */}
+                <div className="flex flex-col gap-2">
+                  <label className="font-sans font-semibold text-[13px] text-[#241B14] flex items-center gap-2">
+                    <Sun size={15} className="text-[#E8593C]" />
+                    Appearance Theme
+                  </label>
+                  <div className="grid grid-cols-2 gap-2">
+                    <button
+                      onClick={() => setTheme("light")}
+                      className={`h-11 rounded-[10px] border font-sans font-semibold text-[12px] flex items-center justify-center gap-2 transition-all ${
+                        theme === "light" 
+                          ? "border-[#E8593C] bg-[rgba(232,89,60,0.04)] text-[#E8593C]" 
+                          : "border-[rgba(36,27,20,0.08)] text-[rgba(36,27,20,0.6)] bg-white hover:border-[rgba(36,27,20,0.15)]"
+                      }`}
+                    >
+                      <Sun size={14} /> Light Mode
+                    </button>
+                    <button
+                      onClick={() => setTheme("dark")}
+                      className={`h-11 rounded-[10px] border font-sans font-semibold text-[12px] flex items-center justify-center gap-2 transition-all ${
+                        theme === "dark" 
+                          ? "border-[#E8593C] bg-[rgba(232,89,60,0.04)] text-[#E8593C]" 
+                          : "border-[rgba(36,27,20,0.08)] text-[rgba(36,27,20,0.6)] bg-white hover:border-[rgba(36,27,20,0.15)]"
+                      }`}
+                    >
+                      <Moon size={14} /> Dark Mode
+                    </button>
+                  </div>
+                </div>
+
+                <div className="pt-4 border-t border-[rgba(36,27,20,0.04)]">
+                  <button 
+                    onClick={saveGeneralSettings}
+                    className="h-10 px-6 bg-[#E8593C] hover:bg-[#D14F31] text-white rounded-[8px] font-sans font-semibold text-[13px] transition-colors shadow-sm"
+                  >
+                    Save Changes
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* INTEGRATIONS TAB */}
           {activeTab === "integrations" && (
             <div className="flex flex-col gap-6 animate-in fade-in duration-300">
               <div>
@@ -203,21 +353,145 @@ export function SettingsView() {
                   )}
                 </div>
               </div>
-
             </div>
           )}
 
-          {activeTab !== "integrations" && (
-            <div className="flex flex-col items-center justify-center py-24 text-center animate-in fade-in duration-300">
-              <div className="w-16 h-16 rounded-full bg-[rgba(36,27,20,0.04)] flex items-center justify-center text-[rgba(36,27,20,0.3)] mb-4">
-                <Settings size={32} />
+          {/* NOTIFICATIONS TAB */}
+          {activeTab === "notifications" && (
+            <div className="flex flex-col gap-6 animate-in fade-in duration-300">
+              <div>
+                <h1 className="font-sans font-bold text-[24px] text-[#241B14] mb-2 tracking-tight">Notification settings</h1>
+                <p className="font-sans text-[14px] text-[rgba(36,27,20,0.6)]">Configure how and when you receive agent updates.</p>
               </div>
-              <h2 className="font-sans font-bold text-[20px] text-[#241B14] mb-2 tracking-tight capitalize">{activeTab} Settings</h2>
-              <p className="font-sans text-[14px] text-[rgba(36,27,20,0.5)] max-w-[400px]">
-                This section is under construction. It will contain preferences for {activeTab} in a future update.
-              </p>
+
+              <div className="bg-white rounded-[16px] border border-[rgba(36,27,20,0.08)] shadow-[0_4px_24px_rgba(36,27,20,0.02)] p-6 flex flex-col gap-5">
+                
+                {/* Toggle 1 */}
+                <div className="flex items-center justify-between">
+                  <div className="flex items-start gap-3">
+                    <MailCheck size={18} className="text-[#E8593C] mt-0.5" />
+                    <div>
+                      <div className="font-semibold text-[13px] text-[#241B14]">Email Sync Reports</div>
+                      <div className="text-[12px] text-[rgba(36,27,20,0.5)]">Receive emails when Auren identifies urgent sync items.</div>
+                    </div>
+                  </div>
+                  <input 
+                    type="checkbox" 
+                    checked={notifications.emailAlerts}
+                    onChange={(e) => setNotifications(prev => ({ ...prev, emailAlerts: e.target.checked }))}
+                    className="w-4 h-4 rounded text-[#E8593C] focus:ring-[#E8593C] border-gray-300 cursor-pointer"
+                  />
+                </div>
+
+                {/* Toggle 2 */}
+                <div className="flex items-center justify-between pt-4 border-t border-[rgba(36,27,20,0.04)]">
+                  <div className="flex items-start gap-3">
+                    <ShieldCheck size={18} className="text-[#E8593C] mt-0.5" />
+                    <div>
+                      <div className="font-semibold text-[13px] text-[#241B14]">Action Request Notifications</div>
+                      <div className="text-[12px] text-[rgba(36,27,20,0.5)]">Notify when background agent jobs require human confirmation.</div>
+                    </div>
+                  </div>
+                  <input 
+                    type="checkbox" 
+                    checked={notifications.pushAlerts}
+                    onChange={(e) => setNotifications(prev => ({ ...prev, pushAlerts: e.target.checked }))}
+                    className="w-4 h-4 rounded text-[#E8593C] focus:ring-[#E8593C] border-gray-300 cursor-pointer"
+                  />
+                </div>
+
+                {/* Toggle 3 */}
+                <div className="flex items-center justify-between pt-4 border-t border-[rgba(36,27,20,0.04)]">
+                  <div className="flex items-start gap-3">
+                    <Volume2 size={18} className="text-[#E8593C] mt-0.5" />
+                    <div>
+                      <div className="font-semibold text-[13px] text-[#241B14]">Sound Effects</div>
+                      <div className="text-[12px] text-[rgba(36,27,20,0.5)]">Play alert sounds when agent tasks complete successfully.</div>
+                    </div>
+                  </div>
+                  <input 
+                    type="checkbox" 
+                    checked={notifications.soundEffects}
+                    onChange={(e) => setNotifications(prev => ({ ...prev, soundEffects: e.target.checked }))}
+                    className="w-4 h-4 rounded text-[#E8593C] focus:ring-[#E8593C] border-gray-300 cursor-pointer"
+                  />
+                </div>
+
+                <div className="pt-4 border-t border-[rgba(36,27,20,0.04)]">
+                  <button 
+                    onClick={() => alert("Notification settings saved!")}
+                    className="h-10 px-6 bg-[#E8593C] hover:bg-[#D14F31] text-white rounded-[8px] font-sans font-semibold text-[13px] transition-colors"
+                  >
+                    Save Preferences
+                  </button>
+                </div>
+
+              </div>
             </div>
           )}
+
+          {/* ACCOUNT TAB */}
+          {activeTab === "account" && (
+            <div className="flex flex-col gap-6 animate-in fade-in duration-300">
+              <div>
+                <h1 className="font-sans font-bold text-[24px] text-[#241B14] mb-2 tracking-tight">Account settings</h1>
+                <p className="font-sans text-[14px] text-[rgba(36,27,20,0.6)]">Manage your account profile and view system usage statistics.</p>
+              </div>
+
+              {/* Profile Card */}
+              <div className="bg-white rounded-[16px] border border-[rgba(36,27,20,0.08)] shadow-[0_4px_24px_rgba(36,27,20,0.02)] p-6 flex flex-col gap-6">
+                <div className="flex items-center gap-4">
+                  <div className="w-16 h-16 rounded-full overflow-hidden bg-[rgba(232,89,60,0.1)] flex items-center justify-center font-sans font-bold text-[#E8593C] text-[24px]">
+                    {user?.imageUrl ? (
+                      <img src={user.imageUrl} alt={user.fullName || "User"} className="w-full h-full object-cover" />
+                    ) : (
+                      user?.firstName?.slice(0, 1) || "U"
+                    )}
+                  </div>
+                  <div>
+                    <h3 className="font-sans font-bold text-[18px] text-[#241B14]">{user?.fullName || "User Profile"}</h3>
+                    <p className="font-sans text-[13px] text-[rgba(36,27,20,0.5)] mt-0.5">
+                      Email: {user?.emailAddresses[0]?.emailAddress || "loading..."}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Account details grid */}
+                <div className="grid grid-cols-2 gap-4 pt-4 border-t border-[rgba(36,27,20,0.04)]">
+                  <div className="flex items-start gap-2.5 p-3.5 bg-[#FAF8F5] rounded-[12px]">
+                    <Database size={16} className="text-[#E8593C] mt-0.5" />
+                    <div>
+                      <div className="font-bold text-[13px] text-[#241B14]">Database ID</div>
+                      <div className="text-[11px] text-[rgba(36,27,20,0.4)] mt-0.5 font-mono select-all truncate max-w-[200px]" title={user?.id || ""}>
+                        {user?.id || "N/A"}
+                      </div>
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-2.5 p-3.5 bg-[#FAF8F5] rounded-[12px]">
+                    <Key size={16} className="text-[#E8593C] mt-0.5" />
+                    <div>
+                      <div className="font-bold text-[13px] text-[#241B14]">Subscription tier</div>
+                      <div className="text-[11px] text-[#085041] mt-0.5 font-semibold bg-[#E1F5EE] px-1.5 py-0.5 rounded-full uppercase tracking-wider inline-block">
+                        Auren Pro Dev
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="pt-4 border-t border-[rgba(36,27,20,0.04)] flex justify-between items-center">
+                  <span className="text-[11px] text-[rgba(36,27,20,0.4)]">Member since: {user?.createdAt ? new Date(user.createdAt).toLocaleDateString() : "2026"}</span>
+                  <button 
+                    onClick={() => alert("Profile updates are managed through Clerk login panel.")}
+                    className="px-4 py-2 bg-[rgba(36,27,20,0.04)] hover:bg-[rgba(36,27,20,0.08)] rounded-[8px] font-sans font-semibold text-[12px] text-[#241B14] transition-colors"
+                  >
+                    Edit Clerk Profile
+                  </button>
+                </div>
+              </div>
+
+            </div>
+          )}
+
         </div>
       </div>
     </div>
