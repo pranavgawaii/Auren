@@ -29,13 +29,13 @@ function classifyPriorityLocal(subject: string, snippet: string): EmailPriority 
   return EMAIL_PRIORITY.NORMAL;
 }
 
-export async function syncInboxEmails() {
+export async function syncInboxEmails(maxResults: number = 20) {
   try {
     const userId = await getUserId();
 
 
-    console.log("[Sync] Fetching emails from Gmail via Corsair...");
-    const corsairRes = await gmailRead();
+    console.log(`[Sync] Fetching ${maxResults} emails from Gmail via Corsair...`);
+    const corsairRes = await gmailRead(maxResults);
 
     if (!corsairRes.success) {
       console.error("[Sync] Corsair fetch failed:", corsairRes.error);

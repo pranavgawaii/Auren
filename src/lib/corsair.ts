@@ -43,14 +43,14 @@ export function getCorsairInstance() {
   return app.instance(instanceId);
 }
 
-export async function gmailRead(): Promise<CorsairResponse<GmailMessage[]>> {
+export async function gmailRead(maxResults: number = 20): Promise<CorsairResponse<GmailMessage[]>> {
   try {
     const tenant = await getTenant();
     
     // Fetch inbox emails from the live Gmail API via Corsair
     const listResult = await tenant.run("gmail.api.messages.list", {
       userId: "me",
-      maxResults: 20,
+      maxResults,
     });
 
     // @ts-expect-error Data structure from Corsair SDK is dynamic
