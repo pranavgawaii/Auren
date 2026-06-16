@@ -2,6 +2,8 @@
 
 import React, { useState, useEffect, useCallback } from "react";
 import { AppShell } from "./app-shell";
+import { useUser } from "@clerk/nextjs";
+import { useRouter } from "next/navigation";
 import { InboxPanel } from "./inbox-panel";
 import { EmailDetail } from "./email-detail";
 import { CalendarPanel } from "./calendar-panel";
@@ -18,6 +20,22 @@ import { executePlan } from "@/app/actions/execute";
 import type { GmailMessage, AgentReasoningResult } from "@/types";
 
 export function DashboardClient() {
+  const { user, isLoaded } = useUser();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (isLoaded) {
+      if (!user) {
+        router.push("/sign-in");
+        return;
+      }
+      const isGoogleConnected = localStorage.getItem(`auren_${user.id}_google_connected`) === "true";
+      if (!isGoogleConnected) {
+        router.push("/onboarding");
+      }
+    }
+  }, [user, isLoaded, router]);
+
   const [view, setView] = useState<"inbox" | "search" | "calendar" | "settings" | "history">("inbox");
   const [isCalendarOpen, setIsCalendarOpen] = useState(true);
   const [isConsoleOpen, setIsConsoleOpen] = useState(false);

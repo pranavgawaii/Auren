@@ -5,9 +5,11 @@ import Image from "next/image";
 import { ArrowRight, CheckCircle2, ChevronRight, Mail, CalendarDays, GitBranch, Zap } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useRouter } from "next/navigation";
+import { useUser } from "@clerk/nextjs";
 
 export default function OnboardingPage() {
   const router = useRouter();
+  const { user, isLoaded } = useUser();
   const [connected, setConnected] = useState({
     google: false, // Covers both Gmail + Calendar
     github: false,
@@ -17,12 +19,23 @@ export default function OnboardingPage() {
     github: false,
   });
 
+  React.useEffect(() => {
+    if (isLoaded && user) {
+      setConnected({
+        google: localStorage.getItem(`auren_${user.id}_google_connected`) === "true",
+        github: localStorage.getItem(`auren_${user.id}_github_connected`) === "true",
+      });
+    }
+  }, [user, isLoaded]);
+
   const handleConnect = (service: "google" | "github") => {
+    if (!user) return;
     setConnecting((prev) => ({ ...prev, [service]: true }));
     // Simulates the Corsair OAuth flow completing
     setTimeout(() => {
       setConnected((prev) => ({ ...prev, [service]: true }));
       setConnecting((prev) => ({ ...prev, [service]: false }));
+      localStorage.setItem(`auren_${user.id}_${service}_connected`, "true");
     }, 1200);
   };
 
