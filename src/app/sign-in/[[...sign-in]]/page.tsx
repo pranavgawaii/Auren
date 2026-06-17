@@ -75,10 +75,6 @@ export default function SignInPage() {
               variables: {
                 colorPrimary: "#E8593C",
                 colorBackground: "#FFFFFF",
-                colorText: "#241B14",
-                colorTextSecondary: "rgba(36,27,20,0.6)",
-                colorInputBackground: "#FFFFFF",
-                colorInputText: "#241B14",
                 borderRadius: "0.75rem",
               },
               elements: {
