@@ -1,10 +1,13 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { ArrowRight, Check, Play, MessageSquare, AlertCircle } from "lucide-react";
+import { ArrowRight, Check, Play, MessageSquare, AlertCircle, ChevronDown, ChevronUp } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { AgentReasoningResult } from "@/types";
-
+import { RangeCalendar } from "@/components/ui/calendar-rac";
+import { TimePicker } from "@/components/ui/time-rac";
+import { parseDate, Time } from "@internationalized/date";
+import type { DateRange } from "react-aria-components";
 interface ActionConfirmationProps {
   isOpen: boolean;
   plan: AgentReasoningResult | null;
@@ -26,6 +29,7 @@ export function ActionConfirmation({
   const [enabledActions, setEnabledActions] = useState<boolean[]>([]);
   const [clarificationText, setClarificationText] = useState("");
   const [isSubmittingClarification, setIsSubmittingClarification] = useState(false);
+  const [expandedActions, setExpandedActions] = useState<Record<number, boolean>>({});
 
   useEffect(() => {
     if (plan) {
@@ -60,9 +64,15 @@ export function ActionConfirmation({
   if (!isOpen) return null;
 
   const toggleAction = (index: number) => {
-    const next = [...enabledActions];
-    next[index] = !next[index];
-    setEnabledActions(next);
+    setEnabledActions(prev => {
+      const newArr = [...prev];
+      newArr[index] = !newArr[index];
+      return newArr;
+    });
+  };
+
+  const toggleExpand = (index: number) => {
+    setExpandedActions(prev => ({ ...prev, [index]: !prev[index] }));
   };
 
   const updateParam = (actionIndex: number, paramKey: string, value: any) => {
@@ -163,10 +173,21 @@ export function ActionConfirmation({
                           </span>
                         </div>
                       </div>
+                      <button
+                        type="button"
+                        onClick={() => toggleExpand(i)}
+                        className="flex items-center gap-1.5 px-2 py-1 rounded-[6px] transition-colors hover:bg-[rgba(36,27,20,0.04)] text-[11px] font-sans font-semibold text-[rgba(36,27,20,0.45)] hover:text-[rgba(36,27,20,0.7)]"
+                      >
+                        {expandedActions[i] ? (
+                          <>Hide Details <ChevronUp className="w-3.5 h-3.5" /></>
+                        ) : (
+                          <>Edit Details <ChevronDown className="w-3.5 h-3.5" /></>
+                        )}
+                      </button>
                     </div>
 
-                    {/* Editable fields if enabled */}
-                    {isEnabled && (
+                    {/* Editable fields if enabled and expanded */}
+                    {isEnabled && expandedActions[i] && (
                       <div className="pl-8 flex flex-col gap-2.5 mt-1 pt-2 border-t border-[rgba(36,27,20,0.04)]">
                         {action.tool === "gmail_send" && (
                           <>
@@ -211,98 +232,78 @@ export function ActionConfirmation({
                                 onChange={(e) => updateParam(i, "title", e.target.value)}
                               />
                             </div>
-                            <div className="grid grid-cols-2 gap-2">
-                              <div className="flex flex-col gap-1.5">
-                                <label className="font-sans text-[11px] font-semibold text-[rgba(36,27,20,0.6)] uppercase tracking-wider">Start Time</label>
-                                <div className="flex flex-col gap-2">
-                                  <input 
-                                    type="date"
-                                    className="w-full min-h-[32px] border border-[rgba(36,27,20,0.12)] bg-white rounded-[8px] px-3 py-1.5 text-[13px] font-sans text-[#241B14] outline-none transition-all focus:border-[#E8593C] focus:ring-2 focus:ring-[#E8593C]/20 shadow-sm"
+                            <div className="flex flex-col gap-3">
+                              <label className="font-sans text-[11px] font-semibold text-[rgba(36,27,20,0.6)] uppercase tracking-wider">Date & Time Range</label>
+                              
+                              <div className="flex justify-center p-3 border border-[rgba(36,27,20,0.08)] bg-white rounded-[12px] shadow-sm">
+                                <RangeCalendar
+                                  className="[&_td]:px-0"
+                                  value={(() => {
+                                    try {
+                                      const s = String(action.parameters.startAt || "");
+                                      const e = String(action.parameters.endAt || "");
+                                      if (!s || !e) return null;
+                                      return {
+                                        start: parseDate(s.split('T')[0]),
+                                        end: parseDate(e.split('T')[0])
+                                      };
+                                    } catch {
+                                      return null;
+                                    }
+                                  })()}
+                                  onChange={(range) => {
+                                    if (!range) return;
+                                    const startD = new Date(String(action.parameters.startAt || new Date().toISOString()));
+                                    const endD = new Date(String(action.parameters.endAt || new Date().toISOString()));
+                                    
+                                    const [sy, sm, sd] = range.start.toString().split('-');
+                                    const [ey, em, ed] = range.end.toString().split('-');
+                                    
+                                    startD.setUTCFullYear(parseInt(sy), parseInt(sm)-1, parseInt(sd));
+                                    endD.setUTCFullYear(parseInt(ey), parseInt(em)-1, parseInt(ed));
+                                    
+                                    updateParam(i, "startAt", startD.toISOString());
+                                    updateParam(i, "endAt", endD.toISOString());
+                                  }}
+                                />
+                              </div>
+
+                              <div className="grid grid-cols-2 gap-2 mt-1">
+                                <div className="flex flex-col gap-1">
+                                  <label className="font-sans text-[10px] font-semibold text-[rgba(36,27,20,0.45)]">Start Time</label>
+                                  <TimePicker 
                                     value={(() => {
                                       const val = String(action.parameters.startAt || "");
-                                      if (!val) return "";
+                                      if (!val) return null;
                                       const d = new Date(val);
-                                      if (isNaN(d.getTime())) return "";
-                                      // Extract verbatim date
-                                      return d.toISOString().split('T')[0];
+                                      if (isNaN(d.getTime())) return null;
+                                      return new Time(d.getUTCHours(), d.getUTCMinutes());
                                     })()}
-                                    onChange={(e) => {
+                                    onChange={(time) => {
+                                      if (!time) return;
                                       const currentVal = String(action.parameters.startAt || new Date().toISOString());
                                       const d = new Date(currentVal);
-                                      const [y, m, day] = e.target.value.split('-');
-                                      if (y && m && day) {
-                                        d.setUTCFullYear(parseInt(y), parseInt(m)-1, parseInt(day));
-                                        updateParam(i, "startAt", d.toISOString());
-                                      }
-                                    }}
-                                  />
-                                  <input 
-                                    type="time"
-                                    className="w-full min-h-[32px] border border-[rgba(36,27,20,0.12)] bg-white rounded-[8px] px-3 py-1.5 text-[13px] font-sans text-[#241B14] outline-none transition-all focus:border-[#E8593C] focus:ring-2 focus:ring-[#E8593C]/20 shadow-sm"
-                                    value={(() => {
-                                      const val = String(action.parameters.startAt || "");
-                                      if (!val) return "";
-                                      const d = new Date(val);
-                                      if (isNaN(d.getTime())) return "";
-                                      const hh = String(d.getUTCHours()).padStart(2, '0');
-                                      const mm = String(d.getUTCMinutes()).padStart(2, '0');
-                                      return `${hh}:${mm}`;
-                                    })()}
-                                    onChange={(e) => {
-                                      const currentVal = String(action.parameters.startAt || new Date().toISOString());
-                                      const d = new Date(currentVal);
-                                      const [h, min] = e.target.value.split(':');
-                                      if (h && min) {
-                                        d.setUTCHours(parseInt(h), parseInt(min));
-                                        updateParam(i, "startAt", d.toISOString());
-                                      }
+                                      d.setUTCHours(time.hour, time.minute);
+                                      updateParam(i, "startAt", d.toISOString());
                                     }}
                                   />
                                 </div>
-                              </div>
-                              <div className="flex flex-col gap-1.5">
-                                <label className="font-sans text-[11px] font-semibold text-[rgba(36,27,20,0.6)] uppercase tracking-wider">End Time</label>
-                                <div className="flex flex-col gap-2">
-                                  <input 
-                                    type="date"
-                                    className="w-full min-h-[32px] border border-[rgba(36,27,20,0.12)] bg-white rounded-[8px] px-3 py-1.5 text-[13px] font-sans text-[#241B14] outline-none transition-all focus:border-[#E8593C] focus:ring-2 focus:ring-[#E8593C]/20 shadow-sm"
+                                <div className="flex flex-col gap-1">
+                                  <label className="font-sans text-[10px] font-semibold text-[rgba(36,27,20,0.45)]">End Time</label>
+                                  <TimePicker 
                                     value={(() => {
                                       const val = String(action.parameters.endAt || "");
-                                      if (!val) return "";
+                                      if (!val) return null;
                                       const d = new Date(val);
-                                      if (isNaN(d.getTime())) return "";
-                                      return d.toISOString().split('T')[0];
+                                      if (isNaN(d.getTime())) return null;
+                                      return new Time(d.getUTCHours(), d.getUTCMinutes());
                                     })()}
-                                    onChange={(e) => {
+                                    onChange={(time) => {
+                                      if (!time) return;
                                       const currentVal = String(action.parameters.endAt || new Date().toISOString());
                                       const d = new Date(currentVal);
-                                      const [y, m, day] = e.target.value.split('-');
-                                      if (y && m && day) {
-                                        d.setUTCFullYear(parseInt(y), parseInt(m)-1, parseInt(day));
-                                        updateParam(i, "endAt", d.toISOString());
-                                      }
-                                    }}
-                                  />
-                                  <input 
-                                    type="time"
-                                    className="w-full min-h-[32px] border border-[rgba(36,27,20,0.12)] bg-white rounded-[8px] px-3 py-1.5 text-[13px] font-sans text-[#241B14] outline-none transition-all focus:border-[#E8593C] focus:ring-2 focus:ring-[#E8593C]/20 shadow-sm"
-                                    value={(() => {
-                                      const val = String(action.parameters.endAt || "");
-                                      if (!val) return "";
-                                      const d = new Date(val);
-                                      if (isNaN(d.getTime())) return "";
-                                      const hh = String(d.getUTCHours()).padStart(2, '0');
-                                      const mm = String(d.getUTCMinutes()).padStart(2, '0');
-                                      return `${hh}:${mm}`;
-                                    })()}
-                                    onChange={(e) => {
-                                      const currentVal = String(action.parameters.endAt || new Date().toISOString());
-                                      const d = new Date(currentVal);
-                                      const [h, min] = e.target.value.split(':');
-                                      if (h && min) {
-                                        d.setUTCHours(parseInt(h), parseInt(min));
-                                        updateParam(i, "endAt", d.toISOString());
-                                      }
+                                      d.setUTCHours(time.hour, time.minute);
+                                      updateParam(i, "endAt", d.toISOString());
                                     }}
                                   />
                                 </div>
@@ -337,6 +338,108 @@ export function ActionConfirmation({
                               <label className="font-sans text-[10px] font-semibold text-[rgba(36,27,20,0.45)]">Description</label>
                               <textarea 
                                 rows={2}
+                                className="border border-[rgba(36,27,20,0.08)] bg-[#FAF8F5] rounded-[6px] px-2.5 py-1 text-[12px] font-sans text-[#241B14] focus:outline-[#E8593C] resize-none"
+                                value={String(action.parameters.body || "")}
+                                onChange={(e) => updateParam(i, "body", e.target.value)}
+                              />
+                            </div>
+                            <div className="flex flex-col gap-1">
+                              <label className="font-sans text-[10px] font-semibold text-[rgba(36,27,20,0.45)]">Assignees (comma separated)</label>
+                              <input 
+                                type="text"
+                                className="border border-[rgba(36,27,20,0.08)] bg-[#FAF8F5] rounded-[6px] px-2.5 py-1 text-[12px] font-sans text-[#241B14] focus:outline-[#E8593C]"
+                                placeholder="e.g. pranavgawaii, 8teen"
+                                value={Array.isArray(action.parameters.assignees) ? action.parameters.assignees.join(", ") : ""}
+                                onChange={(e) => updateParam(i, "assignees", e.target.value.split(",").map(s => s.trim()).filter(Boolean))}
+                              />
+                            </div>
+                            <div className="flex flex-col gap-1">
+                              <label className="font-sans text-[10px] font-semibold text-[rgba(36,27,20,0.45)]">Labels (comma separated)</label>
+                              <input 
+                                type="text"
+                                className="border border-[rgba(36,27,20,0.08)] bg-[#FAF8F5] rounded-[6px] px-2.5 py-1 text-[12px] font-sans text-[#241B14] focus:outline-[#E8593C]"
+                                placeholder="e.g. bug, urgent"
+                                value={Array.isArray(action.parameters.labels) ? action.parameters.labels.join(", ") : ""}
+                                onChange={(e) => updateParam(i, "labels", e.target.value.split(",").map(s => s.trim()).filter(Boolean))}
+                              />
+                            </div>
+                          </>
+                        )}
+
+                        {action.tool === "github_list_issues" && (
+                          <>
+                            <div className="flex flex-col gap-1">
+                              <label className="font-sans text-[10px] font-semibold text-[rgba(36,27,20,0.45)]">Repository URL or Name</label>
+                              <input 
+                                type="text"
+                                className="border border-[rgba(36,27,20,0.08)] bg-[#FAF8F5] rounded-[6px] px-2.5 py-1 text-[12px] font-sans text-[#241B14] focus:outline-[#E8593C]"
+                                placeholder="e.g. pranavgawaii/Auren"
+                                value={String(action.parameters.repoUrl || "")}
+                                onChange={(e) => updateParam(i, "repoUrl", e.target.value)}
+                              />
+                            </div>
+                            <div className="flex flex-col gap-1">
+                              <label className="font-sans text-[10px] font-semibold text-[rgba(36,27,20,0.45)]">State</label>
+                              <select
+                                className="border border-[rgba(36,27,20,0.08)] bg-[#FAF8F5] rounded-[6px] px-2.5 py-1 text-[12px] font-sans text-[#241B14] focus:outline-[#E8593C]"
+                                value={String(action.parameters.state || "open")}
+                                onChange={(e) => updateParam(i, "state", e.target.value)}
+                              >
+                                <option value="open">Open</option>
+                                <option value="closed">Closed</option>
+                                <option value="all">All</option>
+                              </select>
+                            </div>
+                            <div className="flex flex-col gap-1">
+                              <label className="font-sans text-[10px] font-semibold text-[rgba(36,27,20,0.45)]">Filter Labels (comma separated)</label>
+                              <input 
+                                type="text"
+                                className="border border-[rgba(36,27,20,0.08)] bg-[#FAF8F5] rounded-[6px] px-2.5 py-1 text-[12px] font-sans text-[#241B14] focus:outline-[#E8593C]"
+                                placeholder="e.g. bug"
+                                value={Array.isArray(action.parameters.labels) ? action.parameters.labels.join(", ") : ""}
+                                onChange={(e) => updateParam(i, "labels", e.target.value.split(",").map(s => s.trim()).filter(Boolean))}
+                              />
+                            </div>
+                          </>
+                        )}
+
+                        {action.tool === "github_review_pr" && (
+                          <>
+                            <div className="flex flex-col gap-1">
+                              <label className="font-sans text-[10px] font-semibold text-[rgba(36,27,20,0.45)]">Repository URL or Name</label>
+                              <input 
+                                type="text"
+                                className="border border-[rgba(36,27,20,0.08)] bg-[#FAF8F5] rounded-[6px] px-2.5 py-1 text-[12px] font-sans text-[#241B14] focus:outline-[#E8593C]"
+                                placeholder="e.g. pranavgawaii/Auren"
+                                value={String(action.parameters.repoUrl || "")}
+                                onChange={(e) => updateParam(i, "repoUrl", e.target.value)}
+                              />
+                            </div>
+                            <div className="flex flex-col gap-1">
+                              <label className="font-sans text-[10px] font-semibold text-[rgba(36,27,20,0.45)]">PR Number</label>
+                              <input 
+                                type="number"
+                                className="border border-[rgba(36,27,20,0.08)] bg-[#FAF8F5] rounded-[6px] px-2.5 py-1 text-[12px] font-sans text-[#241B14] focus:outline-[#E8593C]"
+                                value={Number(action.parameters.pullNumber || 0)}
+                                onChange={(e) => updateParam(i, "pullNumber", Number(e.target.value))}
+                              />
+                            </div>
+                            <div className="flex flex-col gap-1">
+                              <label className="font-sans text-[10px] font-semibold text-[rgba(36,27,20,0.45)]">Review Action</label>
+                              <select
+                                className="border border-[rgba(36,27,20,0.08)] bg-[#FAF8F5] rounded-[6px] px-2.5 py-1 text-[12px] font-sans text-[#241B14] focus:outline-[#E8593C]"
+                                value={String(action.parameters.event || "COMMENT")}
+                                onChange={(e) => updateParam(i, "event", e.target.value)}
+                              >
+                                <option value="COMMENT">Comment Only</option>
+                                <option value="APPROVE">Approve</option>
+                                <option value="REQUEST_CHANGES">Request Changes</option>
+                              </select>
+                            </div>
+                            <div className="flex flex-col gap-1">
+                              <label className="font-sans text-[10px] font-semibold text-[rgba(36,27,20,0.45)]">Review Body</label>
+                              <textarea 
+                                rows={3}
                                 className="border border-[rgba(36,27,20,0.08)] bg-[#FAF8F5] rounded-[6px] px-2.5 py-1 text-[12px] font-sans text-[#241B14] focus:outline-[#E8593C] resize-none"
                                 value={String(action.parameters.body || "")}
                                 onChange={(e) => updateParam(i, "body", e.target.value)}

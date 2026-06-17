@@ -1,9 +1,9 @@
 "use server";
 
-import { gmailSend, googleCalendarCreate, githubCreateIssue } from "@/lib/corsair";
+import { gmailSend, googleCalendarCreate, githubCreateIssue, githubListIssues, githubReviewPr } from "@/lib/corsair";
 import { createServerSupabaseClient } from "@/lib/supabase";
 import { getUserId } from "@/lib/user";
-import type { AgentReasoningResult, GmailSendPayload, CalendarEventPayload, GitHubIssuePayload } from "@/types";
+import type { AgentReasoningResult, GmailSendPayload, CalendarEventPayload, GitHubIssuePayload, GitHubListIssuesPayload, GitHubReviewPrPayload } from "@/types";
 
 export async function executePlan(
   plan: AgentReasoningResult,
@@ -24,6 +24,14 @@ export async function executePlan(
       } else if (action.tool === "github_create_issue") {
         const payload = action.parameters as unknown as GitHubIssuePayload;
         const res = await githubCreateIssue(payload);
+        results.push({ tool: action.tool, success: res.success, data: "data" in res ? res.data : res.error });
+      } else if (action.tool === "github_list_issues") {
+        const payload = action.parameters as unknown as GitHubListIssuesPayload;
+        const res = await githubListIssues(payload);
+        results.push({ tool: action.tool, success: res.success, data: "data" in res ? res.data : res.error });
+      } else if (action.tool === "github_review_pr") {
+        const payload = action.parameters as unknown as GitHubReviewPrPayload;
+        const res = await githubReviewPr(payload);
         results.push({ tool: action.tool, success: res.success, data: "data" in res ? res.data : res.error });
       } else {
         results.push({ tool: action.tool, success: false, data: "Unknown tool" });

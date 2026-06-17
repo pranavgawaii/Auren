@@ -10,6 +10,8 @@ import {
 import { getAgentHistory } from "@/app/actions/history";
 import type { AgentAction } from "@/types";
 import { ClockHistoryIcon } from "./app-shell";
+import Image from "next/image";
+import Link from "next/link";
 
 export function HistoryPanel() {
   const [history, setHistory] = useState<AgentAction[]>([]);
@@ -207,74 +209,72 @@ export function HistoryPanel() {
   };
 
   return (
-    <div className="flex-1 flex bg-[#FAF8F5] overflow-hidden">
-      {/* Sidebar */}
-      <div className="w-[260px] bg-white border-r border-[rgba(36,27,20,0.08)] p-6 shrink-0 flex flex-col justify-between select-none">
-        <div className="flex flex-col gap-8">
-          <div>
-            <h2 style={{ fontFamily: "var(--font-civane, Georgia, serif)" }} className="text-[20px] text-[#241B14] tracking-tight mb-5 flex items-center gap-2">
-              <ClockHistoryIcon size={18} className="text-[#E8593C]" />
-              <span>History</span>
-            </h2>
-            
-            <div className="flex flex-col gap-1">
-              <button 
-                onClick={() => setActiveFilter("all")}
-                className={`flex items-center justify-between px-3 py-2.5 rounded-[8px] font-sans font-semibold text-[12.5px] transition-colors ${activeFilter === "all" ? "bg-[rgba(232,89,60,0.08)] text-[#E8593C]" : "text-[rgba(36,27,20,0.6)] hover:bg-[rgba(36,27,20,0.04)] hover:text-[#241B14]"}`}
-              >
-                <div className="flex items-center gap-2">
-                  <Clock size={14} className="opacity-70" />
-                  All Runs
-                </div>
-                <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-mono font-medium ${activeFilter === "all" ? "bg-[#E8593C]/10 text-[#E8593C]" : "bg-[rgba(36,27,20,0.04)] text-[rgba(36,27,20,0.5)]"}`}>
-                  {history.length}
-                </span>
-              </button>
-              
-              <button 
-                onClick={() => setActiveFilter("gmail")}
-                className={`flex items-center justify-between px-3 py-2.5 rounded-[8px] font-sans font-semibold text-[12.5px] transition-colors ${activeFilter === "gmail" ? "bg-[rgba(232,89,60,0.08)] text-[#E8593C]" : "text-[rgba(36,27,20,0.6)] hover:bg-[rgba(36,27,20,0.04)] hover:text-[#241B14]"}`}
-              >
-                <div className="flex items-center gap-2">
-                  <Mail size={14} className="opacity-70" />
-                  Gmail Tasks
-                </div>
-                <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-mono font-medium ${activeFilter === "gmail" ? "bg-[#E8593C]/10 text-[#E8593C]" : "bg-[rgba(36,27,20,0.04)] text-[rgba(36,27,20,0.5)]"}`}>
-                  {history.filter(a => a.actionsTaken.some(s => s.tool?.toLowerCase() === "gmail_send")).length}
-                </span>
-              </button>
-
-              <button 
-                onClick={() => setActiveFilter("calendar")}
-                className={`flex items-center justify-between px-3 py-2.5 rounded-[8px] font-sans font-semibold text-[12.5px] transition-colors ${activeFilter === "calendar" ? "bg-[rgba(232,89,60,0.08)] text-[#E8593C]" : "text-[rgba(36,27,20,0.6)] hover:bg-[rgba(36,27,20,0.04)] hover:text-[#241B14]"}`}
-              >
-                <div className="flex items-center gap-2">
-                  <Calendar size={14} className="opacity-70" />
-                  Calendar Tasks
-                </div>
-                <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-mono font-medium ${activeFilter === "calendar" ? "bg-[#E8593C]/10 text-[#E8593C]" : "bg-[rgba(36,27,20,0.04)] text-[rgba(36,27,20,0.5)]"}`}>
-                  {history.filter(a => a.actionsTaken.some(s => s.tool?.toLowerCase() === "calendar_create")).length}
-                </span>
-              </button>
-
-              <button 
-                onClick={() => setActiveFilter("github")}
-                className={`flex items-center justify-between px-3 py-2.5 rounded-[8px] font-sans font-semibold text-[12.5px] transition-colors ${activeFilter === "github" ? "bg-[rgba(232,89,60,0.08)] text-[#E8593C]" : "text-[rgba(36,27,20,0.6)] hover:bg-[rgba(36,27,20,0.04)] hover:text-[#241B14]"}`}
-              >
-                <div className="flex items-center gap-2">
-                  <GitBranch size={14} className="opacity-70" />
-                  GitHub Tasks
-                </div>
-                <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-mono font-medium ${activeFilter === "github" ? "bg-[#E8593C]/10 text-[#E8593C]" : "bg-[rgba(36,27,20,0.04)] text-[rgba(36,27,20,0.5)]"}`}>
-                  {history.filter(a => a.actionsTaken.some(s => s.tool?.toLowerCase() === "github_create_issue")).length}
-                </span>
-              </button>
+    <div className="flex h-screen overflow-hidden bg-[#FAF8F5] text-[#241B14] text-[14px] w-full">
+      {/* ─── LEFT SIDEBAR TABS (ADMIN-STYLE) ─── */}
+      <aside className="w-[240px] border-r border-[rgba(36,27,20,0.08)] flex flex-col bg-[#FAF8F5] shrink-0 z-10 justify-between">
+        <div className="flex flex-col">
+          <div className="h-14 px-4 flex items-center border-b border-[rgba(36,27,20,0.08)]">
+            <div className="flex items-center gap-2 font-medium text-[14px]" style={{ fontFamily: "var(--font-civane, Georgia, serif)" }}>
+              <div className="w-5 h-5 relative rounded-[4px] overflow-hidden">
+                <Image src="/auren_logo.webp" alt="Auren Logo" fill style={{ objectFit: "cover" }} />
+              </div>
+              Auren History
             </div>
+          </div>
+          
+          <div className="flex-1 py-4 px-3 flex flex-col gap-1">
+            <button 
+              onClick={() => setActiveFilter("all")}
+              className={`flex items-center justify-between px-3 py-2 rounded-md transition-colors text-[13px] ${activeFilter === "all" ? "bg-white border border-[rgba(36,27,20,0.08)] shadow-sm font-medium text-[#241B14]" : "text-[rgba(36,27,20,0.6)] hover:text-[#241B14] hover:bg-[rgba(36,27,20,0.04)] border border-transparent"}`}
+            >
+              <div className="flex items-center gap-2.5">
+                <Clock size={16} /> All Runs
+              </div>
+              <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-mono font-medium ${activeFilter === "all" ? "bg-[#E8593C]/10 text-[#E8593C]" : "bg-[rgba(36,27,20,0.04)] text-[rgba(36,27,20,0.5)]"}`}>
+                {history.length}
+              </span>
+            </button>
+            
+            <button 
+              onClick={() => setActiveFilter("gmail")}
+              className={`flex items-center justify-between px-3 py-2 rounded-md transition-colors text-[13px] ${activeFilter === "gmail" ? "bg-white border border-[rgba(36,27,20,0.08)] shadow-sm font-medium text-[#241B14]" : "text-[rgba(36,27,20,0.6)] hover:text-[#241B14] hover:bg-[rgba(36,27,20,0.04)] border border-transparent"}`}
+            >
+              <div className="flex items-center gap-2.5">
+                <Mail size={16} /> Gmail Tasks
+              </div>
+              <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-mono font-medium ${activeFilter === "gmail" ? "bg-[#E8593C]/10 text-[#E8593C]" : "bg-[rgba(36,27,20,0.04)] text-[rgba(36,27,20,0.5)]"}`}>
+                {history.filter(a => a.actionsTaken.some(s => s.tool?.toLowerCase() === "gmail_send")).length}
+              </span>
+            </button>
+
+            <button 
+              onClick={() => setActiveFilter("calendar")}
+              className={`flex items-center justify-between px-3 py-2 rounded-md transition-colors text-[13px] ${activeFilter === "calendar" ? "bg-white border border-[rgba(36,27,20,0.08)] shadow-sm font-medium text-[#241B14]" : "text-[rgba(36,27,20,0.6)] hover:text-[#241B14] hover:bg-[rgba(36,27,20,0.04)] border border-transparent"}`}
+            >
+              <div className="flex items-center gap-2.5">
+                <Calendar size={16} /> Calendar Tasks
+              </div>
+              <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-mono font-medium ${activeFilter === "calendar" ? "bg-[#E8593C]/10 text-[#E8593C]" : "bg-[rgba(36,27,20,0.04)] text-[rgba(36,27,20,0.5)]"}`}>
+                {history.filter(a => a.actionsTaken.some(s => s.tool?.toLowerCase() === "calendar_create")).length}
+              </span>
+            </button>
+
+            <button 
+              onClick={() => setActiveFilter("github")}
+              className={`flex items-center justify-between px-3 py-2 rounded-md transition-colors text-[13px] ${activeFilter === "github" ? "bg-white border border-[rgba(36,27,20,0.08)] shadow-sm font-medium text-[#241B14]" : "text-[rgba(36,27,20,0.6)] hover:text-[#241B14] hover:bg-[rgba(36,27,20,0.04)] border border-transparent"}`}
+            >
+              <div className="flex items-center gap-2.5">
+                <GitBranch size={16} /> GitHub Tasks
+              </div>
+              <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-mono font-medium ${activeFilter === "github" ? "bg-[#E8593C]/10 text-[#E8593C]" : "bg-[rgba(36,27,20,0.04)] text-[rgba(36,27,20,0.5)]"}`}>
+                {history.filter(a => a.actionsTaken.some(s => s.tool?.toLowerCase() === "github_create_issue")).length}
+              </span>
+            </button>
           </div>
         </div>
 
         {/* Bottom stats card */}
-        <div className="bg-[#FAF6F0] border border-[rgba(36,27,20,0.06)] rounded-[12px] p-4 flex flex-col gap-3">
+        <div className="p-4 border-t border-[rgba(36,27,20,0.08)] flex flex-col gap-3">
           <div className="text-[10px] font-sans font-bold uppercase tracking-wider text-[rgba(36,27,20,0.4)]">
             Execution Stats
           </div>
@@ -293,39 +293,33 @@ export function HistoryPanel() {
             </div>
           </div>
         </div>
-      </div>
+      </aside>
 
       {/* Main panel */}
-      <div className="flex-1 flex flex-col bg-[#FAF8F5] overflow-hidden">
-        {/* Top Control Bar */}
-        <div className="h-[56px] border-b border-[rgba(36,27,20,0.08)] bg-white px-8 flex items-center justify-between shrink-0 select-none">
-          <h1 style={{ fontFamily: "var(--font-civane, Georgia, serif)" }} className="text-[20px] text-[#241B14] font-medium tracking-tight">
-            Activity Logs Workspace
-          </h1>
-
-          {/* Search bar inside header */}
-          <div className="h-[32px] bg-[#FAF8F5] rounded-[8px] border border-[rgba(36,27,20,0.05)] flex items-center px-3 gap-2 w-[240px] focus-within:w-[280px] focus-within:border-[#E8593C] transition-all duration-200">
-            <Search size={13} className="text-[rgba(36,27,20,0.35)] shrink-0" />
-            <input 
-              type="text" 
-              placeholder="Search past logs..." 
-              className="bg-transparent border-none outline-none font-sans text-[11.5px] text-[#241B14] placeholder:text-[rgba(36,27,20,0.35)] w-full"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
-            {searchQuery && (
-              <button 
-                onClick={() => setSearchQuery("")}
-                className="text-[rgba(36,27,20,0.3)] hover:text-[#241B14] transition-colors"
-              >
-                <XCircle size={12} />
-              </button>
-            )}
-          </div>
+      <main className="flex-1 flex flex-col min-w-0 overflow-y-auto z-10 relative">
+        
+        {/* Search bar floating or top right */}
+        <div className="absolute top-6 right-8 h-[32px] bg-white rounded-md border border-[rgba(36,27,20,0.08)] shadow-sm flex items-center px-3 gap-2 w-[240px] focus-within:w-[280px] focus-within:border-[#241B14] transition-all duration-200 z-20">
+          <Search size={13} className="text-[rgba(36,27,20,0.5)] shrink-0" />
+          <input 
+            type="text" 
+            placeholder="Search past logs..." 
+            className="bg-transparent border-none outline-none font-sans text-[13px] text-[#241B14] placeholder:text-[rgba(36,27,20,0.4)] w-full"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
+          {searchQuery && (
+            <button 
+              onClick={() => setSearchQuery("")}
+              className="text-[rgba(36,27,20,0.3)] hover:text-[#241B14] transition-colors"
+            >
+              <XCircle size={12} />
+            </button>
+          )}
         </div>
 
         {/* Scrollable feed */}
-        <div className="flex-1 overflow-y-auto p-10">
+        <div className="flex-1 p-8 pt-20 max-w-[800px] w-full mx-auto">
           <div className="max-w-[720px] mx-auto flex flex-col gap-5">
             {isLoading ? (
               <div className="flex items-center justify-center py-20 text-[rgba(36,27,20,0.4)] text-[13px] font-sans bg-white border border-[rgba(36,27,20,0.05)] rounded-2xl shadow-sm">
@@ -485,7 +479,7 @@ export function HistoryPanel() {
             )}
           </div>
         </div>
-      </div>
+      </main>
     </div>
   );
 }

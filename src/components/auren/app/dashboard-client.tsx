@@ -3,9 +3,10 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { AppShell } from "./app-shell";
 import { useUser } from "@clerk/nextjs";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { InboxPanel } from "./inbox-panel";
 import { EmailDetail } from "./email-detail";
+import { DailyBrief } from "./daily-brief";
 import { CalendarPanel } from "./calendar-panel";
 import { SearchClient } from "./search-client";
 import { ActionConfirmation } from "./action-confirmation";
@@ -19,6 +20,7 @@ import { processCommand } from "@/app/actions/agent";
 import { executePlan } from "@/app/actions/execute";
 import { checkConnectionStatus } from "@/app/actions/connect";
 import type { GmailMessage, AgentReasoningResult } from "@/types";
+import { MorphPanel } from "@/components/ui/ai-input";
 
 export function DashboardClient() {
   const { user, isLoaded } = useUser();
@@ -40,7 +42,20 @@ export function DashboardClient() {
     verifyConnection();
   }, [user, isLoaded, router]);
 
-  const [view, setView] = useState<"inbox" | "search" | "calendar" | "settings" | "history">("inbox");
+  const pathname = usePathname();
+  
+  // Determine view from pathname
+  const view = pathname.startsWith("/settings") ? "settings" 
+    : pathname.startsWith("/history") ? "history" 
+    : pathname.startsWith("/calendar") ? "calendar" 
+    : pathname.startsWith("/search") ? "search"
+    : "inbox";
+
+  const setView = (newView: string) => {
+    if (newView === "inbox") router.push("/app");
+    else router.push(`/${newView}`);
+  };
+
   const [folderType, setFolderType] = useState<"INBOX" | "SENT" | "DRAFT">("INBOX");
   const [isCalendarOpen, setIsCalendarOpen] = useState(true);
   const [isConsoleOpen, setIsConsoleOpen] = useState(false);
@@ -117,7 +132,13 @@ export function DashboardClient() {
     if (res.success && res.data) {
       setEmails(res.data);
       if (res.data.length > 0 && !selectedEmailId) {
-        setSelectedEmailId(res.data[0].id);
+        const unread = res.data.find(e => !e.isRead);
+        if (unread) {
+          setSelectedEmailId(unread.id);
+        } else {
+          // If no unread, show Daily Brief by leaving it empty
+          setSelectedEmailId("");
+        }
       }
     }
     setIsLoading(false);
@@ -140,7 +161,7 @@ export function DashboardClient() {
       setAgentPlan(res.data);
       setIsConfirmOpen(true);
     } else {
-      alert("Agent failed to process command.");
+      alert(`Agent error: ${res.error || "Failed to process command."}`);
     }
     setIsAgentLoading(false);
   };
@@ -183,12 +204,16 @@ export function DashboardClient() {
           </div>
           
           <div className="flex-1 flex flex-col relative overflow-hidden">
-            <EmailDetail 
-              email={selectedEmail} 
-              thread={threadEmails}
-              onAction={handleAction} 
-              isAgentLoading={isAgentLoading}
-            />
+            {selectedEmail ? (
+              <EmailDetail 
+                email={selectedEmail} 
+                thread={threadEmails}
+                onAction={handleAction} 
+                isAgentLoading={isAgentLoading}
+              />
+            ) : (
+              <DailyBrief />
+            )}
           </div>
           
           {isCalendarOpen && (
@@ -270,6 +295,9 @@ export function DashboardClient() {
         onExecute={handleAction} 
         isAgentLoading={isAgentLoading} 
       />
+      <div className="fixed bottom-12 right-12 z-[60]">
+        <MorphPanel onExecute={handleAction} isAgentLoading={isAgentLoading} />
+      </div>
     </AppShell>
   );
 }

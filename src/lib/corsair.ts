@@ -9,8 +9,12 @@ import type {
   CalendarEventPayload,
   GitHubIssuePayload,
   GitHubIssueResult,
+  GitHubListIssuesPayload,
+  GitHubListIssuesResult,
+  GitHubReviewPrPayload,
   CorsairResponse,
 } from "@/types";
+
 
 export async function getTenant() {
   const devKey = process.env.CORSAIR_DEV_KEY;
@@ -501,43 +505,44 @@ export async function googleCalendarCreate(
   }
 }
 
+function parseRepoUrl(repoInput: string): { owner: string; repo: string } {
+  let owner = "";
+  let repo = "";
+  repoInput = repoInput.trim();
+
+  const urlMatch = repoInput.match(/github\.com\/([^/\s]+)\/([^/\s]+)/i);
+  if (urlMatch) {
+    owner = urlMatch[1];
+    repo = urlMatch[2].replace(/\.git$/, "");
+  } else if (repoInput.includes("/")) {
+    const parts = repoInput.split("/");
+    owner = parts[0];
+    repo = parts[1];
+  }
+
+  const isValidSlug = (s: string) => /^[a-zA-Z0-9_.\-]+$/.test(s);
+  if (!isValidSlug(owner) || !isValidSlug(repo)) {
+    const defaultRepo = process.env.GITHUB_DEFAULT_REPO;
+    if (defaultRepo && defaultRepo.includes("/")) {
+      const parts = defaultRepo.split("/");
+      owner = parts[0];
+      repo = parts[1];
+    } else {
+      throw new Error(
+        "Cannot determine GitHub owner/repo. Set GITHUB_DEFAULT_REPO=owner/repo in your .env"
+      );
+    }
+  }
+
+  return { owner, repo };
+}
+
 export async function githubCreateIssue(
   payload: GitHubIssuePayload
 ): Promise<CorsairResponse<GitHubIssueResult>> {
   try {
     const tenant = await getTenant();
-    
-    let owner = "";
-    let repo = "";
-    const repoInput = payload.repoUrl?.trim() ?? "";
-
-    // Parse: if it's a full GitHub URL, extract owner/repo
-    const urlMatch = repoInput.match(/github\.com\/([^/\s]+)\/([^/\s]+)/i);
-    if (urlMatch) {
-      owner = urlMatch[1];
-      repo = urlMatch[2].replace(/\.git$/, "");
-    } 
-    // Parse: if it looks like "owner/repo" directly
-    else if (repoInput.includes("/")) {
-      const parts = repoInput.split("/");
-      owner = parts[0];
-      repo = parts[1];
-    }
-
-    // Fall back to GITHUB_DEFAULT_REPO when owner or repo are missing/empty/not a simple slug
-    const isValidSlug = (s: string) => /^[a-zA-Z0-9_.\-]+$/.test(s);
-    if (!isValidSlug(owner) || !isValidSlug(repo)) {
-      const defaultRepo = process.env.GITHUB_DEFAULT_REPO;
-      if (defaultRepo && defaultRepo.includes("/")) {
-        const parts = defaultRepo.split("/");
-        owner = parts[0];
-        repo = parts[1];
-      } else {
-        throw new Error(
-          "Cannot determine GitHub owner/repo. Set GITHUB_DEFAULT_REPO=owner/repo in your .env"
-        );
-      }
-    }
+    const { owner, repo } = parseRepoUrl(payload.repoUrl ?? "");
 
     const runParams = {
       owner,
@@ -554,9 +559,9 @@ export async function githubCreateIssue(
       return {
         success: false,
         error: {
-          code: "UNAUTHENTICATED",
-          message: resultData.message || "GitHub integration is unauthenticated or disconnected.",
-          statusCode: 401,
+          code: "GITHUB_CREATE_ISSUE_ERROR",
+          message: JSON.stringify(resultData),
+          statusCode: 422,
         },
       };
     }
@@ -570,12 +575,121 @@ export async function githubCreateIssue(
     };
 
     return { success: true, data: issueResult };
+  } catch (error: any) {
+    console.error("[Corsair] Execute Error:", error);
+    
+    // Attempt to extract detailed GitHub API validation errors from the Corsair error object
+    let detailedMessage = error.message;
+    if (error.response?.data) {
+      detailedMessage += " - " + JSON.stringify(error.response.data);
+    } else if (error.details) {
+      detailedMessage += " - " + JSON.stringify(error.details);
+    }
+
+    return {
+      success: false,
+      error: {
+        code: "GITHUB_CREATE_ISSUE_ERROR",
+        message: detailedMessage || "Unknown error",
+        statusCode: 500,
+      },
+    };
+  }
+}
+
+export async function githubListIssues(
+  payload: GitHubListIssuesPayload
+): Promise<CorsairResponse<GitHubListIssuesResult>> {
+  try {
+    const tenant = await getTenant();
+    const { owner, repo } = parseRepoUrl(payload.repoUrl ?? "");
+
+    const runParams = {
+      owner,
+      repo,
+      state: payload.state || "open",
+      labels: payload.labels ? payload.labels.join(",") : undefined,
+      per_page: payload.limit || 30,
+    };
+
+    const result = await tenant.run("github.api.issues.listForRepo", runParams);
+    const resultData = result as any;
+    
+    if (resultData && resultData.success === false) {
+      return {
+        success: false,
+        error: {
+          code: "UNAUTHENTICATED",
+          message: resultData.message || "GitHub integration is unauthenticated or disconnected.",
+          statusCode: 401,
+        },
+      };
+    }
+    
+    const issues = (Array.isArray(resultData) ? resultData : []).map((issue: any) => ({
+      id: Number(issue.id || 0),
+      number: Number(issue.number || 0),
+      title: String(issue.title || ""),
+      htmlUrl: String(issue.html_url || ""),
+      state: String(issue.state || "open"),
+    }));
+
+    return { success: true, data: { issues } };
   } catch (error: unknown) {
     console.error("[Corsair] Execute Error:", error);
     return {
       success: false,
       error: {
-        code: "GITHUB_CREATE_ISSUE_ERROR",
+        code: "GITHUB_LIST_ISSUES_ERROR",
+        message: error instanceof Error ? error.message : "Unknown error",
+        statusCode: 500,
+      },
+    };
+  }
+}
+
+export async function githubReviewPr(
+  payload: GitHubReviewPrPayload
+): Promise<CorsairResponse<{ id: number; htmlUrl: string }>> {
+  try {
+    const tenant = await getTenant();
+    const { owner, repo } = parseRepoUrl(payload.repoUrl ?? "");
+
+    const runParams = {
+      owner,
+      repo,
+      pull_number: payload.pullNumber,
+      body: payload.body,
+      event: payload.event,
+    };
+
+    const result = await tenant.run("github.api.pulls.createReview", runParams);
+    const resultData = result as any;
+    
+    if (resultData && resultData.success === false) {
+      return {
+        success: false,
+        error: {
+          code: "UNAUTHENTICATED",
+          message: resultData.message || "GitHub integration is unauthenticated or disconnected.",
+          statusCode: 401,
+        },
+      };
+    }
+    
+    return { 
+      success: true, 
+      data: { 
+        id: Number(resultData.id || 0),
+        htmlUrl: String(resultData.html_url || "") 
+      } 
+    };
+  } catch (error: unknown) {
+    console.error("[Corsair] Execute Error:", error);
+    return {
+      success: false,
+      error: {
+        code: "GITHUB_REVIEW_PR_ERROR",
         message: error instanceof Error ? error.message : "Unknown error",
         statusCode: 500,
       },

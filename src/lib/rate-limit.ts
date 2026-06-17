@@ -1,14 +1,26 @@
 import { createServerSupabaseClient } from "./supabase";
 import { getUserId } from "./user";
+import { currentUser } from "@clerk/nextjs/server";
 
 export const RATE_LIMITS = {
-  COMMANDS_PER_HOUR: 30,
+  COMMANDS_PER_HOUR: 1000, // Increased default limit for development
   SYNC_COOLDOWN_MS: 3 * 60 * 1000, // 3 minutes
 };
 
 export async function checkCommandRateLimit(): Promise<{ success: boolean; error?: string }> {
   try {
     const userId = await getUserId();
+    
+    // Check for Auren Pro in Clerk metadata
+    const user = await currentUser();
+    const isPro = user?.publicMetadata?.isPro === true || 
+                  user?.publicMetadata?.plan === "pro" || 
+                  user?.publicMetadata?.tier === "pro";
+                  
+    if (isPro) {
+      return { success: true }; // Unlimited for Pro users
+    }
+
     const supabase = createServerSupabaseClient();
 
     // Fetch current rate limit record
@@ -54,7 +66,7 @@ export async function checkCommandRateLimit(): Promise<{ success: boolean; error
     if (data.commands_count >= RATE_LIMITS.COMMANDS_PER_HOUR) {
       return { 
         success: false, 
-        error: `Rate limit exceeded. You can run up to ${RATE_LIMITS.COMMANDS_PER_HOUR} commands per hour. Please try again later.` 
+        error: `Rate limit exceeded. You can run up to ${RATE_LIMITS.COMMANDS_PER_HOUR} commands per hour. Upgrade to Auren Pro for unlimited access.` 
       };
     }
 

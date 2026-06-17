@@ -173,6 +173,24 @@ export interface GitHubIssueResult {
   state: string;
 }
 
+export interface GitHubListIssuesPayload {
+  repoUrl: string;
+  state?: "open" | "closed" | "all";
+  labels?: string[];
+  limit?: number;
+}
+
+export interface GitHubListIssuesResult {
+  issues: GitHubIssueResult[];
+}
+
+export interface GitHubReviewPrPayload {
+  repoUrl: string;
+  pullNumber: number;
+  body: string;
+  event: "COMMENT" | "APPROVE" | "REQUEST_CHANGES";
+}
+
 export interface ClassificationResult {
   priority: EmailPriority;
   confidence: number;
@@ -186,7 +204,7 @@ export interface AgentReasoningResult {
 }
 
 export interface PlannedAction {
-  tool: "gmail_send" | "gmail_search" | "calendar_create" | "github_create_issue";
+  tool: "gmail_send" | "gmail_search" | "calendar_create" | "github_create_issue" | "github_list_issues" | "github_review_pr";
   parameters: Record<string, unknown>;
   description: string;
 }

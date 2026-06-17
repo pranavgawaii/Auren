@@ -2,10 +2,10 @@ import type { Metadata } from "next";
 import { DashboardClient } from "@/components/auren/app/dashboard-client";
 
 export const metadata: Metadata = {
-  title: "Settings",
-  description: "Manage your Auren preferences, connected accounts, and billing.",
+  title: "History",
+  description: "View your Auren agent execution history and command logs.",
 };
 
-export default function SettingsPage() {
+export default function HistoryPage() {
   return <DashboardClient />;
 }

@@ -3,6 +3,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import { MoreHorizontal, Reply, CalendarPlus, GitBranch, Archive } from "lucide-react";
 import type { GmailMessage } from "@/types";
+import { ShiningText } from "@/components/ui/shining-text";
 
 interface EmailDetailProps {
   email?: GmailMessage;
@@ -60,7 +61,14 @@ export function EmailDetail({ email, thread = [], onAction, isAgentLoading }: Em
   const subject = email.subject;
 
   return (
-    <div className="flex-1 flex flex-col bg-white h-full relative">
+    <div className="flex-1 flex flex-col bg-white h-full relative overflow-hidden">
+      {/* ShiningText Thinking Overlay */}
+      {isAgentLoading && (
+        <div className="absolute inset-0 bg-white/70 backdrop-blur-[2px] z-50 flex flex-col items-center justify-center pointer-events-auto transition-all duration-300">
+          <ShiningText text="Auren is thinking..." className="text-[20px] font-sans font-medium tracking-tight" />
+        </div>
+      )}
+
       <div className="flex-1 overflow-y-auto px-8 py-8 scrollbar-hide pb-[100px]">
         {/* Main Subject Header */}
         <div className="flex items-start justify-between mb-8">
@@ -171,7 +179,7 @@ export function EmailDetail({ email, thread = [], onAction, isAgentLoading }: Em
           className="h-9 px-4 bg-[#E8593C] text-white rounded-[8px] font-sans font-semibold text-[13px] hover:bg-[#D14F31] transition-colors shadow-sm disabled:opacity-50 flex items-center gap-2"
         >
           <Reply size={14} />
-          {isAgentLoading ? "Thinking..." : "Reply"}
+          Reply
         </button>
         <button
           onClick={() => onAction?.("Schedule a 30 minute meeting based on this email")}
