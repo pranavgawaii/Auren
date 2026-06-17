@@ -2,7 +2,7 @@
 
 import React from "react"
 import { cx } from "class-variance-authority"
-import { AnimatePresence, motion } from "motion/react"
+import { AnimatePresence, motion, useDragControls } from "motion/react"
 
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
@@ -187,25 +187,27 @@ interface ContextShape {
   setIsFullscreen: (val: boolean) => void
   isAgentLoading: boolean
   startResize: (e: React.MouseEvent) => void
+  dragControls: any
 }
 
 const FormContext = React.createContext({} as ContextShape)
 const useFormContext = () => React.useContext(FormContext)
 
 interface MorphPanelProps {
-  onExecute: (command: string) => void;
+  onExecute: (command: string, history?: any[]) => Promise<any>;
   isAgentLoading?: boolean;
 }
 
 export function MorphPanel({ onExecute, isAgentLoading = false }: MorphPanelProps) {
   const wrapperRef = React.useRef<HTMLDivElement>(null)
   const textareaRef = React.useRef<HTMLTextAreaElement | null>(null)
+  const dragControls = useDragControls()
 
   const [showForm, setShowForm] = React.useState(false)
   const [successFlag, setSuccessFlag] = React.useState(false)
 
   const [isFullscreen, setIsFullscreen] = React.useState(false)
-  const [panelSize, setPanelSize] = React.useState({ width: 360, height: 200 })
+  const [panelSize, setPanelSize] = React.useState({ width: 400, height: 440 })
   const [isResizing, setIsResizing] = React.useState(false)
 
   const triggerClose = React.useCallback(() => {
@@ -264,8 +266,8 @@ export function MorphPanel({ onExecute, isAgentLoading = false }: MorphPanelProp
   }, [showForm, triggerClose])
 
   const ctx = React.useMemo(
-    () => ({ showForm, successFlag, triggerOpen, triggerClose, isFullscreen, setIsFullscreen, isAgentLoading, startResize }),
-    [showForm, successFlag, triggerOpen, triggerClose, isFullscreen, isAgentLoading, startResize]
+    () => ({ showForm, successFlag, triggerOpen, triggerClose, isFullscreen, setIsFullscreen, isAgentLoading, startResize, dragControls }),
+    [showForm, successFlag, triggerOpen, triggerClose, isFullscreen, isAgentLoading, startResize, dragControls]
   )
 
   return (
@@ -276,6 +278,10 @@ export function MorphPanel({ onExecute, isAgentLoading = false }: MorphPanelProp
         className={cx(
           "bg-[#FAF8F5] z-50 flex flex-col items-center overflow-hidden border border-[rgba(36,27,20,0.08)] shadow-[0_12px_40px_rgba(0,0,0,0.08)]"
         )}
+        drag
+        dragControls={dragControls}
+        dragListener={false}
+        dragMomentum={false}
         initial={false}
         animate={{
           width: showForm ? (isFullscreen ? "80vw" : panelSize.width) : 140, // compact size when closed
@@ -300,9 +306,22 @@ export function MorphPanel({ onExecute, isAgentLoading = false }: MorphPanelProp
 }
 
 function DockBar() {
-  const { showForm, triggerOpen } = useFormContext()
+  const { showForm, triggerOpen, dragControls } = useFormContext()
   return (
-    <footer className="mt-auto flex h-[44px] items-center justify-center whitespace-nowrap select-none w-full">
+    <footer 
+      className={cx(
+        "mt-auto flex h-[44px] items-center justify-center whitespace-nowrap select-none w-full",
+        !showForm && "cursor-grab active:cursor-grabbing"
+      )}
+      onPointerDown={(e) => {
+        if (!showForm) {
+          const tag = (e.target as HTMLElement).tagName;
+          if (tag !== 'BUTTON') {
+            dragControls.start(e);
+          }
+        }
+      }}
+    >
       <div className="flex items-center justify-center gap-2 px-3 h-full w-full">
         <div className="flex w-fit items-center gap-2">
           <AnimatePresence mode="wait">
@@ -341,15 +360,97 @@ function DockBar() {
   )
 }
 
-const FORM_WIDTH = 360
-const FORM_HEIGHT = 200
+const FORM_WIDTH = 400
+const FORM_HEIGHT = 440
 
-function InputForm({ inputRef, onSuccess, onExecute }: { inputRef: React.RefObject<HTMLTextAreaElement>; onSuccess: () => void; onExecute: (cmd: string) => void }) {
-  const { triggerClose, showForm, isFullscreen, setIsFullscreen, isAgentLoading, startResize } = useFormContext()
+import { Check } from "lucide-react"
+import { useUser } from "@clerk/nextjs"
+import Image from "next/image"
+
+function InputForm({ inputRef, onSuccess, onExecute }: { inputRef: React.RefObject<HTMLTextAreaElement>; onSuccess: () => void; onExecute: (cmd: string, history?: any[]) => Promise<any> }) {
+  const { triggerClose, showForm, isFullscreen, setIsFullscreen, isAgentLoading, startResize, dragControls } = useFormContext()
   const btnRef = React.useRef<HTMLButtonElement>(null)
+  const { user } = useUser()
 
   const [isListening, setIsListening] = React.useState(false)
   const recognitionRef = React.useRef<any>(null)
+  
+  // Real Chat State
+  const [chatHistory, setChatHistory] = React.useState<{role: "user" | "agent", content?: string, isTyping?: boolean, plan?: any}[]>([])
+
+  // Mentions State
+  const MOCK_MENTIONS = [
+    { id: '1', trigger: '@', type: 'contact', label: 'Pranav Gawai', value: '@Pranav Gawai', displayValue: 'pranavgawai1518@gmail.com', icon: '@' },
+    { id: '2', trigger: '@', type: 'contact', label: 'Product Team', value: '@Product Team', displayValue: 'product@example.com', icon: '@' },
+    { id: '3', trigger: '/', type: 'repo', label: 'Auren Frontend', value: 'github/Auren', displayValue: 'github.com/8TEEH/Auren', icon: '/' },
+    { id: '4', trigger: '/', type: 'repo', label: 'skills-introduction-to-github', value: 'github/skills-introduction-to-github', displayValue: 'github.com/8TEEH/skills-intro...', icon: '/' },
+  ]
+  const [mentionQuery, setMentionQuery] = React.useState<{ trigger: '@' | '/', text: string } | null>(null)
+  const [mentionIndex, setMentionIndex] = React.useState(0)
+  
+  const filteredMentions = React.useMemo(() => {
+    if (!mentionQuery) return []
+    return MOCK_MENTIONS.filter(m => 
+       m.trigger === mentionQuery.trigger &&
+       (m.label.toLowerCase().includes(mentionQuery.text) || m.displayValue.toLowerCase().includes(mentionQuery.text))
+    )
+  }, [mentionQuery])
+
+  const handleInput = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    const val = e.target.value;
+    const cursor = e.target.selectionStart;
+    const textBeforeCursor = val.slice(0, cursor);
+    const match = textBeforeCursor.match(/([@/])(\S*)$/);
+    if (match) {
+      setMentionQuery({ trigger: match[1] as '@' | '/', text: match[2].toLowerCase() });
+      setMentionIndex(0);
+    } else {
+      setMentionQuery(null);
+    }
+  }
+
+  const insertMention = (value: string) => {
+    if (!inputRef.current) return;
+    const input = inputRef.current;
+    const cursor = input.selectionStart;
+    const val = input.value;
+    const textBeforeCursor = val.slice(0, cursor);
+    const match = textBeforeCursor.match(/([@/])(\S*)$/);
+    
+    if (match) {
+       const start = match.index!;
+       const before = val.slice(0, start);
+       const after = val.slice(cursor);
+       const inserted = value + ' ';
+       input.value = before + inserted + after;
+       
+       const newCursor = start + inserted.length;
+       input.setSelectionRange(newCursor, newCursor);
+       
+       setMentionQuery(null);
+       input.focus();
+    }
+  }
+
+  const renderHighlightedText = (text: string, role: "user" | "agent") => {
+    if (!text) return text;
+    const exactMatches = MOCK_MENTIONS.map(m => m.value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|');
+    if (!exactMatches) return text;
+    
+    const regex = new RegExp(`(${exactMatches})`, 'g');
+    const parts = text.split(regex);
+    
+    return parts.map((part, i) => {
+      if (MOCK_MENTIONS.some(m => m.value === part)) {
+         if (role === "user") {
+            return <span key={i} className="text-[#E8593C] bg-white px-1.5 py-[2px] rounded border border-white/20 mx-[2px] font-bold shadow-sm">{part}</span>
+         } else {
+            return <span key={i} className="text-[#E8593C] font-semibold bg-[#E8593C]/10 border border-[#E8593C]/20 px-1.5 py-[2px] rounded mx-[2px]">{part}</span>
+         }
+      }
+      return part;
+    });
+  }
 
   React.useEffect(() => {
     if (typeof window !== "undefined") {
@@ -383,14 +484,105 @@ function InputForm({ inputRef, onSuccess, onExecute }: { inputRef: React.RefObje
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
-    if (inputRef.current?.value) {
-      onExecute(inputRef.current.value)
+    const val = inputRef.current?.value
+    if (val) {
+      // Add user message & show typing indicator
+      const currentHistory = [...chatHistory]
+      setChatHistory(prev => [...prev, {role: "user", content: val}, {role: "agent", isTyping: true}])
+      
+      const res = await onExecute(val, currentHistory)
+      
+      // Replace typing indicator with actual response
+      if (res) {
+        if (res.followUpQuestion) {
+          setChatHistory(prev => {
+            const next = [...prev];
+            next[next.length - 1] = {role: "agent", content: res.followUpQuestion}
+            return next;
+          })
+        } else if ((res.actions && res.actions.length > 0) || res.briefing) {
+          setChatHistory(prev => {
+            const next = [...prev];
+            next[next.length - 1] = {role: "agent", plan: res}
+            return next;
+          })
+          if (res.briefing) {
+            triggerClose();
+          }
+        } else {
+          // Fallback if empty explanation but no actions
+          setChatHistory(prev => {
+            const next = [...prev];
+            next[next.length - 1] = {role: "agent", content: res.explanation || "Done."}
+            return next;
+          })
+        }
+      } else {
+        // Failed
+        setChatHistory(prev => {
+           const next = [...prev];
+           next[next.length - 1] = {role: "agent", content: "Failed to process command. Please try again."}
+           return next;
+        })
+      }
+      
       inputRef.current.value = ""
     }
     onSuccess()
   }
 
   function handleKeys(e: React.KeyboardEvent<HTMLTextAreaElement>) {
+    if (mentionQuery !== null && filteredMentions.length > 0) {
+      if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        setMentionIndex(i => Math.min(i + 1, filteredMentions.length - 1));
+        return;
+      }
+      if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        setMentionIndex(i => Math.max(i - 1, 0));
+        return;
+      }
+      if (e.key === 'Enter' || e.key === 'Tab') {
+        e.preventDefault();
+        if (filteredMentions[mentionIndex]) {
+           insertMention(filteredMentions[mentionIndex].value);
+        }
+        return;
+      }
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        setMentionQuery(null);
+        return;
+      }
+    }
+
+    if (e.key === 'Backspace') {
+      const cursor = e.currentTarget.selectionStart;
+      if (cursor === e.currentTarget.selectionEnd) {
+        const textBeforeCursor = e.currentTarget.value.slice(0, cursor);
+        for (const m of MOCK_MENTIONS) {
+          if (textBeforeCursor.endsWith(m.value + ' ')) {
+            e.preventDefault();
+            const start = cursor - (m.value.length + 1);
+            const after = e.currentTarget.value.slice(cursor);
+            e.currentTarget.value = e.currentTarget.value.slice(0, start) + after;
+            e.currentTarget.setSelectionRange(start, start);
+            handleInput(e as any);
+            return;
+          } else if (textBeforeCursor.endsWith(m.value)) {
+            e.preventDefault();
+            const start = cursor - m.value.length;
+            const after = e.currentTarget.value.slice(cursor);
+            e.currentTarget.value = e.currentTarget.value.slice(0, start) + after;
+            e.currentTarget.setSelectionRange(start, start);
+            handleInput(e as any);
+            return;
+          }
+        }
+      }
+    }
+
     if (e.key === "Escape") triggerClose()
     if (e.key === "Enter" && !e.shiftKey) { // Trigger on Enter (use Shift+Enter for newline)
       e.preventDefault()
@@ -401,7 +593,7 @@ function InputForm({ inputRef, onSuccess, onExecute }: { inputRef: React.RefObje
   return (
     <form
       onSubmit={handleSubmit}
-      className="absolute bottom-0 w-full h-full"
+      className="absolute bottom-0 w-full h-full flex flex-col"
       style={{ pointerEvents: showForm ? "all" : "none" }}
     >
       <AnimatePresence>
@@ -411,9 +603,17 @@ function InputForm({ inputRef, onSuccess, onExecute }: { inputRef: React.RefObje
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ type: "spring", stiffness: 550 / SPEED_FACTOR, damping: 45, mass: 0.7 }}
-            className="flex h-full flex-col p-1"
+            className="flex h-full flex-col p-1 relative"
           >
-            <div className="flex justify-between py-1 relative">
+            <div 
+              className="flex justify-between py-1 relative shrink-0 cursor-grab active:cursor-grabbing"
+              onPointerDown={(e) => {
+                const tag = (e.target as HTMLElement).tagName;
+                if (tag !== 'BUTTON' && tag !== 'SVG' && tag !== 'path') {
+                  dragControls.start(e);
+                }
+              }}
+            >
               {!isFullscreen && (
                 <div 
                   className="absolute top-[2px] left-[2px] w-6 h-6 cursor-nwse-resize z-10 opacity-50 hover:opacity-100"
@@ -438,17 +638,6 @@ function InputForm({ inputRef, onSuccess, onExecute }: { inputRef: React.RefObje
                   {isFullscreen ? <Minimize2 size={14} /> : <Maximize2 size={14} />}
                 </button>
                 <button
-                  type="button"
-                  onClick={toggleMic}
-                  className={cx(
-                    "flex items-center justify-center p-1.5 rounded-[8px] transition-colors",
-                    isListening ? "bg-[#E8593C]/10 text-[#E8593C]" : "text-[rgba(36,27,20,0.5)] hover:text-[#241B14] hover:bg-[rgba(36,27,20,0.04)]"
-                  )}
-                  title="Voice Input"
-                >
-                  <Mic size={14} className={isListening ? "animate-pulse" : ""} />
-                </button>
-                <button
                   type="submit"
                   ref={btnRef}
                   disabled={isAgentLoading}
@@ -459,28 +648,141 @@ function InputForm({ inputRef, onSuccess, onExecute }: { inputRef: React.RefObje
               </div>
             </div>
             
-            {isAgentLoading ? (
-              <div className="flex-1 w-full flex items-center justify-center bg-transparent pb-8">
-                <div className="flex flex-col items-center gap-4">
-                  <div className="flex items-center gap-2">
-                    <motion.div className="w-2.5 h-2.5 rounded-full bg-[#E8593C]" animate={{ scale: [1, 1.3, 1], opacity: [0.4, 1, 0.4] }} transition={{ repeat: Infinity, duration: 1.2, delay: 0 }} />
-                    <motion.div className="w-2.5 h-2.5 rounded-full bg-[#E8593C]" animate={{ scale: [1, 1.3, 1], opacity: [0.4, 1, 0.4] }} transition={{ repeat: Infinity, duration: 1.2, delay: 0.2 }} />
-                    <motion.div className="w-2.5 h-2.5 rounded-full bg-[#E8593C]" animate={{ scale: [1, 1.3, 1], opacity: [0.4, 1, 0.4] }} transition={{ repeat: Infinity, duration: 1.2, delay: 0.4 }} />
-                  </div>
-                  <span className="text-[13px] text-[rgba(36,27,20,0.5)] font-medium">Agent is thinking...</span>
-                </div>
+            {/* Chat History Area */}
+            <div className="flex-1 overflow-y-auto px-4 py-2 scrollbar-hide flex flex-col gap-5">
+              {chatHistory.length === 0 ? (
+                 <div className="flex-1 flex items-center justify-center opacity-0" />
+              ) : (
+                <>
+                  {chatHistory.map((msg, i) => {
+                    if (msg.role === "user") {
+                      return (
+                        <div key={i} className="flex justify-end w-full">
+                          <div className="bg-[#E8593C] text-white px-4 py-2.5 rounded-2xl rounded-tr-sm text-[13.5px] max-w-[85%] font-medium leading-snug shadow-sm">
+                            {renderHighlightedText(msg.content || "", "user")}
+                          </div>
+                        </div>
+                      )
+                    } else if (msg.role === "agent") {
+                      return (
+                        <div key={i} className="flex items-start gap-2 w-full">
+                          <div className="w-7 h-7 flex items-center justify-center shrink-0 mt-1">
+                            <Image src="/auren_logo.webp" alt="AI" width={24} height={24} className="opacity-100 object-contain drop-shadow-sm" />
+                          </div>
+                          
+                          {msg.isTyping ? (
+                            <div className="bg-white border border-[rgba(36,27,20,0.08)] text-[rgba(36,27,20,0.6)] px-4 py-3 rounded-2xl rounded-tl-sm text-[13.5px] shadow-sm flex items-center gap-2">
+                              <motion.div className="w-1.5 h-1.5 rounded-full bg-[#E8593C]" animate={{ opacity: [0.3, 1, 0.3] }} transition={{ repeat: Infinity, duration: 1.2, delay: 0 }} />
+                              <motion.div className="w-1.5 h-1.5 rounded-full bg-[#E8593C]" animate={{ opacity: [0.3, 1, 0.3] }} transition={{ repeat: Infinity, duration: 1.2, delay: 0.2 }} />
+                              <motion.div className="w-1.5 h-1.5 rounded-full bg-[#E8593C]" animate={{ opacity: [0.3, 1, 0.3] }} transition={{ repeat: Infinity, duration: 1.2, delay: 0.4 }} />
+                            </div>
+                          ) : msg.content ? (
+                            <div className="bg-white border border-[rgba(36,27,20,0.08)] text-[#241B14] px-4 py-2.5 rounded-2xl rounded-tl-sm text-[13.5px] leading-relaxed shadow-sm max-w-[85%]">
+                              {renderHighlightedText(msg.content || "", "agent")}
+                            </div>
+                          ) : msg.plan?.briefing ? (
+                            <div className="bg-white border border-[rgba(36,27,20,0.08)] text-[#241B14] px-4 py-2.5 rounded-2xl rounded-tl-sm text-[13.5px] leading-relaxed shadow-sm max-w-[85%]">
+                              {renderHighlightedText("I've loaded your morning briefing on the screen. Have a great day!", "agent")}
+                            </div>
+                          ) : msg.plan ? (
+                            <div className="flex flex-col gap-3 w-full">
+                              <div className="bg-white border border-[rgba(36,27,20,0.08)] text-[#241B14] px-4 py-2.5 rounded-2xl rounded-tl-sm text-[13.5px] leading-relaxed shadow-sm">
+                                {renderHighlightedText(msg.plan.explanation || "I've drafted the plan. Please review and confirm the actions.", "agent")}
+                              </div>
+                              <div className="flex flex-col gap-2 w-full pl-2 border-l-2 border-[#E8593C]/20 ml-2">
+                                {msg.plan.actions?.map((action: any, idx: number) => (
+                                  <div key={idx} className="bg-white border border-[rgba(36,27,20,0.08)] rounded-[10px] p-2.5 flex items-center gap-3 shadow-sm">
+                                    <div className="w-8 h-8 bg-[#FAF8F5] text-[rgba(36,27,20,0.7)] rounded-md flex items-center justify-center shrink-0 border border-[rgba(36,27,20,0.08)]">
+                                      <Check size={14} className="text-[#E8593C]" strokeWidth={3} />
+                                    </div>
+                                    <div className="flex flex-col flex-1 min-w-0">
+                                      <span className="font-semibold text-[#241B14] text-[13px] capitalize">{action.tool.replace(/_/g, " ")}</span>
+                                      <span className="text-[rgba(36,27,20,0.5)] text-[12px] truncate">{action.description}</span>
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          ) : null}
+                        </div>
+                      )
+                    }
+                  })}
+                </>
+              )}
+            </div>
+
+            {/* Input area at bottom */}
+            <div className="mt-auto shrink-0 bg-[#FAF8F5] p-3 border-t border-[rgba(36,27,20,0.04)] shadow-[0_-4px_12px_rgba(0,0,0,0.02)]">
+              <div className="relative border border-[rgba(36,27,20,0.15)] focus-within:border-[#E8593C] rounded-xl bg-white shadow-sm transition-all overflow-visible group">
+                
+                {/* Mention Popover */}
+                <AnimatePresence>
+                  {mentionQuery !== null && filteredMentions.length > 0 && (
+                    <motion.div 
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: 10 }}
+                      transition={{ duration: 0.15 }}
+                      className="absolute bottom-[calc(100%+8px)] left-0 w-[280px] max-h-[220px] overflow-y-auto bg-white border border-[rgba(36,27,20,0.08)] shadow-lg rounded-xl flex flex-col p-1.5 z-50 scrollbar-hide"
+                    >
+                      <div className="px-2 py-1 mb-1">
+                        <span className="text-[10px] font-semibold tracking-wider text-[rgba(36,27,20,0.4)] uppercase">Suggestions</span>
+                      </div>
+                      {filteredMentions.map((m, idx) => (
+                        <button
+                          key={m.id}
+                          type="button"
+                          onClick={() => insertMention(m.value)}
+                          className={cx(
+                            "flex items-center gap-2.5 p-2 rounded-lg text-left transition-colors",
+                            idx === mentionIndex ? "bg-[#FAF8F5] border border-[rgba(36,27,20,0.04)]" : "hover:bg-[#FAF8F5] border border-transparent"
+                          )}
+                        >
+                           <div className="w-7 h-7 rounded-md bg-white border border-[rgba(36,27,20,0.08)] shadow-sm flex items-center justify-center shrink-0 text-[#E8593C] font-semibold text-[13px]">
+                              {m.icon}
+                           </div>
+                           <div className="flex flex-col min-w-0">
+                              <span className="text-[13px] font-medium text-[#241B14] truncate">{m.label}</span>
+                              <span className="text-[11px] text-[rgba(36,27,20,0.5)] truncate">{m.displayValue}</span>
+                           </div>
+                        </button>
+                      ))}
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+
+                <textarea
+                  ref={inputRef}
+                  onChange={handleInput}
+                  placeholder="Ask Auren to summarize, schedule, or manage tasks..."
+                  name="message"
+                  className="w-full resize-none p-3 pr-[44px] outline-none text-[#241B14] bg-transparent placeholder:text-[rgba(36,27,20,0.3)] text-[13px] min-h-[44px] max-h-[120px] font-sans"
+                  required
+                  onKeyDown={handleKeys}
+                  spellCheck={false}
+                  disabled={isAgentLoading}
+                />
+                
+                {/* Mic Button moved to side of chat inside the input box */}
+                <button
+                  type="button"
+                  onClick={toggleMic}
+                  className={cx(
+                    "absolute right-2 top-1/2 -translate-y-1/2 p-2 rounded-[8px] transition-colors flex items-center justify-center",
+                    isListening ? "bg-[#E8593C]/10 text-[#E8593C]" : "text-[rgba(36,27,20,0.4)] hover:text-[#241B14] hover:bg-neutral-100"
+                  )}
+                  title="Voice Input"
+                >
+                  <Mic size={16} className={isListening ? "animate-pulse" : ""} />
+                </button>
               </div>
-            ) : (
-              <textarea
-                ref={inputRef}
-                placeholder="Ask me to review code, create events, or summarize tasks..."
-                name="message"
-                className="flex-1 w-full resize-none scroll-py-2 rounded-md p-4 outline-0 text-[#241B14] bg-transparent placeholder:text-[rgba(36,27,20,0.3)] text-[14px]"
-                required
-                onKeyDown={handleKeys}
-                spellCheck={false}
-              />
-            )}
+              
+              <div className="flex justify-between items-center px-1 pt-2 opacity-60">
+                <span className="text-[10px] font-medium text-[#241B14]">Connected: Google Workspace, GitHub</span>
+                <span className="text-[10px] font-medium text-[#E8593C]">Auren AI</span>
+              </div>
+            </div>
           </motion.div>
         )}
       </AnimatePresence>

@@ -21,6 +21,8 @@ import { executePlan } from "@/app/actions/execute";
 import { checkConnectionStatus } from "@/app/actions/connect";
 import type { GmailMessage, AgentReasoningResult } from "@/types";
 import { MorphPanel } from "@/components/ui/ai-input";
+import { motion, AnimatePresence } from "framer-motion";
+import { BriefingCard } from "@/components/ui/briefing-card";
 
 export function DashboardClient() {
   const { user, isLoaded } = useUser();
@@ -59,6 +61,7 @@ export function DashboardClient() {
   const [folderType, setFolderType] = useState<"INBOX" | "SENT" | "DRAFT">("INBOX");
   const [isCalendarOpen, setIsCalendarOpen] = useState(true);
   const [isConsoleOpen, setIsConsoleOpen] = useState(false);
+  const [briefingData, setBriefingData] = useState<any>(null);
   const [selectedEmailId, setSelectedEmailId] = useState<string>("");
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
   const [agentPlan, setAgentPlan] = useState<AgentReasoningResult | null>(null);
@@ -153,17 +156,25 @@ export function DashboardClient() {
     ? emails.filter(e => e.threadId === selectedEmail.threadId).sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
     : [];
 
-  const handleAction = async (command: string) => {
+  const handleAction = async (command: string, history?: any[]) => {
     setCurrentCommand(command);
     setIsAgentLoading(true);
-    const res = await processCommand(command, selectedEmail || null);
+    const res = await processCommand(command, selectedEmail || null, history);
+    setIsAgentLoading(false);
+
     if (res.success && res.data) {
-      setAgentPlan(res.data);
-      setIsConfirmOpen(true);
+      // If there is a briefing, intercept it and show the overlay instead of confirmation
+      if (res.data.briefing) {
+        setBriefingData(res.data.briefing);
+      } else if (res.data.actions && res.data.actions.length > 0) {
+        setAgentPlan(res.data);
+        setIsConfirmOpen(true);
+      }
+      return res.data;
     } else {
       alert(`Agent error: ${res.error || "Failed to process command."}`);
+      return null;
     }
-    setIsAgentLoading(false);
   };
   
   return (
@@ -175,6 +186,30 @@ export function DashboardClient() {
       isConsoleOpen={isConsoleOpen}
       onToggleConsole={() => setIsConsoleOpen(prev => !prev)}
     >
+      <AnimatePresence>
+        {isAgentLoading && (
+          <motion.div
+            initial={{ opacity: 0, backdropFilter: "blur(0px)" }}
+            animate={{ opacity: 1, backdropFilter: "blur(2px)" }}
+            exit={{ opacity: 0, backdropFilter: "blur(0px)" }}
+            className="fixed inset-0 z-40 bg-white/20 pointer-events-none"
+            transition={{ duration: 0.3 }}
+          />
+        )}
+        {briefingData && (
+          <motion.div
+            initial={{ opacity: 0, backdropFilter: "blur(0px)" }}
+            animate={{ opacity: 1, backdropFilter: "blur(6px)" }}
+            exit={{ opacity: 0, backdropFilter: "blur(0px)" }}
+            className="fixed inset-0 z-50 bg-[#FAF8F5]/50 flex items-center justify-center p-8"
+          >
+            <div className="absolute inset-0 cursor-pointer" onClick={() => setBriefingData(null)} />
+            <div className="relative z-10 w-full max-w-[800px]">
+              <BriefingCard data={briefingData} onClose={() => setBriefingData(null)} />
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
       {view === "inbox" ? (
         <div className="flex flex-1 w-full overflow-hidden h-full">
           <div 

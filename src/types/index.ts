@@ -197,9 +197,18 @@ export interface ClassificationResult {
   reasoning: string;
 }
 
+export interface DailyBriefingData {
+  schedule: { time: string; title: string; type: "meeting" | "focus" | "reminder" }[];
+  emails: { sender: string; subject: string; isUrgent: boolean }[];
+  github: { repo: string; prsToReview: number; issuesAssigned: number }[];
+  summaryText: string;
+}
+
 export interface AgentReasoningResult {
   actions: PlannedAction[];
+  briefing?: DailyBriefingData;
   explanation: string;
+  followUpQuestion?: string;
   requiresConfirmation: boolean;
 }
 

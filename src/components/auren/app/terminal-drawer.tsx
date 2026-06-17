@@ -28,6 +28,28 @@ export function TerminalDrawer({ isOpen, setIsOpen, onExecute, isAgentLoading }:
   const inputRef = useRef<HTMLInputElement>(null);
   const recognitionRef = useRef<any>(null);
 
+  const [drawerHeight, setDrawerHeight] = useState<number | string>("auto");
+
+  const startResize = (e: React.MouseEvent) => {
+    e.preventDefault();
+    const startY = e.clientY;
+    const bodyEl = document.getElementById("terminal-drawer-body");
+    const startHeight = typeof drawerHeight === 'number' ? drawerHeight : (bodyEl?.getBoundingClientRect().height || 400);
+
+    const doResize = (moveEvent: MouseEvent) => {
+      const deltaY = startY - moveEvent.clientY;
+      setDrawerHeight(Math.max(100, Math.min(800, startHeight + deltaY)));
+    };
+
+    const stopResize = () => {
+      document.removeEventListener("mousemove", doResize);
+      document.removeEventListener("mouseup", stopResize);
+    };
+
+    document.addEventListener("mousemove", doResize);
+    document.addEventListener("mouseup", stopResize);
+  };
+
   // 1. Focus input on open
   useEffect(() => {
     if (isOpen) {
@@ -210,14 +232,19 @@ export function TerminalDrawer({ isOpen, setIsOpen, onExecute, isAgentLoading }:
     <AnimatePresence>
       {isOpen && (
         <motion.div
+          id="terminal-drawer-body"
           initial={{ y: "100%" }}
           animate={{ y: 0 }}
           exit={{ y: "100%" }}
           transition={{ type: "spring", stiffness: 220, damping: 24 }}
+          style={{ height: drawerHeight }}
           className="fixed bottom-0 left-0 w-full z-[60] bg-[#FDFBF9] border-t border-[rgba(36,27,20,0.12)] shadow-[0_-8px_32px_rgba(36,27,20,0.08)] flex flex-col overflow-visible"
         >
           {/* Header bar in warm sand */}
-          <div className="h-[44px] bg-[#FAF6F0] border-b border-[rgba(36,27,20,0.06)] flex items-center justify-between px-6 shrink-0 select-none">
+          <div 
+            className="h-[44px] bg-[#FAF6F0] border-b border-[rgba(36,27,20,0.06)] flex items-center justify-between px-6 shrink-0 select-none cursor-ns-resize"
+            onMouseDown={startResize}
+          >
             <div className="flex items-center gap-2">
               <TerminalSquare size={16} className="text-[#E8593C]" />
               <span style={{ fontFamily: "var(--font-civane, Georgia, serif)" }} className="text-[16px] text-[#241B14] tracking-wide font-medium">
@@ -285,7 +312,7 @@ export function TerminalDrawer({ isOpen, setIsOpen, onExecute, isAgentLoading }:
                   initial={{ height: 0, opacity: 0 }}
                   animate={{ height: "auto", opacity: 1 }}
                   exit={{ height: 0, opacity: 0 }}
-                  className="px-6 py-5 border-b border-[rgba(36,27,20,0.06)] bg-[#FAF8F5]/80 flex flex-col gap-3 overflow-hidden"
+                  className="px-6 py-5 border-b border-[rgba(36,27,20,0.06)] bg-[#FAF8F5]/80 flex flex-col gap-3 flex-1 overflow-y-auto"
                 >
                   {/* User Command Echo */}
                   {logs.map((log, idx) => {

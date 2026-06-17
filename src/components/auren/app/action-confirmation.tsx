@@ -457,7 +457,7 @@ export function ActionConfirmation({
         )}
 
         {/* Informational warning if no actions are scheduled */}
-        {!hasActions && (
+        {!hasActions && !plan?.followUpQuestion && (
           <div className="flex gap-2.5 bg-[#FEF3C7] border border-[#F59E0B] text-[#92400E] rounded-[12px] p-3 text-[12px] font-sans items-start">
             <AlertCircle className="w-4 h-4 mt-[2px] shrink-0" />
             <div className="flex flex-col gap-1">
@@ -467,12 +467,23 @@ export function ActionConfirmation({
           </div>
         )}
 
+        {/* Display Follow-up Question if provided */}
+        {plan?.followUpQuestion && (
+          <div className="flex gap-2.5 bg-[#F0FDF4] border border-[#BBF7D0] text-[#166534] rounded-[12px] p-3 text-[12px] font-sans items-start">
+            <MessageSquare className="w-4 h-4 mt-[2px] shrink-0 text-[#16A34A]" />
+            <div className="flex flex-col gap-1">
+              <strong>Follow-up Question</strong>
+              <span className="text-[13px] leading-relaxed">{plan.followUpQuestion}</span>
+            </div>
+          </div>
+        )}
+
         {/* Dynamic Clarification/Conversational Input */}
         <div className="flex flex-col gap-2 mt-2 pt-2 border-t border-[rgba(36,27,20,0.08)]">
           <div className="flex items-center gap-1.5 mb-1.5">
             <MessageSquare className="w-3.5 h-3.5 text-[#E8593C]" />
             <span className="font-sans font-bold text-[11px] text-[rgba(36,27,20,0.45)] uppercase tracking-wider">
-              Talk to Auren / Provide details
+              {plan?.followUpQuestion ? "Reply to Auren" : "Talk to Auren / Provide details"}
             </span>
           </div>
           <div className="flex items-center gap-2 border border-[rgba(36,27,20,0.1)] rounded-[10px] p-1 bg-white shadow-inner">
