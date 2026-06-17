@@ -1,10 +1,12 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { GitPullRequest, CircleDot, MessageSquare, ExternalLink } from "lucide-react";
+import { GitPullRequest, CircleDot, MessageSquare, ExternalLink, BookOpen, Lock } from "lucide-react";
 import { checkConnectionStatus } from "@/app/actions/connect";
+import { useRouter } from "next/navigation";
 
 export function GitHubIntegrationView() {
+  const router = useRouter();
   const [isConnected, setIsConnected] = useState<boolean | null>(null);
   const [pullRequests, setPullRequests] = useState<any[]>([]);
   const [issues, setIssues] = useState<any[]>([]);
@@ -52,6 +54,29 @@ export function GitHubIntegrationView() {
     return `${Math.floor(hours / 24)} days ago`;
   };
 
+  // Dynamically extract unique repositories from issues and PRs
+  const dynamicRepos = React.useMemo(() => {
+    const repoMap = new Map<string, { id: string, name: string, isPrivate: boolean, active: boolean }>();
+    const allItems = [...pullRequests, ...issues];
+    
+    allItems.forEach((item) => {
+      const repoUrl = item.repository_url;
+      if (!repoUrl) return;
+      
+      const name = repoUrl.split('/').slice(-2).join('/');
+      if (!repoMap.has(name)) {
+        repoMap.set(name, {
+          id: name,
+          name,
+          isPrivate: false, // Default to public without auth context
+          active: true,
+        });
+      }
+    });
+    
+    return Array.from(repoMap.values());
+  }, [pullRequests, issues]);
+
   if (isConnected === false && !isLoading) {
     return (
       <div className="flex-1 flex flex-col items-center justify-center bg-[#FAF8F5] dark:bg-[#2C2C2C] p-8 text-center">
@@ -65,7 +90,7 @@ export function GitHubIntegrationView() {
         <button 
           onClick={() => {
             localStorage.setItem("auren_default_settings_tab", "integrations");
-            window.dispatchEvent(new CustomEvent("auren-open-integrations"));
+            router.push("/settings");
           }}
           className="h-[40px] px-6 bg-[#E8593C] text-white rounded-[10px] font-sans font-bold text-[13px] hover:bg-[#D14F31] transition-colors shadow-sm"
         >
@@ -97,6 +122,46 @@ export function GitHubIntegrationView() {
 
       <div className="flex-1 p-8 max-w-[1000px] w-full mx-auto flex flex-col gap-8">
         
+        {/* Repositories Section */}
+        <section>
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="font-sans font-semibold text-[15px] text-[#241B14] dark:text-[#F4F4F5] flex items-center gap-2">
+              <BookOpen size={16} className="text-[rgba(36,27,20,0.4)] dark:text-[rgba(255,255,255,0.4)]" />
+              Your Repositories
+            </h2>
+            <span className="font-sans text-[12px] font-medium text-[rgba(36,27,20,0.4)] dark:text-[rgba(255,255,255,0.4)] bg-[rgba(36,27,20,0.04)] dark:bg-[rgba(255,255,255,0.04)] px-2 py-0.5 rounded-full">
+              {dynamicRepos.length} Active
+            </span>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {isLoading ? (
+              <div className="col-span-full p-8 flex justify-center"><div className="w-6 h-6 border-2 border-[rgba(36,27,20,0.1)] dark:border-[rgba(255,255,255,0.1)] border-t-[#241B14] rounded-full animate-spin" /></div>
+            ) : dynamicRepos.length === 0 ? (
+              <div className="col-span-full p-8 text-center text-[13px] text-[rgba(36,27,20,0.5)] dark:text-[rgba(255,255,255,0.5)] border border-[rgba(36,27,20,0.08)] dark:border-[rgba(255,255,255,0.08)] rounded-[12px]">No repositories found.</div>
+            ) : dynamicRepos.map((repo) => (
+              <a 
+                href={`https://github.com/${repo.name}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                key={repo.id} 
+                className="bg-white dark:bg-[#383838] p-4 rounded-[12px] border border-[rgba(36,27,20,0.08)] dark:border-[rgba(255,255,255,0.08)] shadow-[0_2px_12px_rgba(36,27,20,0.02)] hover:border-[#E8593C]/30 hover:shadow-md transition-all group cursor-pointer flex items-center gap-3"
+              >
+                <div className="w-10 h-10 rounded-[8px] bg-[rgba(36,27,20,0.04)] dark:bg-[rgba(255,255,255,0.04)] flex items-center justify-center text-[rgba(36,27,20,0.5)] dark:text-[rgba(255,255,255,0.5)] group-hover:text-[#E8593C] group-hover:bg-[#E8593C]/10 transition-colors">
+                  <BookOpen size={18} />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <h3 className="font-sans font-semibold text-[14px] text-[#241B14] dark:text-[#F4F4F5] truncate mb-0.5 group-hover:text-[#E8593C] transition-colors">{repo.name}</h3>
+                  <div className="flex items-center gap-1.5 font-sans text-[11.5px] text-[rgba(36,27,20,0.4)] dark:text-[rgba(255,255,255,0.4)]">
+                    {repo.isPrivate ? <Lock size={10} /> : <BookOpen size={10} />}
+                    <span>{repo.isPrivate ? "Private" : "Public"}</span>
+                  </div>
+                </div>
+              </a>
+            ))}
+          </div>
+        </section>
+
         {/* Pull Requests Section */}
         <section>
           <div className="flex items-center justify-between mb-4">
