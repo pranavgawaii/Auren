@@ -4,7 +4,7 @@ import React, { useState, useEffect } from "react";
 import { Search, History } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import { UserButton } from "@clerk/nextjs";
+import { UserButton, useUser } from "@clerk/nextjs";
 import { AnimatedThemeToggler } from "@/components/ui/animated-theme-toggler";
 import { KeyboardShortcutsModal } from "@/components/auren/keyboard-shortcuts-modal";
 
@@ -47,7 +47,8 @@ export function AppShell({
   isConsoleOpen = false,
   onToggleConsole
 }: AppShellProps) {
-  const isPro = true;
+  const { user } = useUser();
+  const isPro = user?.publicMetadata?.isPro === true || user?.publicMetadata?.plan === "pro" || user?.publicMetadata?.tier === "pro";
   const [showThemeToggle, setShowThemeToggle] = useState(false);
   const [showShortcuts, setShowShortcuts] = useState(false);
   const [isMounted, setIsMounted] = useState(false);

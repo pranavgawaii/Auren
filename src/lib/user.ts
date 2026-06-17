@@ -37,7 +37,7 @@ async function ensureSupabaseUser(userId: string): Promise<void> {
 export async function getUserId(): Promise<string> {
   let clerkUserId: string | null = null;
   try {
-    const { userId } = auth();
+    const { userId } = await auth();
     clerkUserId = userId;
   } catch {
     // auth() may throw outside of a Next.js request context (e.g., during static analysis or builds)
@@ -62,7 +62,7 @@ export async function getUserId(): Promise<string> {
  */
 export async function getClerkUserId(): Promise<string | null> {
   try {
-    const { userId } = auth();
+    const { userId } = await auth();
     return userId;
   } catch {
     return null;

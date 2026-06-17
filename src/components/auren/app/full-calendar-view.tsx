@@ -4,7 +4,7 @@ import React, { useState, useEffect } from "react";
 import { ChevronLeft, ChevronRight, Plus, Calendar as CalendarIcon, Check, MoreVertical, X, Clock } from "lucide-react";
 import { getCalendarEvents } from "@/app/actions/get-events";
 import { createCalendarEvent } from "@/app/actions/create-event";
-import { toast } from "sonner";
+import { showToast } from "@/components/ui/premium-toast";
 
 interface CalendarEvent {
   id: string;
@@ -113,18 +113,18 @@ export function FullCalendarView() {
         const meetLink = (res as Record<string, unknown>).data && ((res as Record<string, unknown>).data as Record<string, unknown>).meetLink as string | null;
         const warning = (res as Record<string, unknown>).warning as string | undefined;
         if (warning === "calendar_sync_failed") {
-          toast.warning("Event saved locally — Google Calendar sync unavailable. Please try again.");
+          showToast.warning("Saved locally — Google Calendar sync unavailable");
         } else {
-          toast.success(`Event created${meetLink ? ` · Meet: ${meetLink}` : ''}`);
+          showToast.success(`Event created${meetLink ? ` · Meet: ${meetLink}` : ''}`);
         }
         setIsCreateModalOpen(false);
         setNewEventTitle("");
         fetchEvents();
       } else {
-        toast.error("Failed to create event.");
+        showToast.error("Failed to create event.");
       }
     } catch (err) {
-      toast.error("An error occurred while creating the event.");
+      showToast.error("An error occurred while creating the event.");
     } finally {
       setIsCreating(false);
     }

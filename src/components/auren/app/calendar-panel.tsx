@@ -116,7 +116,7 @@ export function CalendarPanel({ onClose }: { onClose?: () => void }) {
             const dayEvents = allEvents.filter(e => e.dayIndex === index);
 
             return (
-              <div key={day.abbrev} className="flex flex-col gap-2">
+              <div key={index} className="flex flex-col gap-2">
                 {/* Day Header */}
                 <div className="flex items-center gap-2">
                   <span className="font-sans text-[10px] uppercase text-[rgba(36,27,20,0.35)] dark:text-[rgba(255,255,255,0.35)] w-[28px]">

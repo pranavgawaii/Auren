@@ -31,6 +31,8 @@ export function DashboardClient() {
   const { user, isLoaded } = useUser();
   const router = useRouter();
 
+  const [isCheckingConnection, setIsCheckingConnection] = useState(true);
+
   useEffect(() => {
     async function verifyConnection() {
       if (isLoaded) {
@@ -41,6 +43,8 @@ export function DashboardClient() {
         const status = await checkConnectionStatus();
         if (!status.google) {
           router.push("/onboarding");
+        } else {
+          setIsCheckingConnection(false);
         }
       }
     }
@@ -203,6 +207,8 @@ export function DashboardClient() {
       return null;
     }
   };
+
+
   
   return (
     <AppShell 
@@ -213,6 +219,13 @@ export function DashboardClient() {
       isConsoleOpen={isConsoleOpen}
       onToggleConsole={() => setIsConsoleOpen(prev => !prev)}
     >
+      {/* Loading Overlay */}
+      {(isCheckingConnection || !isLoaded || !user) && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-white/10 dark:bg-black/10 backdrop-blur-md">
+          <ShiningText text="Verifying workspace..." className="text-[15px] font-medium tracking-wide font-sans" />
+        </div>
+      )}
+
       <AnimatePresence>
         {isAgentLoading && (
           <motion.div
@@ -280,7 +293,7 @@ export function DashboardClient() {
           <div className="flex-1 flex flex-col relative overflow-hidden">
             {isLoading && !selectedEmail ? (
               <div className="flex flex-col items-center justify-center h-full w-full gap-4 bg-white dark:bg-[#383838]">
-                <ShiningText text="Auren is thinking..." className="text-[13px] font-medium tracking-wide font-sans" />
+                <ShiningText text="Syncing workspace..." className="text-[13px] font-medium tracking-wide font-sans" />
               </div>
             ) : selectedEmail ? (
               <EmailDetail 

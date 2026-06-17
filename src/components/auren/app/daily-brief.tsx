@@ -6,13 +6,10 @@ export function DailyBrief() {
   const { user } = useUser();
   const firstName = user?.firstName || "there";
   
-  const [greeting, setGreeting] = useState("Good morning");
+  const [greeting, setGreeting] = useState("Workspace ready,");
 
   useEffect(() => {
-    const hour = new Date().getHours();
-    if (hour < 12) setGreeting("Good morning");
-    else if (hour < 18) setGreeting("Good afternoon");
-    else setGreeting("Good evening");
+    // Keeping the effect structure in case we want to re-add time-based logic later
   }, []);
 
   return (

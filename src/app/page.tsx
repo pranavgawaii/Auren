@@ -20,13 +20,15 @@ const FONT_BODY = "var(--font-sans)";
 const FONT_SUBHEAD = "var(--font-sans)";
 
 export default async function LandingPage() {
-  let clerkUserId: string | null = null;
+  let userId = null;
   try {
-    const { userId } = auth();
-    clerkUserId = userId;
-  } catch {}
+    const authData = await auth();
+    userId = authData.userId;
+  } catch (e) {
+    // Ignore outside of Next request context
+  }
 
-  if (clerkUserId) {
+  if (userId) {
     redirect("/app");
   }
 

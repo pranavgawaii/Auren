@@ -1,7 +1,8 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { getAdminAnalytics, getSystemStatus, toggleAurenPro, AdminUser } from "@/app/actions/admin";
+import { getAdminAnalytics, getSystemStatus, toggleAurenPro } from "@/app/actions/admin";
+import type { AdminUser } from "@/app/actions/admin";
 import { showToast } from "@/components/ui/premium-toast";
 import { Loader2, Users, BarChart2, Search, ChevronRight } from "lucide-react";
 import Link from "next/link";
