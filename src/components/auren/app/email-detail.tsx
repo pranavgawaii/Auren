@@ -1,9 +1,11 @@
 "use client";
 
 import React, { useState, useRef, useEffect } from "react";
-import { MoreHorizontal, Reply, CalendarPlus, GitBranch, Archive } from "lucide-react";
+import { MoreHorizontal, Reply, CalendarPlus, GitBranch, Archive, FileText } from "lucide-react";
 import type { GmailMessage } from "@/types";
 import { ShiningText } from "@/components/ui/shining-text";
+import { saveDraft } from "@/app/actions/save-draft";
+import { toast } from "sonner";
 
 interface EmailDetailProps {
   email?: GmailMessage;
@@ -29,6 +31,7 @@ function getAvatarColor(name: string) {
 
 export function EmailDetail({ email, thread = [], onAction, isAgentLoading }: EmailDetailProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isSavingDraft, setIsSavingDraft] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
   // Close dropdown when clicking outside
@@ -221,6 +224,38 @@ export function EmailDetail({ email, thread = [], onAction, isAgentLoading }: Em
             Schedule
           </div>
           <kbd className="ml-1 px-1.5 py-0.5 rounded-[4px] bg-[rgba(36,27,20,0.06)] dark:bg-[rgba(255,255,255,0.06)] text-[rgba(36,27,20,0.4)] dark:text-[rgba(255,255,255,0.4)] text-[10px] font-mono group-hover:bg-[rgba(36,27,20,0.1)] transition-colors">S</kbd>
+        </button>
+        <button
+          onClick={async () => {
+            if (!email) return;
+            setIsSavingDraft(true);
+            try {
+              const res = await saveDraft({
+                to: email.from,
+                subject: `Re: ${email.subject}`,
+                body: `\n\n---\nOn ${new Date(email.date).toLocaleString()}, ${email.fromName} wrote:\n${email.snippet}`,
+                threadId: email.threadId,
+              });
+              if (res.success) {
+                toast.success("Draft saved to Gmail");
+              } else {
+                toast.error("Failed to save draft");
+              }
+            } catch {
+              toast.error("Failed to save draft");
+            } finally {
+              setIsSavingDraft(false);
+            }
+          }}
+          disabled={isAgentLoading || isSavingDraft || !email}
+          className="h-9 pl-4 pr-2 border border-[rgba(36,27,20,0.08)] dark:border-[rgba(255,255,255,0.08)] text-[rgba(36,27,20,0.6)] dark:text-[rgba(255,255,255,0.6)] rounded-[8px] font-sans font-semibold text-[13px] hover:bg-[rgba(36,27,20,0.02)] dark:bg-[rgba(255,255,255,0.02)] transition-colors bg-white dark:bg-[#383838] disabled:opacity-50 flex items-center gap-2"
+        >
+          {isSavingDraft ? (
+            <span className="w-3 h-3 border-2 border-current/30 border-t-current rounded-full animate-spin" />
+          ) : (
+            <FileText size={14} />
+          )}
+          Draft
         </button>
       </div>
     </div>

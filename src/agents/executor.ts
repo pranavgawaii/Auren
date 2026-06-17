@@ -1,4 +1,4 @@
-import { reasonWithGemini } from "@/lib/gemini";
+import { reasonWithAI } from "@/lib/gemini";
 import type { AgentReasoningResult, GmailMessage } from "@/types";
 
 export async function analyzeCommand(
@@ -28,7 +28,7 @@ User Name: ${userName}
 User Email: ${userEmail}
 
 RESOLVED MENTIONS MAP (Use these to resolve clean mentions in the prompt to their actual values):
-- @Pranav Gawai -> pranavgawai1518@gmail.com
+- @Pranav Gawai -> ${process.env.DEMO_REPLY_EMAIL || "demo@tryauren.dev"}
 - @Product Team -> product@example.com
 - github/Auren -> https://github.com/8TEEH/Auren
 - github/skills-introduction-to-github -> https://github.com/8TEEH/skills-introduction-to-github
@@ -61,7 +61,7 @@ If returning a briefing, format it matching:
 }`;
 
   try {
-    const responseText = await reasonWithGemini(systemPrompt, command);
+    const responseText = await reasonWithAI(systemPrompt, command);
     const result = JSON.parse(responseText.trim()) as AgentReasoningResult;
     return result;
   } catch (error) {

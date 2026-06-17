@@ -110,7 +110,13 @@ export function FullCalendarView() {
       });
 
       if (res.success) {
-        toast.success("Event created successfully!");
+        const meetLink = (res as Record<string, unknown>).data && ((res as Record<string, unknown>).data as Record<string, unknown>).meetLink as string | null;
+        const warning = (res as Record<string, unknown>).warning as string | undefined;
+        if (warning === "calendar_sync_failed") {
+          toast.warning("Event saved locally — Google Calendar sync unavailable. Please try again.");
+        } else {
+          toast.success(`Event created${meetLink ? ` · Meet: ${meetLink}` : ''}`);
+        }
         setIsCreateModalOpen(false);
         setNewEventTitle("");
         fetchEvents();
@@ -413,6 +419,15 @@ export function FullCalendarView() {
                               {eDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                               {evt.endAt ? ` - ${new Date(evt.endAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}` : ''}
                             </span>
+                            {(evt as Record<string, unknown>).hangoutLink || (evt as Record<string, unknown>).meetLink ? (
+                              <a
+                                href={((evt as Record<string, unknown>).hangoutLink || (evt as Record<string, unknown>).meetLink) as string}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="mt-1.5 pointer-events-auto"
+                                style={{ fontSize:'11px', color:'#E8593C', fontWeight:600, textDecoration:'none', background:'#FCE0D2', padding:'2px 8px', borderRadius:'4px', display:'inline-block' }}
+                              >🎥 Join Meet</a>
+                            ) : null}
                           </div>
                         </div>
                       );

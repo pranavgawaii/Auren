@@ -6,6 +6,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { UserButton } from "@clerk/nextjs";
 import { AnimatedThemeToggler } from "@/components/ui/animated-theme-toggler";
+import { KeyboardShortcutsModal } from "@/components/auren/keyboard-shortcuts-modal";
 
 export function ClockHistoryIcon({ size = 20, className = "" }: { size?: number; className?: string }) {
   return (
@@ -48,6 +49,7 @@ export function AppShell({
 }: AppShellProps) {
   const isPro = true;
   const [showThemeToggle, setShowThemeToggle] = useState(false);
+  const [showShortcuts, setShowShortcuts] = useState(false);
 
   useEffect(() => {
     const loadSettings = () => {
@@ -67,8 +69,20 @@ export function AppShell({
     };
   }, []);
 
+  // ? key → show shortcuts modal
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      const tag = (e.target as HTMLElement)?.tagName;
+      if (tag === "INPUT" || tag === "TEXTAREA") return;
+      if (e.key === "?") setShowShortcuts(true);
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, []);
+
   return (
     <div className="h-screen bg-white dark:bg-[#383838] font-sans selection:bg-[#E8593C] selection:text-white flex flex-col overflow-hidden relative">
+      <KeyboardShortcutsModal isOpen={showShortcuts} onClose={() => setShowShortcuts(false)} />
       {/* Topbar */}
       <header 
         className="h-[56px] border-b border-[rgba(36,27,20,0.08)] dark:border-[rgba(255,255,255,0.08)] flex items-center justify-between px-6 shrink-0 z-10 bg-[rgba(251,243,236,0.92)] dark:bg-[#2C2C2C]/90 backdrop-blur-md"

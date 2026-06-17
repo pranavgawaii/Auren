@@ -1,4 +1,4 @@
-export async function reasonWithGemini(
+export async function reasonWithAI(
   systemInstruction: string,
   userMessage: string,
   _responseMimeType: "application/json" | "text/plain" = "application/json",

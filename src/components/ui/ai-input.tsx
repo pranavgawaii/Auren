@@ -369,7 +369,7 @@ import Image from "next/image"
 
 // Mentions State
 const MOCK_MENTIONS = [
-  { id: '1', trigger: '@', type: 'contact', label: 'Pranav Gawai', value: '@Pranav Gawai', displayValue: 'pranavgawai1518@gmail.com', icon: '@' },
+  { id: '1', trigger: '@', type: 'contact', label: 'Pranav Gawai', value: '@Pranav Gawai', displayValue: 'demo@tryauren.dev', icon: '@' },
   { id: '2', trigger: '@', type: 'contact', label: 'Product Team', value: '@Product Team', displayValue: 'product@example.com', icon: '@' },
   { id: '3', trigger: '/', type: 'repo', label: 'Auren Frontend', value: 'github/Auren', displayValue: 'github.com/8TEEH/Auren', icon: '/' },
   { id: '4', trigger: '/', type: 'repo', label: 'skills-introduction-to-github', value: 'github/skills-introduction-to-github', displayValue: 'github.com/8TEEH/skills-intro...', icon: '/' },

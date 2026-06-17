@@ -9,6 +9,13 @@ const PrioritySchema = z.object({
 });
 
 export async function POST(req: Request) {
+  // Webhook secret verification (backward-compatible — only enforced if WEBHOOK_SECRET is set)
+  const secret = req.headers.get('x-webhook-secret') || req.headers.get('x-corsair-secret');
+  const expectedSecret = process.env.WEBHOOK_SECRET;
+  if (expectedSecret && secret !== expectedSecret) {
+    return new Response('Unauthorized', { status: 401 });
+  }
+
   try {
     const body = await req.json();
 

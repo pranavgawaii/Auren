@@ -16,6 +16,13 @@ interface CalendarWebhookPayload {
 const MEETING_PREP_WINDOW_MINUTES = 35;
 
 export async function POST(request: NextRequest): Promise<NextResponse> {
+  // Webhook secret verification (backward-compatible)
+  const secret = request.headers.get('x-webhook-secret') || request.headers.get('x-corsair-secret');
+  const expectedSecret = process.env.WEBHOOK_SECRET;
+  if (expectedSecret && secret !== expectedSecret) {
+    return new NextResponse('Unauthorized', { status: 401 });
+  }
+
   try {
     const payload = await request.json() as CalendarWebhookPayload;
 

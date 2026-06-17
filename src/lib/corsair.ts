@@ -14,6 +14,7 @@ import type {
   GitHubReviewPrPayload,
   CorsairResponse,
 } from "@/types";
+import type { CorsairListResult, CorsairSearchResult, CorsairSendResult, CorsairEmailMessage, CorsairCalendarEvent } from "@/types/corsair";
 
 
 export async function getTenant() {
@@ -77,7 +78,7 @@ export async function gmailRead(
 
     const listResult = await tenant.run("gmail.api.messages.list", params);
 
-    const listResultData = listResult as any;
+    const listResultData = listResult as CorsairListResult;
     if (listResultData && listResultData.success === false) {
       return {
         success: false,
@@ -186,7 +187,7 @@ export async function gmailSearch(
   try {
     const tenant = await getTenant();
     const result = await tenant.run("gmail.db.messages.search", { query, limit: 10 });
-    const resultData = result as any;
+    const resultData = result as CorsairSearchResult;
     if (resultData && resultData.success === false) {
       return {
         success: false,
@@ -197,7 +198,7 @@ export async function gmailSearch(
         },
       };
     }
-    const rows = resultData.data as Record<string, unknown>[] || [];
+    const rows = (resultData.data as unknown as Record<string, unknown>[]) || [];
 
     const messages: GmailMessage[] = rows.map((msg) => ({
       id: String(msg.id || ""),
@@ -251,7 +252,7 @@ export async function gmailSend(
     }
 
     const result = await tenant.run("gmail.api.messages.send", runParams);
-    const resultData = result as any;
+    const resultData = result as CorsairSendResult;
     if (resultData && resultData.success === false) {
       return {
         success: false,
@@ -352,7 +353,7 @@ export async function googleCalendarList(): Promise<CorsairResponse<CalendarEven
       limit: 50,
     });
 
-    const resultData = result as any;
+    const resultData = result as CorsairCalendarEvent & { success?: boolean; message?: string; data?: CorsairCalendarEvent[] };
     if (resultData && resultData.success === false) {
       return {
         success: false,
@@ -364,7 +365,7 @@ export async function googleCalendarList(): Promise<CorsairResponse<CalendarEven
       };
     }
 
-    const rows = resultData.data || [];
+    const rows = (resultData.data as unknown as Record<string, unknown>[]) || [];
 
     const events: CalendarEventResult[] = rows.map((evt: Record<string, unknown>) => ({
       id: String(evt.id || ""),
