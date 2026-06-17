@@ -117,8 +117,11 @@ export function ActionConfirmation({
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <div className="w-2 h-2 rounded-full bg-[#E8593C] animate-pulse" />
-            <h3 className="font-sans font-bold text-[16px] text-[#241B14] dark:text-[#F4F4F5] tracking-tight">
-              Auren Plan Confirmation
+            <h3 
+              className="font-bold text-[18px] text-[#241B14] dark:text-[#F4F4F5] tracking-tight"
+              style={{ fontFamily: "Civanel, sans-serif" }}
+            >
+              Execution Plan
             </h3>
           </div>
         </div>

@@ -19,7 +19,8 @@ AVAILABLE TOOLS:
 5. "github_review_pr": Creates a Pull Request review. Requires 'repoUrl', 'pullNumber' (number), 'body' (string), 'event' ("COMMENT"|"APPROVE"|"REQUEST_CHANGES").
 
 CURRENT CONTEXT:
-Current Date/Time: ${new Date().toLocaleString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit', timeZoneName: 'short' })}
+Current Date/Time (Asia/Kolkata): ${new Date().toLocaleString('en-US', { timeZone: 'Asia/Kolkata', weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit', timeZoneName: 'short' })}
+NOTE: The user is in IST (UTC+05:30). All calendar 'startAt' and 'endAt' ISO 8601 strings MUST use the +05:30 timezone offset (e.g. "2026-06-18T10:00:00+05:30"). Do NOT use "Z" if the user implies their local time.
 ${emailContext ? `Currently reading email from: ${emailContext.from}
 Subject: ${emailContext.subject}
 Snippet: ${emailContext.snippet}
@@ -28,7 +29,7 @@ User Name: ${userName}
 User Email: ${userEmail}
 
 RESOLVED MENTIONS MAP (Use these to resolve clean mentions in the prompt to their actual values):
-- @Pranav Gawai -> ${process.env.DEMO_REPLY_EMAIL || "demo@tryauren.dev"}
+- @Pranav Gawai -> pranavgawai1518@gmail.com
 - @Product Team -> product@example.com
 - github/Auren -> https://github.com/8TEEH/Auren
 - github/skills-introduction-to-github -> https://github.com/8TEEH/skills-introduction-to-github

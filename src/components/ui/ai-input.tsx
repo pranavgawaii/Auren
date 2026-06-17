@@ -384,7 +384,7 @@ function InputForm({ inputRef, onSuccess, onExecute, emails = [] }: { inputRef: 
       { id: '4', trigger: '/', type: 'repo', label: 'skills-introduction-to-github', value: 'github/skills-introduction-to-github', displayValue: 'github.com/8TEEH/skills-intro...', icon: '/' },
     ]
     if (!emails || emails.length === 0) {
-      baseMentions.push({ id: '1', trigger: '@', type: 'contact', label: 'Pranav Gawai', value: '@Pranav Gawai', displayValue: 'demo@tryauren.dev', icon: '@' })
+      baseMentions.push({ id: '1', trigger: '@', type: 'contact', label: 'Pranav Gawai', value: '@Pranav Gawai', displayValue: 'pranavgawai1518@gmail.com', icon: '@' })
       return baseMentions
     }
     const contacts = new Map()
@@ -549,6 +549,12 @@ function InputForm({ inputRef, onSuccess, onExecute, emails = [] }: { inputRef: 
     e.preventDefault()
     const val = inputRef.current?.value
     if (val) {
+      if (inputRef.current) {
+        inputRef.current.value = ""
+        setInputValue("")
+        inputRef.current.style.height = 'auto'
+      }
+
       // Add user message & show typing indicator
       const currentHistory = [...chatHistory]
       setChatHistory(prev => [...prev, {role: "user", content: val}, {role: "agent", isTyping: true}])
@@ -587,11 +593,6 @@ function InputForm({ inputRef, onSuccess, onExecute, emails = [] }: { inputRef: 
            next[next.length - 1] = {role: "agent", content: "Failed to process command. Please try again."}
            return next;
         })
-      }
-      
-      if (inputRef.current) {
-        inputRef.current.value = ""
-        setInputValue("")
       }
     }
     onSuccess()
