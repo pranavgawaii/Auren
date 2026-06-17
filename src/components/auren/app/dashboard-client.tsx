@@ -373,7 +373,7 @@ export function DashboardClient() {
             showToast.success("Actions executed successfully!");
             setIsExecuting(false);
             setIsConfirmOpen(false);
-            setTimeout(() => window.location.reload(), 1500); // Reload to sync state after toast
+            setTimeout(() => router.refresh(), 1500); // Reload to sync state after toast without unmounting client
           } else {
             showToast.error(`Execution failed: ${res.error || "Unknown error"}`);
           }

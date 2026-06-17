@@ -161,6 +161,7 @@ export function AppShell({
             <button 
               onClick={() => {
                 localStorage.setItem("auren_default_settings_tab", "billing");
+                window.dispatchEvent(new CustomEvent("auren-open-billing"));
                 if (onViewChange) onViewChange("settings");
               }}
               className="hidden md:flex h-[28px] px-3 bg-[rgba(36,27,20,0.04)] dark:bg-[rgba(255,255,255,0.08)] border border-[rgba(36,27,20,0.08)] dark:border-[rgba(255,255,255,0.08)] rounded-full items-center justify-center font-sans font-medium text-[11px] text-[rgba(36,27,20,0.6)] dark:text-[rgba(255,255,255,0.6)] hover:bg-[rgba(36,27,20,0.08)] dark:hover:bg-[rgba(255,255,255,0.12)] hover:text-[#241B14] dark:hover:text-[#F4F4F5] transition-colors"

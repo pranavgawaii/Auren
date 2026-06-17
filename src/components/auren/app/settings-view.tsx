@@ -141,10 +141,18 @@ export function SettingsView() {
       const isDarkNow = document.documentElement.classList.contains("dark");
       const resolvedTheme = isDarkNow ? "dark" : "light";
       // Only update localStorage if we don't have a saved value yet
+      // Only update localStorage if we don't have a saved value yet
       if (!localStorage.getItem("auren_theme")) {
         localStorage.setItem("auren_theme", resolvedTheme);
       }
       setTheme(resolvedTheme);
+      
+      // Auto-route to specific tab if requested (e.g. from Upgrade button)
+      const defaultTab = localStorage.getItem("auren_default_settings_tab");
+      if (defaultTab) {
+        setActiveTab(defaultTab as any);
+        localStorage.removeItem("auren_default_settings_tab");
+      }
     }
 
     if (user) {
@@ -154,7 +162,15 @@ export function SettingsView() {
 
     const handleFocus = () => loadStatus();
     window.addEventListener("focus", handleFocus);
-    return () => window.removeEventListener("focus", handleFocus);
+    
+    // Custom event listener for cross-component routing (from Upgrade button)
+    const handleOpenBilling = () => setActiveTab("billing");
+    window.addEventListener("auren-open-billing", handleOpenBilling);
+    
+    return () => {
+      window.removeEventListener("focus", handleFocus);
+      window.removeEventListener("auren-open-billing", handleOpenBilling);
+    };
   }, [user]);
 
   const handleConnect = async (service: "google" | "github") => {

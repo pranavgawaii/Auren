@@ -19,7 +19,7 @@ export async function reasonWithAI(
         headers: {
           "Authorization": `Bearer ${OPENROUTER_API_KEY}`,
           "Content-Type": "application/json",
-          "HTTP-Referer": "https://auren.app",
+          "HTTP-Referer": "https://tryauren.in",
           "X-Title": "Auren",
         },
         body: JSON.stringify({
