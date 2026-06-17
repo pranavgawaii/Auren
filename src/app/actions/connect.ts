@@ -44,7 +44,9 @@ export async function getConnectedGithubUsername(): Promise<string | null> {
     const tenant = await getTenant();
     // Use Corsair's proxy to Octokit to get the authenticated user's profile
     const result: any = await tenant.run("github.api.users.getAuthenticated", {});
-    if (result && result.login) {
+    if (result && result.data && result.data.login) {
+      return result.data.login;
+    } else if (result && result.login) {
       return result.login;
     }
     return null;

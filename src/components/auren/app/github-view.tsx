@@ -17,50 +17,50 @@ export function GitHubIntegrationView() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    async function fetchGithubData() {
-      setIsLoading(true);
-      setError(null);
-      
-      try {
-        const status = await checkConnectionStatus();
-        setIsConnected(status.github);
-        
-        if (!status.github) {
-          setIsLoading(false);
-          return;
-        }
-
-        // Fetch the REAL authenticated username from the connected Corsair account
-        const realGithubUsername = await getConnectedGithubUsername();
-        const usernameToFetch = realGithubUsername || user?.username || "8teen";
-        setConnectedUsername(usernameToFetch);
-
-        const [repoData, prRes, issueRes] = await Promise.all([
-          getConnectedGithubRepos(),
-          fetch(`https://api.github.com/search/issues?q=is:pr+is:open+author:${usernameToFetch}`),
-          fetch(`https://api.github.com/search/issues?q=is:issue+is:open+assignee:${usernameToFetch}`)
-        ]);
-
-        if (!prRes.ok || !issueRes.ok) throw new Error("Failed to fetch live data from GitHub. Rate limit exceeded.");
-
-        const prData = await prRes.json();
-        const issueData = await issueRes.json();
-
-        setRepositories(Array.isArray(repoData) ? repoData : []);
-        setPullRequests(prData.items || []);
-        setIssues(issueData.items || []);
-      } catch (err: any) {
-        setError(err.message);
-      } finally {
-        setIsLoading(false);
-      }
-    }
+  const fetchGithubData = React.useCallback(async () => {
+    setIsLoading(true);
+    setError(null);
     
+    try {
+      const status = await checkConnectionStatus();
+      setIsConnected(status.github);
+      
+      if (!status.github) {
+        setIsLoading(false);
+        return;
+      }
+
+      // Fetch the REAL authenticated username from the connected Corsair account
+      const realGithubUsername = await getConnectedGithubUsername();
+      const usernameToFetch = realGithubUsername || user?.username || "8teen";
+      setConnectedUsername(usernameToFetch);
+
+      const [repoData, prRes, issueRes] = await Promise.all([
+        getConnectedGithubRepos(),
+        fetch(`https://api.github.com/search/issues?q=is:pr+is:open+author:${usernameToFetch}`),
+        fetch(`https://api.github.com/search/issues?q=is:issue+is:open+assignee:${usernameToFetch}`)
+      ]);
+
+      if (!prRes.ok || !issueRes.ok) throw new Error("Failed to fetch live data from GitHub. Rate limit exceeded.");
+
+      const prData = await prRes.json();
+      const issueData = await issueRes.json();
+
+      setRepositories(Array.isArray(repoData) ? repoData : []);
+      setPullRequests(prData.items || []);
+      setIssues(issueData.items || []);
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [user]);
+
+  useEffect(() => {
     if (user !== undefined) {
       fetchGithubData();
     }
-  }, [user]);
+  }, [user, fetchGithubData]);
 
   const timeAgo = (dateStr: string) => {
     if (!dateStr) return "";
@@ -116,8 +116,13 @@ export function GitHubIntegrationView() {
             </div>
           </div>
           <div className="flex items-center gap-3">
-            <button className="h-[36px] px-4 bg-white dark:bg-[#383838] border border-[rgba(36,27,20,0.12)] dark:border-[rgba(255,255,255,0.12)] text-[#241B14] dark:text-[#F4F4F5] rounded-[8px] font-sans font-medium text-[13px] flex items-center gap-2 hover:bg-[#FAF8F5] dark:bg-[#2C2C2C] shadow-sm transition-colors">
-              Sync Now
+            <button 
+              onClick={() => fetchGithubData()}
+              disabled={isLoading}
+              className="h-[36px] px-4 bg-white dark:bg-[#383838] border border-[rgba(36,27,20,0.12)] dark:border-[rgba(255,255,255,0.12)] text-[#241B14] dark:text-[#F4F4F5] rounded-[8px] font-sans font-medium text-[13px] flex items-center gap-2 hover:bg-[#FAF8F5] dark:bg-[#2C2C2C] shadow-sm transition-colors disabled:opacity-50"
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={isLoading ? "animate-spin" : ""}><path d="M21 2v6h-6"/><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/><path d="M3 22v-6h6"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16"/></svg>
+              {isLoading ? "Syncing..." : "Sync Now"}
             </button>
           </div>
         </div>
