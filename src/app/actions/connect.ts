@@ -39,6 +39,43 @@ export async function checkConnectionStatus(): Promise<{ google: boolean; github
   }
 }
 
+export async function getConnectedGithubUsername(): Promise<string | null> {
+  try {
+    const tenant = await getTenant();
+    // Use Corsair's proxy to Octokit to get the authenticated user's profile
+    const result: any = await tenant.run("github.api.users.getAuthenticated", {});
+    if (result && result.login) {
+      return result.login;
+    }
+    return null;
+  } catch (error) {
+    console.error("Failed to fetch connected github username:", error);
+    return null;
+  }
+}
+
+export async function getConnectedGithubRepos(): Promise<any[]> {
+  try {
+    const tenant = await getTenant();
+    // Securely fetch repositories for the connected user using Corsair backend
+    const result: any = await tenant.run("github.api.repos.listForAuthenticatedUser", {
+      sort: "updated",
+      per_page: 6
+    });
+    if (Array.isArray(result)) {
+      return result;
+    }
+    // Check if data is nested
+    if (result && Array.isArray(result.data)) {
+      return result.data;
+    }
+    return [];
+  } catch (error) {
+    console.error("Failed to fetch connected github repos:", error);
+    return [];
+  }
+}
+
 export async function disconnectService(service: "google" | "github"): Promise<{ success: boolean; error?: string }> {
   try {
     const tenant = await getTenant();

@@ -262,9 +262,29 @@ export function MorphPanel({ onExecute, isAgentLoading = false, emails = [] }: M
         triggerClose()
       }
     }
+
+    function handleOpenEvent(e: Event) {
+      const customEvent = e as CustomEvent;
+      triggerOpen()
+      if (customEvent.detail?.text) {
+        setTimeout(() => {
+          if (textareaRef.current) {
+            textareaRef.current.value = customEvent.detail.text;
+            // The setter is handled directly on DOM to prevent state sync issues immediately
+            textareaRef.current.dispatchEvent(new Event('input', { bubbles: true }));
+            textareaRef.current.focus();
+          }
+        }, 50);
+      }
+    }
+
     document.addEventListener("mousedown", clickOutsideHandler)
-    return () => document.removeEventListener("mousedown", clickOutsideHandler)
-  }, [showForm, triggerClose])
+    document.addEventListener("open-ai-chat", handleOpenEvent)
+    return () => {
+      document.removeEventListener("mousedown", clickOutsideHandler)
+      document.removeEventListener("open-ai-chat", handleOpenEvent)
+    }
+  }, [showForm, triggerClose, triggerOpen])
 
   const ctx = React.useMemo(
     () => ({ showForm, successFlag, triggerOpen, triggerClose, isFullscreen, setIsFullscreen, isAgentLoading, startResize, dragControls }),

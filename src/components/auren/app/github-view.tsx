@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { GitPullRequest, CircleDot, MessageSquare, ExternalLink, BookOpen, Lock } from "lucide-react";
-import { checkConnectionStatus, getConnectedGithubUsername } from "@/app/actions/connect";
+import { checkConnectionStatus, getConnectedGithubUsername, getConnectedGithubRepos } from "@/app/actions/connect";
 import { useRouter } from "next/navigation";
 import { useUser } from "@clerk/nextjs";
 
@@ -36,15 +36,14 @@ export function GitHubIntegrationView() {
         const usernameToFetch = realGithubUsername || user?.username || "8teen";
         setConnectedUsername(usernameToFetch);
 
-        const [repoRes, prRes, issueRes] = await Promise.all([
-          fetch(`https://api.github.com/users/${usernameToFetch}/repos?sort=updated&per_page=6`),
+        const [repoData, prRes, issueRes] = await Promise.all([
+          getConnectedGithubRepos(),
           fetch(`https://api.github.com/search/issues?q=is:pr+is:open+author:${usernameToFetch}`),
           fetch(`https://api.github.com/search/issues?q=is:issue+is:open+assignee:${usernameToFetch}`)
         ]);
 
-        if (!repoRes.ok || !prRes.ok || !issueRes.ok) throw new Error("Failed to fetch live data from GitHub. Rate limit exceeded.");
+        if (!prRes.ok || !issueRes.ok) throw new Error("Failed to fetch live data from GitHub. Rate limit exceeded.");
 
-        const repoData = await repoRes.json();
         const prData = await prRes.json();
         const issueData = await issueRes.json();
 
@@ -69,6 +68,11 @@ export function GitHubIntegrationView() {
     const hours = Math.floor(diff / (1000 * 60 * 60));
     if (hours < 24) return `${hours} hours ago`;
     return `${Math.floor(hours / 24)} days ago`;
+  };
+
+  const openAskAI = (text: string) => {
+    const event = new CustomEvent("open-ai-chat", { detail: { text } });
+    document.dispatchEvent(event);
   };
 
   if (isConnected === false && !isLoading) {
@@ -208,34 +212,14 @@ export function GitHubIntegrationView() {
                 {/* Quick Actions Row */}
                 <div className="flex items-center gap-2 pl-9 mt-1">
                   <button 
-                    onClick={() => {
-                      const event = new KeyboardEvent("keydown", { key: "k", metaKey: true, bubbles: true });
-                      document.dispatchEvent(event);
-                      setTimeout(() => {
-                        const input = document.querySelector('input[placeholder="Type a command..."]') as HTMLInputElement;
-                        if (input) {
-                          input.value = `Approve PR #${pr.number} in ${pr.repository_url.split('/').slice(-2).join('/')} with comment "LGTM!"`;
-                          input.dispatchEvent(new Event('input', { bubbles: true }));
-                        }
-                      }, 100);
-                    }}
+                    onClick={() => openAskAI(`Approve PR #${pr.number} in ${pr.repository_url.split('/').slice(-2).join('/')} with comment "LGTM!"`)}
                     className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-[rgba(36,27,20,0.08)] dark:border-[rgba(255,255,255,0.08)] bg-white dark:bg-[#383838] hover:border-[#E8593C]/30 hover:bg-[#E8593C]/5 text-[11.5px] font-sans font-medium text-[rgba(36,27,20,0.7)] dark:text-[rgba(255,255,255,0.7)] hover:text-[#E8593C] transition-all shadow-[0_1px_2px_rgba(36,27,20,0.02)]"
                   >
                     <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
                     Approve PR
                   </button>
                   <button 
-                    onClick={() => {
-                      const event = new KeyboardEvent("keydown", { key: "k", metaKey: true, bubbles: true });
-                      document.dispatchEvent(event);
-                      setTimeout(() => {
-                        const input = document.querySelector('input[placeholder="Type a command..."]') as HTMLInputElement;
-                        if (input) {
-                          input.value = `Draft a review comment for PR #${pr.number} in ${pr.repository_url.split('/').slice(-2).join('/')} saying...`;
-                          input.dispatchEvent(new Event('input', { bubbles: true }));
-                        }
-                      }, 100);
-                    }}
+                    onClick={() => openAskAI(`Draft a review comment for PR #${pr.number} in ${pr.repository_url.split('/').slice(-2).join('/')} saying...`)}
                     className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-[rgba(36,27,20,0.08)] dark:border-[rgba(255,255,255,0.08)] bg-white dark:bg-[#383838] hover:border-[#E8593C]/30 hover:bg-[#E8593C]/5 text-[11.5px] font-sans font-medium text-[rgba(36,27,20,0.7)] dark:text-[rgba(255,255,255,0.7)] hover:text-[#E8593C] transition-all shadow-[0_1px_2px_rgba(36,27,20,0.02)]"
                   >
                     <MessageSquare size={11} className="mt-[1px]" />
@@ -291,34 +275,14 @@ export function GitHubIntegrationView() {
                 {/* Quick Actions Row */}
                 <div className="flex items-center gap-2 pl-9 mt-1">
                   <button 
-                    onClick={() => {
-                      const event = new KeyboardEvent("keydown", { key: "k", metaKey: true, bubbles: true });
-                      document.dispatchEvent(event);
-                      setTimeout(() => {
-                        const input = document.querySelector('input[placeholder="Type a command..."]') as HTMLInputElement;
-                        if (input) {
-                          input.value = `Close issue #${issue.number} in ${issue.repository_url.split('/').slice(-2).join('/')} as completed`;
-                          input.dispatchEvent(new Event('input', { bubbles: true }));
-                        }
-                      }, 100);
-                    }}
+                    onClick={() => openAskAI(`Close issue #${issue.number} in ${issue.repository_url.split('/').slice(-2).join('/')} as completed`)}
                     className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-[rgba(36,27,20,0.08)] dark:border-[rgba(255,255,255,0.08)] bg-white dark:bg-[#383838] hover:border-[#E8593C]/30 hover:bg-[#E8593C]/5 text-[11.5px] font-sans font-medium text-[rgba(36,27,20,0.7)] dark:text-[rgba(255,255,255,0.7)] hover:text-[#E8593C] transition-all shadow-[0_1px_2px_rgba(36,27,20,0.02)]"
                   >
                     <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
                     Close Issue
                   </button>
                   <button 
-                    onClick={() => {
-                      const event = new KeyboardEvent("keydown", { key: "k", metaKey: true, bubbles: true });
-                      document.dispatchEvent(event);
-                      setTimeout(() => {
-                        const input = document.querySelector('input[placeholder="Type a command..."]') as HTMLInputElement;
-                        if (input) {
-                          input.value = `Assign issue #${issue.number} in ${issue.repository_url.split('/').slice(-2).join('/')} to me`;
-                          input.dispatchEvent(new Event('input', { bubbles: true }));
-                        }
-                      }, 100);
-                    }}
+                    onClick={() => openAskAI(`Assign issue #${issue.number} in ${issue.repository_url.split('/').slice(-2).join('/')} to me`)}
                     className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-[rgba(36,27,20,0.08)] dark:border-[rgba(255,255,255,0.08)] bg-white dark:bg-[#383838] hover:border-[#E8593C]/30 hover:bg-[#E8593C]/5 text-[11.5px] font-sans font-medium text-[rgba(36,27,20,0.7)] dark:text-[rgba(255,255,255,0.7)] hover:text-[#E8593C] transition-all shadow-[0_1px_2px_rgba(36,27,20,0.02)]"
                   >
                     <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" x2="19" y1="8" y2="14"/><line x1="22" x2="16" y1="11" y2="11"/></svg>
@@ -339,34 +303,14 @@ export function GitHubIntegrationView() {
             </div>
             <div className="flex items-center gap-3">
               <button 
-                onClick={() => {
-                  const event = new KeyboardEvent("keydown", { key: "k", metaKey: true, bubbles: true });
-                  document.dispatchEvent(event);
-                  setTimeout(() => {
-                    const input = document.querySelector('input[placeholder="Type a command..."]') as HTMLInputElement;
-                    if (input) {
-                      input.value = `Create a new issue in ${connectedUsername || 'my'}/repository...`;
-                      input.dispatchEvent(new Event('input', { bubbles: true }));
-                    }
-                  }, 100);
-                }}
+                onClick={() => openAskAI(`Create a new issue in ${connectedUsername || 'my'}/repository...`)}
                 className="h-[36px] px-4 bg-white dark:bg-[#383838] border border-[rgba(36,27,20,0.12)] dark:border-[rgba(255,255,255,0.12)] text-[#241B14] dark:text-[#F4F4F5] rounded-[8px] font-sans font-medium text-[13px] flex items-center gap-2 hover:border-[#E8593C]/30 hover:text-[#E8593C] shadow-[0_1px_2px_rgba(36,27,20,0.02)] transition-all"
               >
                 <CircleDot size={14} />
                 Create Issue
               </button>
               <button 
-                onClick={() => {
-                  const event = new KeyboardEvent("keydown", { key: "k", metaKey: true, bubbles: true });
-                  document.dispatchEvent(event);
-                  setTimeout(() => {
-                    const input = document.querySelector('input[placeholder="Type a command..."]') as HTMLInputElement;
-                    if (input) {
-                      input.value = `Draft a new pull request for the latest changes in ${connectedUsername || 'my'}/repository...`;
-                      input.dispatchEvent(new Event('input', { bubbles: true }));
-                    }
-                  }, 100);
-                }}
+                onClick={() => openAskAI(`Draft a new pull request for the latest changes in ${connectedUsername || 'my'}/repository...`)}
                 className="h-[36px] px-4 bg-white dark:bg-[#383838] border border-[rgba(36,27,20,0.12)] dark:border-[rgba(255,255,255,0.12)] text-[#241B14] dark:text-[#F4F4F5] rounded-[8px] font-sans font-medium text-[13px] flex items-center gap-2 hover:border-[#E8593C]/30 hover:text-[#E8593C] shadow-[0_1px_2px_rgba(36,27,20,0.02)] transition-all"
               >
                 <GitPullRequest size={14} />
