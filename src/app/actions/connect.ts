@@ -44,6 +44,8 @@ export async function getConnectedGithubUsername(): Promise<string | null> {
     const tenant = await getTenant();
     // Use Corsair's proxy to Octokit to get the authenticated user's profile
     const result: any = await tenant.run("github.api.users.getAuthenticated", {});
+    console.log("[DEBUG] getConnectedGithubUsername result:", JSON.stringify(result));
+    
     if (result && result.data && result.data.login) {
       return result.data.login;
     } else if (result && result.login) {
@@ -56,6 +58,11 @@ export async function getConnectedGithubUsername(): Promise<string | null> {
   }
 }
 
+export async function getDefaultGithubUsername(): Promise<string> {
+  const defaultRepo = process.env.GITHUB_DEFAULT_REPO || "pranavgawaii/Auren";
+  return defaultRepo.split("/")[0];
+}
+
 export async function getConnectedGithubRepos(): Promise<any[]> {
   try {
     const tenant = await getTenant();
@@ -64,6 +71,8 @@ export async function getConnectedGithubRepos(): Promise<any[]> {
       sort: "updated",
       per_page: 6
     });
+    console.log("[DEBUG] getConnectedGithubRepos result type:", typeof result, Array.isArray(result));
+    
     if (Array.isArray(result)) {
       return result;
     }
@@ -71,6 +80,8 @@ export async function getConnectedGithubRepos(): Promise<any[]> {
     if (result && Array.isArray(result.data)) {
       return result.data;
     }
+    
+    console.log("[DEBUG] getConnectedGithubRepos strange result:", JSON.stringify(result).substring(0, 200));
     return [];
   } catch (error) {
     console.error("Failed to fetch connected github repos:", error);

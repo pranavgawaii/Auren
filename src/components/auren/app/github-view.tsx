@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { GitPullRequest, CircleDot, MessageSquare, ExternalLink, BookOpen, Lock } from "lucide-react";
-import { checkConnectionStatus } from "@/app/actions/connect";
+import { checkConnectionStatus, getDefaultGithubUsername } from "@/app/actions/connect";
 import { useRouter } from "next/navigation";
 import { useUser } from "@clerk/nextjs";
 
@@ -32,7 +32,8 @@ export function GitHubIntegrationView() {
 
       // Retrieve GitHub username directly from Clerk's linked OAuth accounts
       const githubAccount = user?.externalAccounts?.find(a => (a.provider as string) === "oauth_github" || (a.provider as string) === "github");
-      const usernameToFetch = githubAccount?.username || user?.username || "8TEEN";
+      const defaultUsername = await getDefaultGithubUsername();
+      const usernameToFetch = githubAccount?.username || defaultUsername;
       setConnectedUsername(usernameToFetch);
 
       const [repoRes, prRes, issueRes] = await Promise.all([
