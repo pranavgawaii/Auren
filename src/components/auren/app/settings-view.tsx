@@ -13,6 +13,7 @@ import {
   Check,
   ChevronRight
 } from "lucide-react";
+import { showToast } from "@/components/ui/premium-toast";
 import { checkConnectionStatus, getConnectUrl, disconnectService } from "@/app/actions/connect";
 import { useUser } from "@clerk/nextjs";
 import Image from "next/image";
@@ -162,7 +163,7 @@ export function SettingsView() {
     if (res.success && res.url) {
       window.open(res.url, "_blank");
     } else {
-      alert(res.error || `Failed to connect ${service}`);
+      showToast.error(res.error || `Failed to connect ${service}`);
     }
     setLoading((prev) => ({ ...prev, [service]: false }));
   };
@@ -176,7 +177,7 @@ export function SettingsView() {
     if (res.success) {
       await loadStatus();
     } else {
-      alert(res.error || `Failed to disconnect ${service}`);
+      showToast.error(res.error || `Failed to disconnect ${service}`);
     }
     setLoading((prev) => ({ ...prev, [service]: false }));
   };
@@ -187,7 +188,7 @@ export function SettingsView() {
     localStorage.setItem("auren_timezone", timezone);
     localStorage.setItem("auren_show_topbar_toggle", showTopbarToggle.toString());
     window.dispatchEvent(new Event("auren_preferences_updated"));
-    alert("Preferences updated!");
+    showToast.success("Preferences updated!");
   };
 
   const handleThemeChange = (newTheme: "light" | "dark") => {
@@ -206,9 +207,9 @@ export function SettingsView() {
     try {
       setUpdatingProfile(true);
       await user.update({ firstName, lastName });
-      alert("Profile updated!");
+      showToast.success("Profile updated!");
     } catch (err: any) {
-      alert(err.message || "Failed to update profile name.");
+      showToast.error(err.message || "Failed to update profile name.");
     } finally {
       setUpdatingProfile(false);
     }
@@ -220,9 +221,9 @@ export function SettingsView() {
     try {
       setUploadingAvatar(true);
       await user.setProfileImage({ file });
-      alert("Avatar updated successfully!");
+      showToast.success("Avatar updated successfully!");
     } catch (err: any) {
-      alert(err.message || "Failed to upload avatar.");
+      showToast.error(err.message || "Failed to upload avatar.");
     } finally {
       setUploadingAvatar(false);
     }

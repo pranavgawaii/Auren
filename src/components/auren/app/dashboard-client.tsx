@@ -25,6 +25,7 @@ import { MorphPanel } from "@/components/ui/ai-input";
 import { motion, AnimatePresence } from "framer-motion";
 import { BriefingCard } from "@/components/ui/briefing-card";
 import { ShiningText } from "@/components/ui/shining-text";
+import { showToast } from "@/components/ui/premium-toast";
 
 export function DashboardClient() {
   const { user, isLoaded } = useUser();
@@ -198,7 +199,7 @@ export function DashboardClient() {
       }
       return res.data;
     } else {
-      alert(`Agent error: ${res.error || "Failed to process command."}`);
+      showToast.error(`Agent error: ${res.error || "Failed to process command."}`);
       return null;
     }
   };
@@ -356,10 +357,12 @@ export function DashboardClient() {
           setIsConfirmOpen(false);
           
           if (res.success) {
-            alert("Actions executed successfully!");
-            window.location.reload(); // Refresh the entire app to sync both Email and Calendar data
+            showToast.success("Actions executed successfully!");
+            setIsExecuting(false);
+            setIsConfirmOpen(false);
+            setTimeout(() => window.location.reload(), 1500); // Reload to sync state after toast
           } else {
-            alert(`Execution failed: ${res.error || "Unknown error"}`);
+            showToast.error(`Execution failed: ${res.error || "Unknown error"}`);
           }
         }} 
         onCancel={() => setIsConfirmOpen(false)}
@@ -371,7 +374,7 @@ export function DashboardClient() {
           if (res.success && res.data) {
             setAgentPlan(res.data);
           } else {
-            alert("Failed to refine plan.");
+            showToast.error("Failed to refine plan.");
           }
           setIsAgentLoading(false);
         }}

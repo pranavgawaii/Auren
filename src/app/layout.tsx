@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import localFont from "next/font/local";
 import "./globals.css";
 import { cn } from "@/lib/utils";
-import { Toaster } from "@/components/ui/toaster";
+import { Toaster } from "sonner";
 import { Inter, Plus_Jakarta_Sans, JetBrains_Mono } from "next/font/google";
 
 const inter = Inter({
@@ -71,7 +71,7 @@ export default function RootLayout({
         >
           <SmoothScroll />
           {children}
-          <Toaster />
+          <Toaster position="top-center" />
           <Analytics />
         </body>
       </html>

@@ -7,6 +7,7 @@ import { cn } from "@/lib/utils";
 import { useRouter } from "next/navigation";
 import { useUser } from "@clerk/nextjs";
 import { getConnectUrl, checkConnectionStatus } from "@/app/actions/connect";
+import { showToast } from "@/components/ui/premium-toast";
 
 export default function OnboardingPage() {
   const router = useRouter();
@@ -51,7 +52,7 @@ export default function OnboardingPage() {
       // Open the OAuth screen in a new tab so the main app page stays open
       window.open(res.url, "_blank");
     } else {
-      alert(res.error || "Failed to connect.");
+      showToast.error(res.error || "Failed to connect.");
       setConnecting((prev) => ({ ...prev, [service]: false }));
     }
   };

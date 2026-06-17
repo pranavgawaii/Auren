@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { getAdminAnalytics, getSystemStatus, toggleAurenPro, AdminUser } from "@/app/actions/admin";
+import { showToast } from "@/components/ui/premium-toast";
 import { Loader2, Users, BarChart2, Search, ChevronRight } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
@@ -30,7 +31,7 @@ export default function AdminWorkspace() {
     setIsToggling(userId);
     const res = await toggleAurenPro(userId, !currentStatus);
     if (res.success) await loadData();
-    else alert(res.error);
+    else showToast.error(res.error || "Failed");
     setIsToggling(null);
   };
 
