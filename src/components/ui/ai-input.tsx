@@ -186,7 +186,6 @@ interface ContextShape {
   isFullscreen: boolean
   setIsFullscreen: (val: boolean) => void
   isAgentLoading: boolean
-  startResize: (e: React.MouseEvent) => void
   dragControls: any
 }
 
@@ -208,8 +207,6 @@ export function MorphPanel({ onExecute, isAgentLoading = false, emails = [] }: M
   const [successFlag, setSuccessFlag] = React.useState(false)
 
   const [isFullscreen, setIsFullscreen] = React.useState(false)
-  const [panelSize, setPanelSize] = React.useState({ width: 400, height: 440 })
-  const [isResizing, setIsResizing] = React.useState(false)
 
   const triggerClose = React.useCallback(() => {
     setShowForm(false)
@@ -229,33 +226,6 @@ export function MorphPanel({ onExecute, isAgentLoading = false, emails = [] }: M
     setTimeout(() => setSuccessFlag(false), 1500)
   }, [])
 
-  const startResize = React.useCallback((e: React.MouseEvent) => {
-    e.preventDefault();
-    setIsResizing(true);
-    const startX = e.clientX;
-    const startY = e.clientY;
-    const startWidth = panelSize.width;
-    const startHeight = panelSize.height;
-
-    const doResize = (moveEvent: MouseEvent) => {
-      const deltaX = startX - moveEvent.clientX;
-      const deltaY = startY - moveEvent.clientY;
-      setPanelSize({
-        width: Math.max(300, Math.min(1000, startWidth + deltaX)),
-        height: Math.max(150, Math.min(800, startHeight + deltaY)),
-      });
-    };
-
-    const stopResize = () => {
-      setIsResizing(false);
-      document.removeEventListener("mousemove", doResize);
-      document.removeEventListener("mouseup", stopResize);
-    };
-
-    document.addEventListener("mousemove", doResize);
-    document.addEventListener("mouseup", stopResize);
-  }, [panelSize]);
-
   React.useEffect(() => {
     function clickOutsideHandler(e: MouseEvent) {
       if (wrapperRef.current && !wrapperRef.current.contains(e.target as Node) && showForm) {
@@ -267,8 +237,8 @@ export function MorphPanel({ onExecute, isAgentLoading = false, emails = [] }: M
   }, [showForm, triggerClose])
 
   const ctx = React.useMemo(
-    () => ({ showForm, successFlag, triggerOpen, triggerClose, isFullscreen, setIsFullscreen, isAgentLoading, startResize, dragControls }),
-    [showForm, successFlag, triggerOpen, triggerClose, isFullscreen, isAgentLoading, startResize, dragControls]
+    () => ({ showForm, successFlag, triggerOpen, triggerClose, isFullscreen, setIsFullscreen, isAgentLoading, dragControls }),
+    [showForm, successFlag, triggerOpen, triggerClose, isFullscreen, isAgentLoading, dragControls]
   )
 
   return (
@@ -284,10 +254,18 @@ export function MorphPanel({ onExecute, isAgentLoading = false, emails = [] }: M
         dragListener={false}
         dragMomentum={false}
         initial={false}
-        animate={{
-          width: showForm ? (isFullscreen ? "80vw" : panelSize.width) : 140, // compact size when closed
-          height: showForm ? (isFullscreen ? "80vh" : panelSize.height) : 44,
-          borderRadius: showForm ? 14 : 22,
+        animate={showForm ? { 
+          width: isFullscreen ? '100vw' : 440, 
+          height: isFullscreen ? '100vh' : Math.min(600, typeof window !== 'undefined' ? window.innerHeight - 100 : 600), 
+          borderRadius: isFullscreen ? 0 : 24,
+          opacity: 1, 
+          scale: 1,
+          pointerEvents: 'auto',
+          transformOrigin: 'bottom right'
+        } : {
+          width: 140,
+          height: 44,
+          borderRadius: 22,
         }}
         transition={{
           type: "spring",
@@ -369,7 +347,7 @@ import { useUser } from "@clerk/nextjs"
 import Image from "next/image"
 
 function InputForm({ inputRef, onSuccess, onExecute, emails = [] }: { inputRef: React.RefObject<HTMLTextAreaElement>; onSuccess: () => void; onExecute: (cmd: string, history?: any[]) => Promise<any>; emails?: any[] }) {
-  const { triggerClose, showForm, isFullscreen, setIsFullscreen, isAgentLoading, startResize, dragControls } = useFormContext()
+  const { triggerClose, showForm, isFullscreen, setIsFullscreen, isAgentLoading, dragControls } = useFormContext()
   const btnRef = React.useRef<HTMLButtonElement>(null)
   const { user } = useUser()
 
@@ -667,13 +645,7 @@ function InputForm({ inputRef, onSuccess, onExecute, emails = [] }: { inputRef: 
     >
       <AnimatePresence>
         {showForm && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ type: "spring", stiffness: 550 / SPEED_FACTOR, damping: 45, mass: 0.7 }}
-            className="flex h-full flex-col p-1 relative"
-          >
+          <div className="absolute inset-0 flex flex-col p-4 z-20 h-full overflow-hidden opacity-0 animate-in fade-in duration-300 delay-150">
             <div 
               className="flex justify-between py-1 relative shrink-0 cursor-grab active:cursor-grabbing"
               onPointerDown={(e) => {
@@ -683,17 +655,6 @@ function InputForm({ inputRef, onSuccess, onExecute, emails = [] }: { inputRef: 
                 }
               }}
             >
-              {!isFullscreen && (
-                <div 
-                  className="absolute top-[2px] left-[2px] w-6 h-6 cursor-nwse-resize z-10 opacity-50 hover:opacity-100"
-                  onMouseDown={startResize}
-                  title="Drag to resize"
-                >
-                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" className="text-[rgba(36,27,20,0.4)] dark:text-[rgba(255,255,255,0.4)] absolute top-2 left-2">
-                    <path d="M21 3L3 21M21 9L9 21M21 15L15 21" />
-                  </svg>
-                </div>
-              )}
               <p className="text-[#241B14] dark:text-[#F4F4F5] z-2 ml-[38px] flex items-center gap-[6px] select-none font-medium text-[13px]">
                 Auren AI Agent
               </p>
@@ -868,7 +829,7 @@ function InputForm({ inputRef, onSuccess, onExecute, emails = [] }: { inputRef: 
                 <span className="text-[10px] font-medium text-[#E8593C]">Auren AI</span>
               </div>
             </div>
-          </motion.div>
+          </div>
         )}
       </AnimatePresence>
 

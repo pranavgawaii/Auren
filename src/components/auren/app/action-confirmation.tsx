@@ -111,7 +111,7 @@ export function ActionConfirmation({
       />
 
       {/* Sheet panel */}
-      <div className="relative w-[540px] max-w-full mx-auto bg-[#FDFBF9] dark:bg-[#2C2C2C] rounded-t-[24px] border-t border-[rgba(36,27,20,0.08)] dark:border-[rgba(255,255,255,0.08)] shadow-[0_-12px_48px_rgba(36,27,20,0.12)] p-6 z-10 animate-in slide-in-from-bottom-12 duration-300 flex flex-col gap-4 max-h-[85vh] overflow-y-auto scrollbar-hide text-left">
+      <div className="relative w-[640px] max-w-full mx-auto bg-[#FDFBF9] dark:bg-[#2C2C2C] rounded-t-[24px] border-t border-[rgba(36,27,20,0.08)] dark:border-[rgba(255,255,255,0.08)] shadow-[0_-12px_48px_rgba(36,27,20,0.12)] p-6 z-10 animate-in slide-in-from-bottom-12 duration-300 flex flex-col gap-4 max-h-[85vh] overflow-y-auto scrollbar-hide text-left">
         
         {/* Title */}
         <div className="flex items-center justify-between">
@@ -119,7 +119,7 @@ export function ActionConfirmation({
             <div className="w-2 h-2 rounded-full bg-[#E8593C] animate-pulse" />
             <h3 
               className="font-bold text-[18px] text-[#241B14] dark:text-[#F4F4F5] tracking-tight"
-              style={{ fontFamily: "Civanel, sans-serif" }}
+              style={{ fontFamily: "var(--font-civane), sans-serif" }}
             >
               Execution Plan
             </h3>
@@ -262,8 +262,8 @@ export function ActionConfirmation({
                                     const [sy, sm, sd] = range.start.toString().split('-');
                                     const [ey, em, ed] = range.end.toString().split('-');
                                     
-                                    startD.setUTCFullYear(parseInt(sy), parseInt(sm)-1, parseInt(sd));
-                                    endD.setUTCFullYear(parseInt(ey), parseInt(em)-1, parseInt(ed));
+                                    startD.setFullYear(parseInt(sy), parseInt(sm)-1, parseInt(sd));
+                                    endD.setFullYear(parseInt(ey), parseInt(em)-1, parseInt(ed));
                                     
                                     updateParam(i, "startAt", startD.toISOString());
                                     updateParam(i, "endAt", endD.toISOString());
@@ -280,13 +280,13 @@ export function ActionConfirmation({
                                       if (!val) return null;
                                       const d = new Date(val);
                                       if (isNaN(d.getTime())) return null;
-                                      return new Time(d.getUTCHours(), d.getUTCMinutes());
+                                      return new Time(d.getHours(), d.getMinutes());
                                     })()}
                                     onChange={(time) => {
                                       if (!time) return;
                                       const currentVal = String(action.parameters.startAt || new Date().toISOString());
                                       const d = new Date(currentVal);
-                                      d.setUTCHours(time.hour, time.minute);
+                                      d.setHours(time.hour, time.minute);
                                       updateParam(i, "startAt", d.toISOString());
                                     }}
                                   />
@@ -299,13 +299,13 @@ export function ActionConfirmation({
                                       if (!val) return null;
                                       const d = new Date(val);
                                       if (isNaN(d.getTime())) return null;
-                                      return new Time(d.getUTCHours(), d.getUTCMinutes());
+                                      return new Time(d.getHours(), d.getMinutes());
                                     })()}
                                     onChange={(time) => {
                                       if (!time) return;
                                       const currentVal = String(action.parameters.endAt || new Date().toISOString());
                                       const d = new Date(currentVal);
-                                      d.setUTCHours(time.hour, time.minute);
+                                      d.setHours(time.hour, time.minute);
                                       updateParam(i, "endAt", d.toISOString());
                                     }}
                                   />
