@@ -2,8 +2,10 @@
 
 import React, { useState, useEffect } from "react";
 import { GitPullRequest, CircleDot, MessageSquare, ExternalLink } from "lucide-react";
+import { checkConnectionStatus } from "@/app/actions/connect";
 
 export function GitHubIntegrationView() {
+  const [isConnected, setIsConnected] = useState<boolean | null>(null);
   const [pullRequests, setPullRequests] = useState<any[]>([]);
   const [issues, setIssues] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -14,6 +16,14 @@ export function GitHubIntegrationView() {
       setIsLoading(true);
       setError(null);
       try {
+        const status = await checkConnectionStatus();
+        setIsConnected(status.github);
+        
+        if (!status.github) {
+          setIsLoading(false);
+          return;
+        }
+
         const [prRes, issueRes] = await Promise.all([
           fetch("https://api.github.com/search/issues?q=is:pr+is:open+author:8teen"),
           fetch("https://api.github.com/search/issues?q=is:issue+is:open+assignee:8teen")
@@ -42,11 +52,51 @@ export function GitHubIntegrationView() {
     return `${Math.floor(hours / 24)} days ago`;
   };
 
-  const MOCK_REPOSITORIES = [
-    { id: 1, name: "pranavgawaii/Auren", isPrivate: true, active: true },
-    { id: 2, name: "pranavgawaii/portfolio", isPrivate: false, active: false },
-    { id: 3, name: "8teen/saas-boilerplate", isPrivate: true, active: false },
-  ];
+  // Dynamically extract unique repositories from issues and PRs
+  const dynamicRepos = React.useMemo(() => {
+    const repoMap = new Map<string, { id: string, name: string, isPrivate: boolean, active: boolean }>();
+    const allItems = [...pullRequests, ...issues];
+    
+    allItems.forEach((item, index) => {
+      const repoUrl = item.repository_url;
+      if (!repoUrl) return;
+      
+      const name = repoUrl.split('/').slice(-2).join('/');
+      if (!repoMap.has(name)) {
+        repoMap.set(name, {
+          id: name,
+          name,
+          isPrivate: false, // Can't reliably tell from search API without auth, assume public for now
+          active: repoMap.size === 0, // Make the first one active by default
+        });
+      }
+    });
+    
+    return Array.from(repoMap.values());
+  }, [pullRequests, issues]);
+
+  if (isConnected === false && !isLoading) {
+    return (
+      <div className="flex-1 flex flex-col items-center justify-center bg-[#FAF8F5] dark:bg-[#2C2C2C] p-8 text-center">
+        <div className="w-16 h-16 rounded-2xl bg-white dark:bg-[#383838] border border-[rgba(36,27,20,0.08)] dark:border-[rgba(255,255,255,0.08)] flex items-center justify-center mb-6 shadow-sm">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-[#241B14] dark:text-[#F4F4F5]"><path d="M15 22v-4a4.8 4.8 0 0 0-1-3.5c3 0 6-2 6-5.5.08-1.25-.27-2.48-1-3.5.28-1.15.28-2.35 0-3.5 0 0-1 0-3 1.5-2.64-.5-5.36-.5-8 0C6 2 5 2 5 2c-.3 1.15-.3 2.35 0 3.5A5.403 5.403 0 0 0 4 9c0 3.5 3 5.5 6 5.5-.39.49-.68 1.05-.85 1.65-.17.6-.22 1.23-.15 1.85v4"/><path d="M9 18c-4.51 2-5-2-7-2"/></svg>
+        </div>
+        <h2 className="text-[20px] font-bold text-[#241B14] dark:text-[#F4F4F5] mb-2 font-sans tracking-tight">Connect your GitHub</h2>
+        <p className="text-[14px] text-[rgba(36,27,20,0.6)] dark:text-[rgba(255,255,255,0.6)] max-w-[320px] mb-8 leading-relaxed">
+          Connect your GitHub account in Settings to view your pull requests, manage issues, and take action seamlessly with Auren.
+        </p>
+        <button 
+          onClick={() => {
+            localStorage.setItem("auren_default_settings_tab", "integrations");
+            window.dispatchEvent(new CustomEvent("auren-open-integrations"));
+          }}
+          className="h-[40px] px-6 bg-[#E8593C] text-white rounded-[10px] font-sans font-bold text-[13px] hover:bg-[#D14F31] transition-colors shadow-sm"
+        >
+          Go to Settings
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div className="flex-1 flex overflow-hidden">
@@ -56,8 +106,13 @@ export function GitHubIntegrationView() {
           <h2 className="font-sans font-bold text-[13px] text-[#241B14] dark:text-[#F4F4F5]">Your Repositories</h2>
         </div>
         <div className="flex-1 overflow-y-auto p-2">
-          <div className="flex flex-col gap-1">
-            {MOCK_REPOSITORIES.map(repo => (
+          {dynamicRepos.length === 0 && !isLoading ? (
+            <div className="p-4 text-center text-[12px] text-[rgba(36,27,20,0.5)] dark:text-[rgba(255,255,255,0.5)]">
+              No repositories found.
+            </div>
+          ) : (
+            <div className="flex flex-col gap-1">
+              {dynamicRepos.map(repo => (
               <button 
                 key={repo.id}
                 className={`w-full text-left px-3 py-2.5 rounded-[8px] flex items-center gap-2.5 transition-colors ${repo.active ? 'bg-[#FAF8F5] dark:bg-[#2C2C2C] border border-[rgba(36,27,20,0.06)] dark:border-[rgba(255,255,255,0.06)] shadow-sm' : 'hover:bg-[rgba(36,27,20,0.02)] dark:hover:bg-[rgba(255,255,255,0.02)] border border-transparent'}`}

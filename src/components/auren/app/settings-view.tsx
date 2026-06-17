@@ -165,11 +165,14 @@ export function SettingsView() {
     
     // Custom event listener for cross-component routing (from Upgrade button)
     const handleOpenBilling = () => setActiveTab("billing");
+    const handleOpenIntegrations = () => setActiveTab("integrations");
     window.addEventListener("auren-open-billing", handleOpenBilling);
+    window.addEventListener("auren-open-integrations", handleOpenIntegrations);
     
     return () => {
       window.removeEventListener("focus", handleFocus);
       window.removeEventListener("auren-open-billing", handleOpenBilling);
+      window.removeEventListener("auren-open-integrations", handleOpenIntegrations);
     };
   }, [user]);
 
