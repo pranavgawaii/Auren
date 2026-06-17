@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { GitPullRequest, CircleDot, MessageSquare, ExternalLink, BookOpen, Lock } from "lucide-react";
-import { checkConnectionStatus } from "@/app/actions/connect";
+import { checkConnectionStatus, getConnectedGithubUsername } from "@/app/actions/connect";
 import { useRouter } from "next/navigation";
 import { useUser } from "@clerk/nextjs";
 
@@ -10,6 +10,7 @@ export function GitHubIntegrationView() {
   const router = useRouter();
   const { user } = useUser();
   const [isConnected, setIsConnected] = useState<boolean | null>(null);
+  const [connectedUsername, setConnectedUsername] = useState<string | null>(null);
   const [repositories, setRepositories] = useState<any[]>([]);
   const [pullRequests, setPullRequests] = useState<any[]>([]);
   const [issues, setIssues] = useState<any[]>([]);
@@ -30,12 +31,15 @@ export function GitHubIntegrationView() {
           return;
         }
 
-        const username = user?.username || "8teen";
+        // Fetch the REAL authenticated username from the connected Corsair account
+        const realGithubUsername = await getConnectedGithubUsername();
+        const usernameToFetch = realGithubUsername || user?.username || "8teen";
+        setConnectedUsername(usernameToFetch);
 
         const [repoRes, prRes, issueRes] = await Promise.all([
-          fetch(`https://api.github.com/users/${username}/repos?sort=updated&per_page=6`),
-          fetch(`https://api.github.com/search/issues?q=is:pr+is:open+author:${username}`),
-          fetch(`https://api.github.com/search/issues?q=is:issue+is:open+assignee:${username}`)
+          fetch(`https://api.github.com/users/${usernameToFetch}/repos?sort=updated&per_page=6`),
+          fetch(`https://api.github.com/search/issues?q=is:pr+is:open+author:${usernameToFetch}`),
+          fetch(`https://api.github.com/search/issues?q=is:issue+is:open+assignee:${usernameToFetch}`)
         ]);
 
         if (!repoRes.ok || !prRes.ok || !issueRes.ok) throw new Error("Failed to fetch live data from GitHub. Rate limit exceeded.");
@@ -101,7 +105,7 @@ export function GitHubIntegrationView() {
             <div>
               <h1 className="text-[24px] text-[#241B14] dark:text-[#F4F4F5] leading-none mb-2" style={{ fontFamily: "var(--font-civane, Georgia, serif)" }}>GitHub</h1>
               <div className="font-sans text-[13px] text-[rgba(36,27,20,0.5)] dark:text-[rgba(255,255,255,0.5)] flex items-center gap-1.5">
-                <span className="font-medium text-[#241B14] dark:text-[#F4F4F5]">{user?.username || "Connected User"}</span>
+                <span className="font-medium text-[#241B14] dark:text-[#F4F4F5]">@{connectedUsername || "Connected User"}</span>
                 <span className="w-1 h-1 rounded-full bg-[rgba(36,27,20,0.15)] dark:bg-[rgba(255,255,255,0.15)]" />
                 <span className="text-[#0F6E56] font-medium flex items-center gap-1.5"><span className="w-1.5 h-1.5 rounded-full bg-[#0F6E56] shadow-[0_0_8px_rgba(15,110,86,0.6)]" /> Connected</span>
               </div>
@@ -341,7 +345,7 @@ export function GitHubIntegrationView() {
                   setTimeout(() => {
                     const input = document.querySelector('input[placeholder="Type a command..."]') as HTMLInputElement;
                     if (input) {
-                      input.value = `Create a new issue in ${user?.username || 'my'}/repository...`;
+                      input.value = `Create a new issue in ${connectedUsername || 'my'}/repository...`;
                       input.dispatchEvent(new Event('input', { bubbles: true }));
                     }
                   }, 100);
@@ -358,7 +362,7 @@ export function GitHubIntegrationView() {
                   setTimeout(() => {
                     const input = document.querySelector('input[placeholder="Type a command..."]') as HTMLInputElement;
                     if (input) {
-                      input.value = `Draft a new pull request for the latest changes in ${user?.username || 'my'}/repository...`;
+                      input.value = `Draft a new pull request for the latest changes in ${connectedUsername || 'my'}/repository...`;
                       input.dispatchEvent(new Event('input', { bubbles: true }));
                     }
                   }, 100);
