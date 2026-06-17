@@ -367,6 +367,14 @@ import { Check } from "lucide-react"
 import { useUser } from "@clerk/nextjs"
 import Image from "next/image"
 
+// Mentions State
+const MOCK_MENTIONS = [
+  { id: '1', trigger: '@', type: 'contact', label: 'Pranav Gawai', value: '@Pranav Gawai', displayValue: 'pranavgawai1518@gmail.com', icon: '@' },
+  { id: '2', trigger: '@', type: 'contact', label: 'Product Team', value: '@Product Team', displayValue: 'product@example.com', icon: '@' },
+  { id: '3', trigger: '/', type: 'repo', label: 'Auren Frontend', value: 'github/Auren', displayValue: 'github.com/8TEEH/Auren', icon: '/' },
+  { id: '4', trigger: '/', type: 'repo', label: 'skills-introduction-to-github', value: 'github/skills-introduction-to-github', displayValue: 'github.com/8TEEH/skills-intro...', icon: '/' },
+]
+
 function InputForm({ inputRef, onSuccess, onExecute }: { inputRef: React.RefObject<HTMLTextAreaElement>; onSuccess: () => void; onExecute: (cmd: string, history?: any[]) => Promise<any> }) {
   const { triggerClose, showForm, isFullscreen, setIsFullscreen, isAgentLoading, startResize, dragControls } = useFormContext()
   const btnRef = React.useRef<HTMLButtonElement>(null)
@@ -378,13 +386,6 @@ function InputForm({ inputRef, onSuccess, onExecute }: { inputRef: React.RefObje
   // Real Chat State
   const [chatHistory, setChatHistory] = React.useState<{role: "user" | "agent", content?: string, isTyping?: boolean, plan?: any}[]>([])
 
-  // Mentions State
-  const MOCK_MENTIONS = [
-    { id: '1', trigger: '@', type: 'contact', label: 'Pranav Gawai', value: '@Pranav Gawai', displayValue: 'pranavgawai1518@gmail.com', icon: '@' },
-    { id: '2', trigger: '@', type: 'contact', label: 'Product Team', value: '@Product Team', displayValue: 'product@example.com', icon: '@' },
-    { id: '3', trigger: '/', type: 'repo', label: 'Auren Frontend', value: 'github/Auren', displayValue: 'github.com/8TEEH/Auren', icon: '/' },
-    { id: '4', trigger: '/', type: 'repo', label: 'skills-introduction-to-github', value: 'github/skills-introduction-to-github', displayValue: 'github.com/8TEEH/skills-intro...', icon: '/' },
-  ]
   const [mentionQuery, setMentionQuery] = React.useState<{ trigger: '@' | '/', text: string } | null>(null)
   const [mentionIndex, setMentionIndex] = React.useState(0)
   

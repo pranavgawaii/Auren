@@ -52,7 +52,7 @@ export function BriefingCard({ data, onClose }: { data: DailyBriefingData, onClo
             <div className="flex flex-col gap-5">
               <div className="flex items-center gap-2 text-[rgba(36,27,20,0.5)] font-semibold text-[11px] uppercase tracking-widest pl-1">
                 <Calendar size={14} />
-                <span>Today's Schedule</span>
+                <span>Today&apos;s Schedule</span>
               </div>
               
               <div className="relative pl-[26px]">
