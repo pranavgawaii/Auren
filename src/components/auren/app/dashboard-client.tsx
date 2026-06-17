@@ -24,6 +24,7 @@ import type { GmailMessage, AgentReasoningResult } from "@/types";
 import { MorphPanel } from "@/components/ui/ai-input";
 import { motion, AnimatePresence } from "framer-motion";
 import { BriefingCard } from "@/components/ui/briefing-card";
+import { ShiningText } from "@/components/ui/shining-text";
 
 export function DashboardClient() {
   const { user, isLoaded } = useUser();
@@ -137,7 +138,7 @@ export function DashboardClient() {
 
   const fetchEmails = useCallback(async (shouldSync: boolean = false) => {
     setIsLoading(true);
-    let limit = 20;
+    let limit = 10; // Reduced from 20 for faster loading
     if (typeof window !== "undefined" && user) {
       const savedLimit = localStorage.getItem(`auren_${user.id}_sync_limit`);
       if (savedLimit) limit = parseInt(savedLimit, 10);
@@ -268,7 +269,11 @@ export function DashboardClient() {
           )}
           
           <div className="flex-1 flex flex-col relative overflow-hidden">
-            {selectedEmail ? (
+            {isLoading && !selectedEmail ? (
+              <div className="flex flex-col items-center justify-center h-full w-full gap-4 bg-white dark:bg-[#383838]">
+                <ShiningText text="Auren is thinking..." className="text-[13px] font-medium tracking-wide font-sans" />
+              </div>
+            ) : selectedEmail ? (
               <EmailDetail 
                 email={selectedEmail} 
                 thread={threadEmails}

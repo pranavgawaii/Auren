@@ -135,12 +135,15 @@ export function SettingsView() {
         setShowTopbarToggle(savedTopbarToggle === "true");
       }
       
-      // Enforce the saved theme on mount
-      if (savedTheme === "dark") {
-        document.documentElement.classList.add("dark");
-      } else {
-        document.documentElement.classList.remove("dark");
+      // Read the actual current theme from the DOM (already applied by the root layout),
+      // then sync state to it — never override the DOM from here.
+      const isDarkNow = document.documentElement.classList.contains("dark");
+      const resolvedTheme = isDarkNow ? "dark" : "light";
+      // Only update localStorage if we don't have a saved value yet
+      if (!localStorage.getItem("auren_theme")) {
+        localStorage.setItem("auren_theme", resolvedTheme);
       }
+      setTheme(resolvedTheme);
     }
 
     if (user) {
