@@ -10,6 +10,7 @@ export function GitHubIntegrationView() {
   const router = useRouter();
   const { user } = useUser();
   const [isConnected, setIsConnected] = useState<boolean | null>(null);
+  const [repositories, setRepositories] = useState<any[]>([]);
   const [pullRequests, setPullRequests] = useState<any[]>([]);
   const [issues, setIssues] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -31,16 +32,19 @@ export function GitHubIntegrationView() {
 
         const username = user?.username || "8teen";
 
-        const [prRes, issueRes] = await Promise.all([
+        const [repoRes, prRes, issueRes] = await Promise.all([
+          fetch(`https://api.github.com/users/${username}/repos?sort=updated&per_page=6`),
           fetch(`https://api.github.com/search/issues?q=is:pr+is:open+author:${username}`),
           fetch(`https://api.github.com/search/issues?q=is:issue+is:open+assignee:${username}`)
         ]);
 
-        if (!prRes.ok || !issueRes.ok) throw new Error("Failed to fetch live data from GitHub. Rate limit exceeded.");
+        if (!repoRes.ok || !prRes.ok || !issueRes.ok) throw new Error("Failed to fetch live data from GitHub. Rate limit exceeded.");
 
+        const repoData = await repoRes.json();
         const prData = await prRes.json();
         const issueData = await issueRes.json();
 
+        setRepositories(Array.isArray(repoData) ? repoData : []);
         setPullRequests(prData.items || []);
         setIssues(issueData.items || []);
       } catch (err: any) {
@@ -56,34 +60,12 @@ export function GitHubIntegrationView() {
   }, [user]);
 
   const timeAgo = (dateStr: string) => {
+    if (!dateStr) return "";
     const diff = Date.now() - new Date(dateStr).getTime();
     const hours = Math.floor(diff / (1000 * 60 * 60));
     if (hours < 24) return `${hours} hours ago`;
     return `${Math.floor(hours / 24)} days ago`;
   };
-
-  // Dynamically extract unique repositories from issues and PRs
-  const dynamicRepos = React.useMemo(() => {
-    const repoMap = new Map<string, { id: string, name: string, isPrivate: boolean, active: boolean }>();
-    const allItems = [...pullRequests, ...issues];
-    
-    allItems.forEach((item) => {
-      const repoUrl = item.repository_url;
-      if (!repoUrl) return;
-      
-      const name = repoUrl.split('/').slice(-2).join('/');
-      if (!repoMap.has(name)) {
-        repoMap.set(name, {
-          id: name,
-          name,
-          isPrivate: false, // Default to public without auth context
-          active: true,
-        });
-      }
-    });
-    
-    return Array.from(repoMap.values());
-  }, [pullRequests, issues]);
 
   if (isConnected === false && !isLoading) {
     return (
@@ -117,8 +99,12 @@ export function GitHubIntegrationView() {
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" className="text-[#241B14] dark:text-[#F4F4F5]"><path d="M15 22v-4a4.8 4.8 0 0 0-1-3.5c3 0 6-2 6-5.5.08-1.25-.27-2.48-1-3.5.28-1.15.28-2.35 0-3.5 0 0-1 0-3 1.5-2.64-.5-5.36-.5-8 0C6 2 5 2 5 2c-.3 1.15-.3 2.35 0 3.5A5.403 5.403 0 0 0 4 9c0 3.5 3 5.5 6 5.5-.39.49-.68 1.05-.85 1.65-.17.6-.22 1.23-.15 1.85v4"/><path d="M9 18c-4.51 2-5-2-7-2"/></svg>
             </div>
             <div>
-              <h1 className="text-[24px] text-[#241B14] dark:text-[#F4F4F5] leading-none mb-1" style={{ fontFamily: "var(--font-civane, Georgia, serif)" }}>GitHub</h1>
-              <p className="font-sans text-[13px] text-[rgba(36,27,20,0.5)] dark:text-[rgba(255,255,255,0.5)]">{user?.username || "Connected User"} • Connected</p>
+              <h1 className="text-[24px] text-[#241B14] dark:text-[#F4F4F5] leading-none mb-2" style={{ fontFamily: "var(--font-civane, Georgia, serif)" }}>GitHub</h1>
+              <div className="font-sans text-[13px] text-[rgba(36,27,20,0.5)] dark:text-[rgba(255,255,255,0.5)] flex items-center gap-1.5">
+                <span className="font-medium text-[#241B14] dark:text-[#F4F4F5]">{user?.username || "Connected User"}</span>
+                <span className="w-1 h-1 rounded-full bg-[rgba(36,27,20,0.15)] dark:bg-[rgba(255,255,255,0.15)]" />
+                <span className="text-[#0F6E56] font-medium flex items-center gap-1.5"><span className="w-1.5 h-1.5 rounded-full bg-[#0F6E56] shadow-[0_0_8px_rgba(15,110,86,0.6)]" /> Connected</span>
+              </div>
             </div>
           </div>
           <div className="flex items-center gap-3">
@@ -138,18 +124,18 @@ export function GitHubIntegrationView() {
               Your Repositories
             </h2>
             <span className="font-sans text-[12px] font-medium text-[rgba(36,27,20,0.4)] dark:text-[rgba(255,255,255,0.4)] bg-[rgba(36,27,20,0.04)] dark:bg-[rgba(255,255,255,0.04)] px-2 py-0.5 rounded-full">
-              {dynamicRepos.length} Active
+              {repositories.length} Active
             </span>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {isLoading ? (
               <div className="col-span-full p-8 flex justify-center"><div className="w-6 h-6 border-2 border-[rgba(36,27,20,0.1)] dark:border-[rgba(255,255,255,0.1)] border-t-[#241B14] rounded-full animate-spin" /></div>
-            ) : dynamicRepos.length === 0 ? (
+            ) : repositories.length === 0 ? (
               <div className="col-span-full p-8 text-center text-[13px] text-[rgba(36,27,20,0.5)] dark:text-[rgba(255,255,255,0.5)] border border-[rgba(36,27,20,0.08)] dark:border-[rgba(255,255,255,0.08)] rounded-[12px]">No repositories found.</div>
-            ) : dynamicRepos.map((repo) => (
+            ) : repositories.map((repo) => (
               <a 
-                href={`https://github.com/${repo.name}`}
+                href={repo.html_url}
                 target="_blank"
                 rel="noopener noreferrer"
                 key={repo.id} 
@@ -159,10 +145,10 @@ export function GitHubIntegrationView() {
                   <BookOpen size={18} />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <h3 className="font-sans font-semibold text-[14px] text-[#241B14] dark:text-[#F4F4F5] truncate mb-0.5 group-hover:text-[#E8593C] transition-colors">{repo.name}</h3>
+                  <h3 className="font-sans font-semibold text-[14px] text-[#241B14] dark:text-[#F4F4F5] truncate mb-0.5 group-hover:text-[#E8593C] transition-colors">{repo.full_name}</h3>
                   <div className="flex items-center gap-1.5 font-sans text-[11.5px] text-[rgba(36,27,20,0.4)] dark:text-[rgba(255,255,255,0.4)]">
-                    {repo.isPrivate ? <Lock size={10} /> : <BookOpen size={10} />}
-                    <span>{repo.isPrivate ? "Private" : "Public"}</span>
+                    {repo.private ? <Lock size={10} /> : <BookOpen size={10} />}
+                    <span>{repo.private ? "Private" : "Public"}</span>
                   </div>
                 </div>
               </a>
@@ -337,6 +323,52 @@ export function GitHubIntegrationView() {
                 </div>
               </div>
             ))}
+          </div>
+        </section>
+
+        {/* Global Quick Actions Footer */}
+        <section className="mt-4 pt-8 border-t border-[rgba(36,27,20,0.08)] dark:border-[rgba(255,255,255,0.08)]">
+          <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+            <div>
+              <h3 className="font-sans font-semibold text-[15px] text-[#241B14] dark:text-[#F4F4F5] mb-1">Auren GitHub Actions</h3>
+              <p className="font-sans text-[13px] text-[rgba(36,27,20,0.5)] dark:text-[rgba(255,255,255,0.5)]">Use natural language to manage your repositories.</p>
+            </div>
+            <div className="flex items-center gap-3">
+              <button 
+                onClick={() => {
+                  const event = new KeyboardEvent("keydown", { key: "k", metaKey: true, bubbles: true });
+                  document.dispatchEvent(event);
+                  setTimeout(() => {
+                    const input = document.querySelector('input[placeholder="Type a command..."]') as HTMLInputElement;
+                    if (input) {
+                      input.value = `Create a new issue in ${user?.username || 'my'}/repository...`;
+                      input.dispatchEvent(new Event('input', { bubbles: true }));
+                    }
+                  }, 100);
+                }}
+                className="h-[36px] px-4 bg-white dark:bg-[#383838] border border-[rgba(36,27,20,0.12)] dark:border-[rgba(255,255,255,0.12)] text-[#241B14] dark:text-[#F4F4F5] rounded-[8px] font-sans font-medium text-[13px] flex items-center gap-2 hover:border-[#E8593C]/30 hover:text-[#E8593C] shadow-[0_1px_2px_rgba(36,27,20,0.02)] transition-all"
+              >
+                <CircleDot size={14} />
+                Create Issue
+              </button>
+              <button 
+                onClick={() => {
+                  const event = new KeyboardEvent("keydown", { key: "k", metaKey: true, bubbles: true });
+                  document.dispatchEvent(event);
+                  setTimeout(() => {
+                    const input = document.querySelector('input[placeholder="Type a command..."]') as HTMLInputElement;
+                    if (input) {
+                      input.value = `Draft a new pull request for the latest changes in ${user?.username || 'my'}/repository...`;
+                      input.dispatchEvent(new Event('input', { bubbles: true }));
+                    }
+                  }, 100);
+                }}
+                className="h-[36px] px-4 bg-white dark:bg-[#383838] border border-[rgba(36,27,20,0.12)] dark:border-[rgba(255,255,255,0.12)] text-[#241B14] dark:text-[#F4F4F5] rounded-[8px] font-sans font-medium text-[13px] flex items-center gap-2 hover:border-[#E8593C]/30 hover:text-[#E8593C] shadow-[0_1px_2px_rgba(36,27,20,0.02)] transition-all"
+              >
+                <GitPullRequest size={14} />
+                Draft PR
+              </button>
+            </div>
           </div>
         </section>
 
