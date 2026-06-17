@@ -407,6 +407,7 @@ function InputForm({ inputRef, onSuccess, onExecute, emails = [] }: { inputRef: 
   // Real Chat State
   const [chatHistory, setChatHistory] = React.useState<{role: "user" | "agent", content?: string, isTyping?: boolean, plan?: any}[]>([])
 
+  const backdropRef = React.useRef<HTMLDivElement>(null)
   const [mentionQuery, setMentionQuery] = React.useState<{ trigger: '@' | '/', text: string } | null>(null)
   const [mentionIndex, setMentionIndex] = React.useState(0)
   
@@ -419,6 +420,12 @@ function InputForm({ inputRef, onSuccess, onExecute, emails = [] }: { inputRef: 
   }, [mentionQuery, dynamicMentions])
 
   const handleInput = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    // Auto-grow textarea height
+    if (e.target) {
+      e.target.style.height = 'auto';
+      e.target.style.height = `${e.target.scrollHeight}px`;
+    }
+
     const val = e.target.value;
     const cursor = e.target.selectionStart;
     const textBeforeCursor = val.slice(0, cursor);
@@ -450,8 +457,19 @@ function InputForm({ inputRef, onSuccess, onExecute, emails = [] }: { inputRef: 
        input.setSelectionRange(newCursor, newCursor);
        
        setInputValue(input.value);
+       // Auto-grow textarea height after inserting
+       input.style.height = 'auto';
+       input.style.height = `${input.scrollHeight}px`;
+
        setMentionQuery(null);
        input.focus();
+    }
+  }
+
+  const handleScroll = (e: React.UIEvent<HTMLTextAreaElement>) => {
+    if (backdropRef.current) {
+      backdropRef.current.scrollTop = e.currentTarget.scrollTop;
+      backdropRef.current.scrollLeft = e.currentTarget.scrollLeft;
     }
   }
 
@@ -802,23 +820,27 @@ function InputForm({ inputRef, onSuccess, onExecute, emails = [] }: { inputRef: 
                   )}
                 </AnimatePresence>
 
-                <div className="relative w-full min-h-[44px] max-h-[120px]">
+                <div className="relative w-full">
                   {/* Backdrop for highlights */}
                   <div 
+                    ref={backdropRef}
                     aria-hidden="true" 
                     className="absolute inset-0 p-3 pr-[44px] overflow-hidden whitespace-pre-wrap break-words text-[13px] leading-[20px] tracking-normal font-sans pointer-events-none z-0"
                   >
                     {renderInputHighlights(inputValue)}
+                    {/* Add a line break for trailing newlines so the backdrop div matches the height of the textarea precisely */}
+                    {inputValue.endsWith('\n') ? <br /> : null}
                   </div>
                   {/* Actual Textarea */}
                   <textarea
                     ref={inputRef}
+                    onScroll={handleScroll}
                     onChange={(e) => { handleInput(e); setInputValue(e.target.value); }}
                     value={inputValue}
                     placeholder="Ask Auren to summarize, schedule, or manage tasks..."
                     name="message"
-                    className="w-full h-full resize-none p-3 pr-[44px] outline-none bg-transparent text-[13px] leading-[20px] tracking-normal font-sans placeholder:text-[rgba(36,27,20,0.3)] dark:placeholder:text-[rgba(255,255,255,0.3)] absolute inset-0 z-10"
-                    style={{ color: "transparent", caretColor: "var(--tw-caret-color, #241B14)" }}
+                    className="w-full resize-none p-3 pr-[44px] outline-none bg-transparent text-[13px] leading-[20px] tracking-normal font-sans placeholder:text-[rgba(36,27,20,0.3)] dark:placeholder:text-[rgba(255,255,255,0.3)] relative z-10 min-h-[44px] max-h-[120px] scrollbar-hide"
+                    style={{ color: "transparent", caretColor: "var(--tw-caret-color, #241B14)", overflowY: "auto" }}
                     required
                     onKeyDown={handleKeys}
                     spellCheck={false}
