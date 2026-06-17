@@ -58,13 +58,17 @@ export function DashboardClient() {
 
   const [view, setViewInternal] = useState<"search" | "github" | "calendar" | "inbox" | "settings" | "history">(initialView as any);
 
+  useEffect(() => {
+    setViewInternal(initialView as any);
+  }, [initialView]);
+
   const setView = (newView: string) => {
     if (newView === "inbox") {
       setIsZenMode(false);
-      window.history.pushState(null, "", "/app");
+      router.push("/app", { scroll: false });
       setViewInternal("inbox");
     } else {
-      window.history.pushState(null, "", `/${newView}`);
+      router.push(`/${newView}`, { scroll: false });
       setViewInternal(newView as any);
     }
   };

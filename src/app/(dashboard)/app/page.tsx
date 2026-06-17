@@ -7,5 +7,5 @@ export const metadata: Metadata = {
 };
 
 export default function AppPage() {
-  return <DashboardClient />;
+  return null;
 }

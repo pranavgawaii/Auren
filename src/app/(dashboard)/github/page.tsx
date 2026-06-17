@@ -7,5 +7,5 @@ export const metadata: Metadata = {
 };
 
 export default function GitHubPage() {
-  return <DashboardClient />;
+  return null;
 }
