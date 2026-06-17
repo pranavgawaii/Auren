@@ -39,6 +39,9 @@ export function ActionConfirmation({
       
       // Auto-fill missing dates to prevent Bad Request from Google API
       clonedPlan.actions.forEach((a: any) => {
+        if (!a.parameters) a.parameters = {};
+        if (!a.tool) a.tool = "unknown_tool";
+        
         if (a.tool === "calendar_create") {
           if (!a.parameters.startAt) {
             const now = new Date();
@@ -222,7 +225,7 @@ export function ActionConfirmation({
                         </button>
                         <div className="flex flex-col">
                           <span className="font-sans font-bold text-[13px] text-[#241B14] dark:text-[#F4F4F5] capitalize">
-                            {action.tool.replace(/_/g, " ")}
+                            {(action.tool || "Action").replace(/_/g, " ")}
                           </span>
                           <span className="font-sans text-[11px] text-[rgba(36,27,20,0.4)] dark:text-[rgba(255,255,255,0.4)]">
                             {action.description}
@@ -299,9 +302,12 @@ export function ActionConfirmation({
                                       const s = String(action.parameters.startAt || "");
                                       const e = String(action.parameters.endAt || "");
                                       if (!s || !e) return null;
+                                      const sDate = s.includes('T') ? s.split('T')[0] : s;
+                                      const eDate = e.includes('T') ? e.split('T')[0] : e;
+                                      if (!/^\d{4}-\d{2}-\d{2}$/.test(sDate) || !/^\d{4}-\d{2}-\d{2}$/.test(eDate)) return null;
                                       return {
-                                        start: parseDate(s.split('T')[0]),
-                                        end: parseDate(e.split('T')[0])
+                                        start: parseDate(sDate),
+                                        end: parseDate(eDate)
                                       };
                                     } catch {
                                       return null;

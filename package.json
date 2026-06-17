@@ -39,6 +39,9 @@
     "next": "14.2.35",
     "next-themes": "^0.4.6",
     "openai": "^6.42.0",
+    "pdf-lib": "^1.17.1",
+    "pptxgenjs": "^4.0.1",
+    "puppeteer-core": "^25.1.0",
     "react": "^18",
     "react-aria-components": "^1.18.0",
     "react-dom": "^18",
@@ -61,5 +64,19 @@
     "postcss": "^8",
     "tailwindcss": "^3.4.1",
     "typescript": "^5"
-  }
+  },
+  "description": "> The execution layer between thinking and doing.",
+  "main": "index.js",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/pranavgawaii/Auren.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/pranavgawaii/Auren/issues"
+  },
+  "homepage": "https://github.com/pranavgawaii/Auren#readme"
 }
