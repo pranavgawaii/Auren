@@ -218,7 +218,7 @@ const CodeLine = ({ text, type, isNew, delay }: { text: string; type: 'normal' |
         borderRadius: "3px",
       }}
     >
-      <span className="w-5 text-[rgba(36,27,20,0.35)] select-none text-[10px] text-right pr-2">{prefix}</span>
+      <span className="w-5 text-[rgba(36,27,20,0.35)] dark:text-[rgba(255,255,255,0.35)] select-none text-[10px] text-right pr-2">{prefix}</span>
       <span className="whitespace-pre">{highlightTokens(text)}</span>
     </motion.div>
   );
@@ -246,12 +246,12 @@ function LiveCodeDiff({ diffState }: { diffState: number }) {
   ];
 
   return (
-    <div className="font-mono text-xs text-[#241B14] bg-white p-4 rounded-xl border border-[rgba(36,27,20,0.08)] flex flex-col justify-between h-full min-h-[300px]">
+    <div className="font-mono text-xs text-[#241B14] dark:text-[#F4F4F5] bg-white dark:bg-[#383838] p-4 rounded-xl border border-[rgba(36,27,20,0.08)] dark:border-[rgba(255,255,255,0.08)] flex flex-col justify-between h-full min-h-[300px]">
       <div>
-        <div className="flex justify-between items-center pb-2 border-b border-[rgba(36,27,20,0.06)] mb-3">
+        <div className="flex justify-between items-center pb-2 border-b border-[rgba(36,27,20,0.06)] dark:border-[rgba(255,255,255,0.06)] mb-3">
           <div className="flex items-center gap-2">
             <Code size={13} className="text-[#E8593C]" />
-            <span className="text-[10px] text-[rgba(36,27,20,0.4)] tracking-wider">SRC/MIDDLEWARE.TS</span>
+            <span className="text-[10px] text-[rgba(36,27,20,0.4)] dark:text-[rgba(255,255,255,0.4)] tracking-wider">SRC/MIDDLEWARE.TS</span>
           </div>
           <div className="flex items-center gap-1.5">
             <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse"></span>
@@ -295,7 +295,7 @@ function LiveCodeDiff({ diffState }: { diffState: number }) {
         </div>
       </div>
 
-      <div className="pt-2.5 border-t border-[rgba(36,27,20,0.06)] mt-3 flex justify-between items-center text-[10px] text-[rgba(36,27,20,0.4)]">
+      <div className="pt-2.5 border-t border-[rgba(36,27,20,0.06)] dark:border-[rgba(255,255,255,0.06)] mt-3 flex justify-between items-center text-[10px] text-[rgba(36,27,20,0.4)] dark:text-[rgba(255,255,255,0.4)]">
         <div>Lines: 9 | Diff: {diffState >= 2 ? (diffState === 3 ? "-4, +4" : "-4, +0") : "0"}</div>
         <span>Auren Agent compiler active</span>
       </div>
@@ -307,20 +307,20 @@ function WorkspaceSyncDiff({ syncState }: { syncState: number }) {
   return (
     <div className="flex flex-col sm:flex-row gap-4 h-full min-h-[300px]">
       {/* Gmail Pane */}
-      <div className="flex-1 bg-white border border-[rgba(36,27,20,0.08)] rounded-xl p-4 flex flex-col justify-between">
+      <div className="flex-1 bg-white dark:bg-[#383838] border border-[rgba(36,27,20,0.08)] dark:border-[rgba(255,255,255,0.08)] rounded-xl p-4 flex flex-col justify-between">
         <div>
-          <div className="flex items-center gap-2 pb-2 border-b border-[rgba(36,27,20,0.06)] mb-3 justify-between">
+          <div className="flex items-center gap-2 pb-2 border-b border-[rgba(36,27,20,0.06)] dark:border-[rgba(255,255,255,0.06)] mb-3 justify-between">
             <div className="flex items-center gap-1.5">
               <Mail size={12} className="text-[#EA4335]" />
-              <span className="text-[10px] text-[rgba(36,27,20,0.4)] tracking-wider font-semibold">WORKSPACE/GMAIL</span>
+              <span className="text-[10px] text-[rgba(36,27,20,0.4)] dark:text-[rgba(255,255,255,0.4)] tracking-wider font-semibold">WORKSPACE/GMAIL</span>
             </div>
-            <span className="text-[9px] text-[rgba(36,27,20,0.35)] font-mono">THREAD_391</span>
+            <span className="text-[9px] text-[rgba(36,27,20,0.35)] dark:text-[rgba(255,255,255,0.35)] font-mono">THREAD_391</span>
           </div>
 
-          <div className="bg-[#FAF8F5] p-2.5 rounded-lg border border-[rgba(36,27,20,0.05)] mb-2.5">
+          <div className="bg-[#FAF8F5] dark:bg-[#2C2C2C] p-2.5 rounded-lg border border-[rgba(36,27,20,0.05)] mb-2.5">
             <div className="flex justify-between items-center text-[10px] mb-1">
-              <span className="font-semibold text-[#241B14]">Rahul</span>
-              <span className="text-[rgba(36,27,20,0.4)] text-[8px]">4:12 PM</span>
+              <span className="font-semibold text-[#241B14] dark:text-[#F4F4F5]">Rahul</span>
+              <span className="text-[rgba(36,27,20,0.4)] dark:text-[rgba(255,255,255,0.4)] text-[8px]">4:12 PM</span>
             </div>
             <p className="text-[10px] text-[rgba(36,27,20,0.65)] leading-relaxed font-sans">
               Hey! Can we sync on Thursday at 3 PM to align on the new waitlist design?
@@ -348,21 +348,21 @@ function WorkspaceSyncDiff({ syncState }: { syncState: number }) {
           </AnimatePresence>
         </div>
 
-        <div className="text-[9px] text-[rgba(36,27,20,0.45)] flex justify-between items-center pt-2 border-t border-[rgba(36,27,20,0.06)] mt-4">
+        <div className="text-[9px] text-[rgba(36,27,20,0.45)] dark:text-[rgba(255,255,255,0.45)] flex justify-between items-center pt-2 border-t border-[rgba(36,27,20,0.06)] dark:border-[rgba(255,255,255,0.06)] mt-4">
           <span>Mail API connected</span>
           {syncState >= 2 && <span className="text-[#0F6E56] font-semibold">Active Draft</span>}
         </div>
       </div>
 
       {/* Calendar Pane */}
-      <div className="flex-1 bg-white border border-[rgba(36,27,20,0.08)] rounded-xl p-4 flex flex-col justify-between">
+      <div className="flex-1 bg-white dark:bg-[#383838] border border-[rgba(36,27,20,0.08)] dark:border-[rgba(255,255,255,0.08)] rounded-xl p-4 flex flex-col justify-between">
         <div>
-          <div className="flex items-center gap-2 pb-2 border-b border-[rgba(36,27,20,0.06)] mb-3 justify-between">
+          <div className="flex items-center gap-2 pb-2 border-b border-[rgba(36,27,20,0.06)] dark:border-[rgba(255,255,255,0.06)] mb-3 justify-between">
             <div className="flex items-center gap-1.5">
               <Calendar size={12} className="text-[#4285F4]" />
-              <span className="text-[10px] text-[rgba(36,27,20,0.4)] tracking-wider font-semibold">WORKSPACE/CALENDAR</span>
+              <span className="text-[10px] text-[rgba(36,27,20,0.4)] dark:text-[rgba(255,255,255,0.4)] tracking-wider font-semibold">WORKSPACE/CALENDAR</span>
             </div>
-            <span className="text-[9px] text-[rgba(36,27,20,0.35)] font-mono">THU, JUN 18</span>
+            <span className="text-[9px] text-[rgba(36,27,20,0.35)] dark:text-[rgba(255,255,255,0.35)] font-mono">THU, JUN 18</span>
           </div>
 
           <div className="space-y-1.5">
@@ -374,7 +374,7 @@ function WorkspaceSyncDiff({ syncState }: { syncState: number }) {
               if (slot.booking) {
                 return (
                   <div key={slot.time} className="flex items-center gap-2 text-[10px]">
-                    <span className="w-12 text-[rgba(36,27,20,0.4)] text-right font-mono">{slot.time}</span>
+                    <span className="w-12 text-[rgba(36,27,20,0.4)] dark:text-[rgba(255,255,255,0.4)] text-right font-mono">{slot.time}</span>
                     <div className="flex-1 h-7 rounded-lg relative flex items-center px-2">
                       {syncState >= 3 ? (
                         <motion.div
@@ -388,7 +388,7 @@ function WorkspaceSyncDiff({ syncState }: { syncState: number }) {
                           <CheckCircle2 size={10} className="text-[#E8593C] flex-shrink-0" />
                         </motion.div>
                       ) : (
-                        <div className="w-full h-full border border-dashed border-[rgba(36,27,20,0.12)] rounded-lg flex items-center px-2 text-[rgba(36,27,20,0.3)] italic text-[9px]">
+                        <div className="w-full h-full border border-dashed border-[rgba(36,27,20,0.12)] dark:border-[rgba(255,255,255,0.12)] rounded-lg flex items-center px-2 text-[rgba(36,27,20,0.3)] dark:text-[rgba(255,255,255,0.3)] italic text-[9px]">
                           Available
                         </div>
                       )}
@@ -399,11 +399,11 @@ function WorkspaceSyncDiff({ syncState }: { syncState: number }) {
 
               return (
                 <div key={slot.time} className="flex items-center gap-2 text-[10px]">
-                  <span className="w-12 text-[rgba(36,27,20,0.4)] text-right font-mono">{slot.time}</span>
+                  <span className="w-12 text-[rgba(36,27,20,0.4)] dark:text-[rgba(255,255,255,0.4)] text-right font-mono">{slot.time}</span>
                   <div className={`flex-1 h-7 rounded-lg flex items-center px-2 border ${
                     slot.busy 
-                      ? "bg-[rgba(36,27,20,0.02)] border-[rgba(36,27,20,0.06)] text-[rgba(36,27,20,0.5)]" 
-                      : "border-dashed border-[rgba(36,27,20,0.12)] text-[rgba(36,27,20,0.3)] italic"
+                      ? "bg-[rgba(36,27,20,0.02)] dark:bg-[rgba(255,255,255,0.02)] border-[rgba(36,27,20,0.06)] dark:border-[rgba(255,255,255,0.06)] text-[rgba(36,27,20,0.5)] dark:text-[rgba(255,255,255,0.5)]" 
+                      : "border-dashed border-[rgba(36,27,20,0.12)] dark:border-[rgba(255,255,255,0.12)] text-[rgba(36,27,20,0.3)] dark:text-[rgba(255,255,255,0.3)] italic"
                   }`}>
                     <span className="text-[9px] truncate">{slot.busy ? slot.title : "Available"}</span>
                   </div>
@@ -413,7 +413,7 @@ function WorkspaceSyncDiff({ syncState }: { syncState: number }) {
           </div>
         </div>
 
-        <div className="text-[9px] text-[rgba(36,27,20,0.45)] flex justify-between items-center pt-2 border-t border-[rgba(36,27,20,0.06)] mt-4">
+        <div className="text-[9px] text-[rgba(36,27,20,0.45)] dark:text-[rgba(255,255,255,0.45)] flex justify-between items-center pt-2 border-t border-[rgba(36,27,20,0.06)] dark:border-[rgba(255,255,255,0.06)] mt-4">
           <span>Calendar Sync OK</span>
           {syncState >= 3 && <span className="text-[#E8593C] font-semibold">Event Reserved</span>}
         </div>
@@ -434,11 +434,11 @@ function PRTerminalExecution({ execState }: { execState: number }) {
   return (
     <div className="flex flex-col sm:flex-row gap-4 h-full min-h-[300px]">
       {/* Shell Pane */}
-      <div className="flex-1 bg-white border border-[rgba(36,27,20,0.08)] rounded-xl p-4 flex flex-col justify-between font-mono text-[10px] text-[#241B14]">
+      <div className="flex-1 bg-white dark:bg-[#383838] border border-[rgba(36,27,20,0.08)] dark:border-[rgba(255,255,255,0.08)] rounded-xl p-4 flex flex-col justify-between font-mono text-[10px] text-[#241B14] dark:text-[#F4F4F5]">
         <div>
-          <div className="flex items-center gap-2 pb-2 border-b border-[rgba(36,27,20,0.06)] mb-3">
+          <div className="flex items-center gap-2 pb-2 border-b border-[rgba(36,27,20,0.06)] dark:border-[rgba(255,255,255,0.06)] mb-3">
             <Terminal size={12} className="text-[#E8593C]" />
-            <span className="text-[rgba(36,27,20,0.4)] tracking-wider font-semibold">AUREN EXECUTION SHELL</span>
+            <span className="text-[rgba(36,27,20,0.4)] dark:text-[rgba(255,255,255,0.4)] tracking-wider font-semibold">AUREN EXECUTION SHELL</span>
           </div>
 
           <div className="space-y-1 text-[rgba(36,27,20,0.8)]">
@@ -455,21 +455,21 @@ function PRTerminalExecution({ execState }: { execState: number }) {
           </div>
         </div>
 
-        <div className="text-[9px] text-[rgba(36,27,20,0.45)] flex justify-between items-center pt-2 border-t border-[rgba(36,27,20,0.06)] mt-4">
+        <div className="text-[9px] text-[rgba(36,27,20,0.45)] dark:text-[rgba(255,255,255,0.45)] flex justify-between items-center pt-2 border-t border-[rgba(36,27,20,0.06)] dark:border-[rgba(255,255,255,0.06)] mt-4">
           <span>Terminal ID: #820</span>
           {execState >= 2 && <span className="text-[#0F6E56] font-semibold">Success</span>}
         </div>
       </div>
 
       {/* GitHub PR Monitor */}
-      <div className="flex-1 bg-white border border-[rgba(36,27,20,0.08)] rounded-xl p-4 flex flex-col justify-between">
+      <div className="flex-1 bg-white dark:bg-[#383838] border border-[rgba(36,27,20,0.08)] dark:border-[rgba(255,255,255,0.08)] rounded-xl p-4 flex flex-col justify-between">
         <div>
-          <div className="flex items-center gap-2 pb-2 border-b border-[rgba(36,27,20,0.06)] mb-3 justify-between">
+          <div className="flex items-center gap-2 pb-2 border-b border-[rgba(36,27,20,0.06)] dark:border-[rgba(255,255,255,0.06)] mb-3 justify-between">
             <div className="flex items-center gap-1.5">
-              <GithubIcon size={12} className="text-[#241B14]" />
-              <span className="text-[10px] text-[rgba(36,27,20,0.4)] tracking-wider font-semibold">GITHUB PR</span>
+              <GithubIcon size={12} className="text-[#241B14] dark:text-[#F4F4F5]" />
+              <span className="text-[10px] text-[rgba(36,27,20,0.4)] dark:text-[rgba(255,255,255,0.4)] tracking-wider font-semibold">GITHUB PR</span>
             </div>
-            <span className="text-[9px] text-[rgba(36,27,20,0.35)] font-mono">tryauren/Auren</span>
+            <span className="text-[9px] text-[rgba(36,27,20,0.35)] dark:text-[rgba(255,255,255,0.35)] font-mono">tryauren/Auren</span>
           </div>
 
           <AnimatePresence>
@@ -484,14 +484,14 @@ function PRTerminalExecution({ execState }: { execState: number }) {
                     <span className="text-[#0F6E56] bg-[#F0FDF8] border border-[#A7C4BB] px-2 py-0.5 rounded text-[8px] font-bold font-mono">
                       OPEN
                     </span>
-                    <span className="text-[9px] text-[rgba(36,27,20,0.4)] font-mono">PR #14</span>
+                    <span className="text-[9px] text-[rgba(36,27,20,0.4)] dark:text-[rgba(255,255,255,0.4)] font-mono">PR #14</span>
                   </div>
-                  <h4 className="text-[11px] font-semibold text-[#241B14] mt-1 leading-snug">
+                  <h4 className="text-[11px] font-semibold text-[#241B14] dark:text-[#F4F4F5] mt-1 leading-snug">
                     feat: Clerk auth middleware migration
                   </h4>
                 </div>
 
-                <div className="bg-[#FAF8F5] border border-[rgba(36,27,20,0.05)] p-2 rounded-lg space-y-1">
+                <div className="bg-[#FAF8F5] dark:bg-[#2C2C2C] border border-[rgba(36,27,20,0.05)] p-2 rounded-lg space-y-1">
                   <div className="flex items-center gap-1.5 text-[8px] text-[#0F6E56] font-mono font-medium">
                     <CheckCircle2 size={10} />
                     <span>Typescript compilation passed</span>
@@ -509,15 +509,15 @@ function PRTerminalExecution({ execState }: { execState: number }) {
                 </button>
               </motion.div>
             ) : (
-              <div className="h-24 flex flex-col items-center justify-center border border-dashed border-[rgba(36,27,20,0.12)] rounded-lg text-[rgba(36,27,20,0.35)] italic text-[9px] gap-2">
-                <RefreshCw className="animate-spin text-[rgba(36,27,20,0.3)]" size={14} />
+              <div className="h-24 flex flex-col items-center justify-center border border-dashed border-[rgba(36,27,20,0.12)] dark:border-[rgba(255,255,255,0.12)] rounded-lg text-[rgba(36,27,20,0.35)] dark:text-[rgba(255,255,255,0.35)] italic text-[9px] gap-2">
+                <RefreshCw className="animate-spin text-[rgba(36,27,20,0.3)] dark:text-[rgba(255,255,255,0.3)]" size={14} />
                 <span>Waiting for build checks...</span>
               </div>
             )}
           </AnimatePresence>
         </div>
 
-        <div className="text-[9px] text-[rgba(36,27,20,0.45)] flex justify-between items-center pt-2 border-t border-[rgba(36,27,20,0.06)] mt-4">
+        <div className="text-[9px] text-[rgba(36,27,20,0.45)] dark:text-[rgba(255,255,255,0.45)] flex justify-between items-center pt-2 border-t border-[rgba(36,27,20,0.06)] dark:border-[rgba(255,255,255,0.06)] mt-4">
           <span>PR Webhook Connected</span>
           {execState >= 3 && <span className="text-[#0F6E56] font-semibold">Active</span>}
         </div>
@@ -673,8 +673,8 @@ export function HowItWorksSection() {
                   onClick={() => selectStep(idx)}
                   className={`group cursor-pointer p-6 rounded-2xl transition-all duration-300 flex gap-5 items-start ${
                     isActive 
-                      ? "bg-white shadow-[0_12px_36px_rgba(36,27,20,0.05)] border border-[rgba(232,89,60,0.12)]" 
-                      : "bg-transparent border border-transparent hover:bg-white/40"
+                      ? "bg-white dark:bg-[#383838] shadow-[0_12px_36px_rgba(36,27,20,0.05)] border border-[rgba(232,89,60,0.12)]" 
+                      : "bg-transparent border border-transparent hover:bg-white dark:bg-[#383838]/40"
                   }`}
                 >
                   {/* Vertical Progress Rail */}
@@ -682,7 +682,7 @@ export function HowItWorksSection() {
                     <div className={`w-8 h-8 rounded-full flex items-center justify-center font-mono text-xs font-semibold transition-all duration-300 ${
                       isActive 
                         ? "bg-[#E8593C] text-white shadow-[0_4px_10px_rgba(232,89,60,0.2)]" 
-                        : "bg-neutral-100 text-[rgba(36,27,20,0.4)] group-hover:text-[rgba(36,27,20,0.6)]"
+                        : "bg-neutral-100 text-[rgba(36,27,20,0.4)] dark:text-[rgba(255,255,255,0.4)] group-hover:text-[rgba(36,27,20,0.6)] dark:text-[rgba(255,255,255,0.6)]"
                     }`}>
                       {step.num}
                     </div>
@@ -702,7 +702,7 @@ export function HowItWorksSection() {
                   <div className="flex-1 pt-0.5">
                     <h3 
                       className={`font-sans font-semibold text-lg mb-2 transition-colors duration-300 ${
-                        isActive ? "text-[#241B14]" : "text-[rgba(36,27,20,0.7)] group-hover:text-[#241B14]"
+                        isActive ? "text-[#241B14] dark:text-[#F4F4F5]" : "text-[rgba(36,27,20,0.7)] dark:text-[rgba(255,255,255,0.7)] group-hover:text-[#241B14] dark:text-[#F4F4F5]"
                       }`}
                     >
                       {step.title}
@@ -717,10 +717,10 @@ export function HowItWorksSection() {
           </div>
 
           {/* Right Column: Sleek interactive IDE window */}
-          <div className="lg:col-span-7 w-full bg-[#FDFBF9] rounded-3xl border border-[rgba(36,27,20,0.08)] shadow-[0_24px_60px_rgba(36,27,20,0.06),0_4px_16px_rgba(36,27,20,0.02)] overflow-hidden flex flex-col justify-between relative min-h-[460px]">
+          <div className="lg:col-span-7 w-full bg-[#FDFBF9] rounded-3xl border border-[rgba(36,27,20,0.08)] dark:border-[rgba(255,255,255,0.08)] shadow-[0_24px_60px_rgba(36,27,20,0.06),0_4px_16px_rgba(36,27,20,0.02)] overflow-hidden flex flex-col justify-between relative min-h-[460px]">
             
             {/* Topbar Chrome */}
-            <div className="flex items-center justify-between px-6 py-4 border-b border-[rgba(36,27,20,0.06)] bg-[#FAF8F5]">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-[rgba(36,27,20,0.06)] dark:border-[rgba(255,255,255,0.06)] bg-[#FAF8F5] dark:bg-[#2C2C2C]">
               <div className="flex gap-1.5">
                 <div className="w-2.5 h-2.5 rounded-full bg-[#FF5F56]" />
                 <div className="w-2.5 h-2.5 rounded-full bg-[#FFBD2E]" />
@@ -731,16 +731,16 @@ export function HowItWorksSection() {
                 {steps[activeStep].fileTab}
               </span>
               
-              <div className="flex items-center gap-1 text-[10px] font-sans font-medium text-[rgba(36,27,20,0.6)] bg-white px-2 py-0.5 rounded border border-[rgba(36,27,20,0.08)]">
+              <div className="flex items-center gap-1 text-[10px] font-sans font-medium text-[rgba(36,27,20,0.6)] dark:text-[rgba(255,255,255,0.6)] bg-white dark:bg-[#383838] px-2 py-0.5 rounded border border-[rgba(36,27,20,0.08)] dark:border-[rgba(255,255,255,0.08)]">
                 <Lock size={10} className="text-[#0F6E56]" />
                 <span>SANDBOXED</span>
               </div>
             </div>
 
             {/* Input Prompt Section */}
-            <div className="px-6 py-3 border-b border-[rgba(36,27,20,0.04)] bg-[#FDFBF9] flex items-center gap-3">
+            <div className="px-6 py-3 border-b border-[rgba(36,27,20,0.04)] dark:border-[rgba(255,255,255,0.04)] bg-[#FDFBF9] flex items-center gap-3">
               <span className="text-[#E8593C] font-mono text-xs font-bold select-none">auren &gt;</span>
-              <div className="text-[12px] font-mono text-[#241B14] truncate flex-1">
+              <div className="text-[12px] font-mono text-[#241B14] dark:text-[#F4F4F5] truncate flex-1">
                 {steps[activeStep].command}
                 <motion.span
                   animate={{ opacity: [1, 0, 1] }}
@@ -795,8 +795,8 @@ export function HowItWorksSection() {
             </div>
 
             {/* Interactive Control Footer */}
-            <div className="px-6 py-3 border-t border-[rgba(36,27,20,0.06)] bg-[#FAF8F5] flex items-center justify-between">
-              <span className="text-[10px] font-sans text-[rgba(36,27,20,0.4)]">Press [Approve] to confirm changes</span>
+            <div className="px-6 py-3 border-t border-[rgba(36,27,20,0.06)] dark:border-[rgba(255,255,255,0.06)] bg-[#FAF8F5] dark:bg-[#2C2C2C] flex items-center justify-between">
+              <span className="text-[10px] font-sans text-[rgba(36,27,20,0.4)] dark:text-[rgba(255,255,255,0.4)]">Press [Approve] to confirm changes</span>
               
               <button
                 onClick={handleNextExecute}

@@ -44,8 +44,8 @@ function EmailRow({ id, sender, subject, time, priority, avatarColor, isSelected
   return (
     <div 
       className={cn(
-        "h-[60px] flex items-center px-4 cursor-pointer border-b border-[rgba(36,27,20,0.04)] transition-colors relative group",
-        isSelected ? "bg-[#FBF3EC]" : "hover:bg-[rgba(36,27,20,0.02)]"
+        "h-[60px] flex items-center px-4 cursor-pointer border-b border-[rgba(36,27,20,0.04)] dark:border-[rgba(255,255,255,0.04)] transition-colors relative group",
+        isSelected ? "bg-[#FBF3EC] dark:bg-[#383838]" : "hover:bg-[rgba(36,27,20,0.02)] dark:hover:bg-[rgba(255,255,255,0.02)]"
       )}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
@@ -64,11 +64,11 @@ function EmailRow({ id, sender, subject, time, priority, avatarColor, isSelected
 
       <div className="ml-3 flex-1 min-w-0 overflow-hidden">
         <div className="flex items-center gap-2">
-          <span className="font-sans font-semibold text-[13px] text-[#241B14] truncate">
+          <span className="font-sans font-semibold text-[13px] text-[#241B14] dark:text-[#F4F4F5] truncate">
             {sender}
           </span>
         </div>
-        <div className="font-sans text-[12px] text-[rgba(36,27,20,0.5)] truncate mt-[2px]">
+        <div className="font-sans text-[12px] text-[rgba(36,27,20,0.5)] dark:text-[rgba(255,255,255,0.5)] truncate mt-[2px]">
           {subject}
         </div>
       </div>
@@ -81,13 +81,13 @@ function EmailRow({ id, sender, subject, time, priority, avatarColor, isSelected
         
         <div className="w-[80px] flex justify-end">
           {isHovered ? (
-            <div className="flex items-center gap-2 text-[rgba(36,27,20,0.4)]">
-              <button className="hover:text-[#241B14] transition-colors"><Reply size={14} /></button>
-              <button className="hover:text-[#241B14] transition-colors"><CalendarIcon size={14} /></button>
-              <button className="hover:text-[#241B14] transition-colors"><Code2 size={14} /></button>
+            <div className="flex items-center gap-2 text-[rgba(36,27,20,0.4)] dark:text-[rgba(255,255,255,0.4)]">
+              <button className="hover:text-[#241B14] dark:text-[#F4F4F5] transition-colors"><Reply size={14} /></button>
+              <button className="hover:text-[#241B14] dark:text-[#F4F4F5] transition-colors"><CalendarIcon size={14} /></button>
+              <button className="hover:text-[#241B14] dark:text-[#F4F4F5] transition-colors"><Code2 size={14} /></button>
             </div>
           ) : (
-            <span className="font-sans text-[11px] text-[rgba(36,27,20,0.35)]">
+            <span className="font-sans text-[11px] text-[rgba(36,27,20,0.35)] dark:text-[rgba(255,255,255,0.35)]">
               {time}
             </span>
           )}
@@ -145,23 +145,23 @@ export function InboxPanel({
   ];
 
   return (
-    <div className="w-full flex-1 flex flex-col bg-white h-full overflow-hidden">
+    <div className="w-full flex-1 flex flex-col bg-white dark:bg-[#383838] h-full overflow-hidden">
       
       {/* Header & Folder Navigation */}
-      <div className="flex flex-col border-b border-[rgba(36,27,20,0.08)] shrink-0">
+      <div className="flex flex-col border-b border-[rgba(36,27,20,0.08)] dark:border-[rgba(255,255,255,0.08)] shrink-0">
         <div className="h-[56px] px-6 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <h2 style={{ fontFamily: "var(--font-civane, Georgia, serif)" }} className="text-[20px] text-[#241B14] tracking-tight">
+            <h2 style={{ fontFamily: "var(--font-civane, Georgia, serif)" }} className="text-[20px] text-[#241B14] dark:text-[#F4F4F5] tracking-tight">
               Mailbox
             </h2>
-            <div className="bg-[#FBF3EC] border border-[rgba(36,27,20,0.08)] rounded-full px-2 py-[2px] font-sans text-[11px] text-[rgba(36,27,20,0.5)] leading-none flex items-center">
+            <div className="bg-[#FBF3EC] dark:bg-[#4F4F4F] border border-[rgba(36,27,20,0.08)] dark:border-[rgba(255,255,255,0.08)] rounded-full px-2 py-[2px] font-sans text-[11px] text-[rgba(36,27,20,0.5)] dark:text-[rgba(255,255,255,0.5)] leading-none flex items-center">
               {filteredEmails.length}
             </div>
           </div>
           <button 
             onClick={() => onRefresh(true)}
             disabled={isLoading}
-            className="h-[28px] px-3 border border-[rgba(36,27,20,0.08)] rounded-[8px] font-sans text-[11px] text-[#241B14] hover:bg-[#FBF3EC] transition-colors disabled:opacity-50"
+            className="h-[28px] px-3 border border-[rgba(36,27,20,0.08)] dark:border-[rgba(255,255,255,0.08)] rounded-[8px] font-sans text-[11px] text-[#241B14] dark:text-[#F4F4F5] hover:bg-[#FBF3EC] transition-colors disabled:opacity-50"
           >
             {isLoading ? "Syncing..." : "Sync"}
           </button>
@@ -176,8 +176,8 @@ export function InboxPanel({
               className={cn(
                 "px-3 py-1.5 rounded-md font-sans text-[12px] font-medium transition-colors",
                 folderType === folder
-                  ? "bg-[#241B14] text-white"
-                  : "bg-[rgba(36,27,20,0.04)] text-[rgba(36,27,20,0.6)] hover:bg-[rgba(36,27,20,0.08)]"
+                  ? "bg-[#241B14] dark:bg-[#4D4D4D] text-white"
+                  : "bg-[rgba(36,27,20,0.04)] dark:bg-[rgba(255,255,255,0.04)] text-[rgba(36,27,20,0.6)] dark:text-[rgba(255,255,255,0.6)] hover:bg-[rgba(36,27,20,0.08)] dark:hover:bg-[rgba(255,255,255,0.08)]"
               )}
             >
               {folder === "INBOX" ? "Inbox" : folder === "SENT" ? "Sent" : folder === "DRAFT" ? "Drafts" : "Spam"}
@@ -187,7 +187,7 @@ export function InboxPanel({
       </div>
 
       {/* Priority Tabs */}
-      <div className="flex px-4 border-b border-[rgba(36,27,20,0.08)] bg-[#FAF8F5] shrink-0 gap-1 select-none">
+      <div className="flex px-4 border-b border-[rgba(36,27,20,0.08)] dark:border-[rgba(255,255,255,0.08)] bg-[#FAF8F5] dark:bg-[#2C2C2C] shrink-0 gap-1 select-none">
         {tabs.map(tab => (
           <button
             key={tab.name}
@@ -195,8 +195,8 @@ export function InboxPanel({
             className={cn(
               "font-sans text-[11.5px] pb-[10px] pt-[12px] px-2.5 relative transition-all flex items-center gap-1.5",
               activeTab === tab.name 
-                ? "text-[#241B14] font-semibold" 
-                : "text-[rgba(36,27,20,0.4)] hover:text-[#241B14]"
+                ? "text-[#241B14] dark:text-[#F4F4F5] font-semibold" 
+                : "text-[rgba(36,27,20,0.4)] dark:text-[rgba(255,255,255,0.4)] hover:text-[#241B14] dark:text-[#F4F4F5]"
             )}
             title={tab.desc}
           >
@@ -208,7 +208,7 @@ export function InboxPanel({
               "text-[9px] px-1.5 py-0.5 rounded font-mono leading-none font-medium",
               activeTab === tab.name 
                 ? "bg-[#E8593C]/10 text-[#E8593C]" 
-                : "bg-[rgba(36,27,20,0.04)] text-[rgba(36,27,20,0.4)]"
+                : "bg-[rgba(36,27,20,0.04)] dark:bg-[rgba(255,255,255,0.04)] text-[rgba(36,27,20,0.4)] dark:text-[rgba(255,255,255,0.4)]"
             )}>
               {tab.count}
             </span>
@@ -238,7 +238,7 @@ export function InboxPanel({
           />
         ))}
         {filteredEmails.length === 0 && !isLoading && (
-          <div className="p-8 text-center text-[rgba(36,27,20,0.5)] font-sans text-[13px]">
+          <div className="p-8 text-center text-[rgba(36,27,20,0.5)] dark:text-[rgba(255,255,255,0.5)] font-sans text-[13px]">
             No emails found in this folder.
           </div>
         )}

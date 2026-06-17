@@ -238,16 +238,16 @@ export function TerminalDrawer({ isOpen, setIsOpen, onExecute, isAgentLoading }:
           exit={{ y: "100%" }}
           transition={{ type: "spring", stiffness: 220, damping: 24 }}
           style={{ height: drawerHeight }}
-          className="fixed bottom-0 left-0 w-full z-[60] bg-[#FDFBF9] border-t border-[rgba(36,27,20,0.12)] shadow-[0_-8px_32px_rgba(36,27,20,0.08)] flex flex-col overflow-visible"
+          className="fixed bottom-0 left-0 w-full z-[60] bg-[#FDFBF9] border-t border-[rgba(36,27,20,0.12)] dark:border-[rgba(255,255,255,0.12)] shadow-[0_-8px_32px_rgba(36,27,20,0.08)] flex flex-col overflow-visible"
         >
           {/* Header bar in warm sand */}
           <div 
-            className="h-[44px] bg-[#FAF6F0] border-b border-[rgba(36,27,20,0.06)] flex items-center justify-between px-6 shrink-0 select-none cursor-ns-resize"
+            className="h-[44px] bg-[#FAF6F0] border-b border-[rgba(36,27,20,0.06)] dark:border-[rgba(255,255,255,0.06)] flex items-center justify-between px-6 shrink-0 select-none cursor-ns-resize"
             onMouseDown={startResize}
           >
             <div className="flex items-center gap-2">
               <TerminalSquare size={16} className="text-[#E8593C]" />
-              <span style={{ fontFamily: "var(--font-civane, Georgia, serif)" }} className="text-[16px] text-[#241B14] tracking-wide font-medium">
+              <span style={{ fontFamily: "var(--font-civane, Georgia, serif)" }} className="text-[16px] text-[#241B14] dark:text-[#F4F4F5] tracking-wide font-medium">
                 Auren Console
               </span>
             </div>
@@ -255,14 +255,14 @@ export function TerminalDrawer({ isOpen, setIsOpen, onExecute, isAgentLoading }:
             <div className="flex items-center gap-4">
               <button
                 onClick={() => setIsOpen(false)}
-                className="text-[rgba(36,27,20,0.4)] hover:text-[#E8593C] transition-colors"
+                className="text-[rgba(36,27,20,0.4)] dark:text-[rgba(255,255,255,0.4)] hover:text-[#E8593C] transition-colors"
               >
                 <X size={16} />
               </button>
             </div>
           </div>
 
-          <div className="flex flex-col relative bg-white">
+          <div className="flex flex-col relative bg-white dark:bg-[#383838]">
             {/* Tag autocomplete dropdown */}
             <AnimatePresence>
               {showDropdown && filteredContacts.length > 0 && (
@@ -270,9 +270,9 @@ export function TerminalDrawer({ isOpen, setIsOpen, onExecute, isAgentLoading }:
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: 10 }}
-                  className="absolute bottom-full left-6 mb-2 bg-white border border-[rgba(36,27,20,0.08)] shadow-[0_8px_32px_rgba(36,27,20,0.12)] rounded-xl w-[320px] max-h-[200px] overflow-y-auto scrollbar-hide flex flex-col p-1.5 z-50"
+                  className="absolute bottom-full left-6 mb-2 bg-white dark:bg-[#383838] border border-[rgba(36,27,20,0.08)] dark:border-[rgba(255,255,255,0.08)] shadow-[0_8px_32px_rgba(36,27,20,0.12)] rounded-xl w-[320px] max-h-[200px] overflow-y-auto scrollbar-hide flex flex-col p-1.5 z-50"
                 >
-                  <div className="text-[9px] font-sans font-bold uppercase tracking-wider text-[rgba(36,27,20,0.35)] px-2.5 py-1.5 border-b border-[rgba(36,27,20,0.04)] mb-1">
+                  <div className="text-[9px] font-sans font-bold uppercase tracking-wider text-[rgba(36,27,20,0.35)] dark:text-[rgba(255,255,255,0.35)] px-2.5 py-1.5 border-b border-[rgba(36,27,20,0.04)] dark:border-[rgba(255,255,255,0.04)] mb-1">
                     Contacts Autocomplete
                   </div>
                   {filteredContacts.map((contact, idx) => (
@@ -283,14 +283,14 @@ export function TerminalDrawer({ isOpen, setIsOpen, onExecute, isAgentLoading }:
                       className={`flex items-center justify-between px-2.5 py-2 rounded-lg cursor-pointer transition-colors ${
                         idx === selectedIndex 
                           ? "bg-[rgba(232,89,60,0.08)] text-[#E8593C]" 
-                          : "hover:bg-[rgba(36,27,20,0.02)] text-[#241B14]"
+                          : "hover:bg-[rgba(36,27,20,0.02)] dark:bg-[rgba(255,255,255,0.02)] text-[#241B14] dark:text-[#F4F4F5]"
                       }`}
                     >
                       <div className="flex flex-col min-w-0">
                         <span className="font-sans font-semibold text-[11.5px] truncate">
                           {contact.name}
                         </span>
-                        <span className="font-mono text-[9px] text-[rgba(36,27,20,0.4)] truncate">
+                        <span className="font-mono text-[9px] text-[rgba(36,27,20,0.4)] dark:text-[rgba(255,255,255,0.4)] truncate">
                           {contact.email}
                         </span>
                       </div>
@@ -312,13 +312,13 @@ export function TerminalDrawer({ isOpen, setIsOpen, onExecute, isAgentLoading }:
                   initial={{ height: 0, opacity: 0 }}
                   animate={{ height: "auto", opacity: 1 }}
                   exit={{ height: 0, opacity: 0 }}
-                  className="px-6 py-5 border-b border-[rgba(36,27,20,0.06)] bg-[#FAF8F5]/80 flex flex-col gap-3 flex-1 overflow-y-auto"
+                  className="px-6 py-5 border-b border-[rgba(36,27,20,0.06)] dark:border-[rgba(255,255,255,0.06)] bg-[#FAF8F5] dark:bg-[#2C2C2C]/80 flex flex-col gap-3 flex-1 overflow-y-auto"
                 >
                   {/* User Command Echo */}
                   {logs.map((log, idx) => {
                     if (!log) return null;
                     return (
-                      <div key={idx} className="flex gap-3 text-[#241B14] font-mono text-[13px]">
+                      <div key={idx} className="flex gap-3 text-[#241B14] dark:text-[#F4F4F5] font-mono text-[13px]">
                         <span className="text-[#E8593C] font-bold">❯</span>
                         <span className="font-sans font-medium text-[rgba(36,27,20,0.8)]">{log.replace(">", "").trim()}</span>
                       </div>
@@ -338,7 +338,7 @@ export function TerminalDrawer({ isOpen, setIsOpen, onExecute, isAgentLoading }:
             {/* Input Bar */}
             <form
               onSubmit={handleSubmit}
-              className="h-[64px] bg-[#FDFBF9] border-t border-[rgba(36,27,20,0.08)] px-6 flex items-center gap-3 shrink-0"
+              className="h-[64px] bg-[#FDFBF9] border-t border-[rgba(36,27,20,0.08)] dark:border-[rgba(255,255,255,0.08)] px-6 flex items-center gap-3 shrink-0"
             >
               <span 
                 className="text-[#E8593C] text-[14px] font-bold select-none whitespace-nowrap"
@@ -351,7 +351,7 @@ export function TerminalDrawer({ isOpen, setIsOpen, onExecute, isAgentLoading }:
                 ref={inputRef}
                 type="text"
                 onKeyDown={handleInputKeyDown}
-                className="flex-1 bg-transparent border-none outline-none text-[14px] text-[#241B14] placeholder:text-[rgba(36,27,20,0.25)] font-mono"
+                className="flex-1 bg-transparent border-none outline-none text-[14px] text-[#241B14] dark:text-[#F4F4F5] placeholder:text-[rgba(36,27,20,0.25)] font-mono"
                 style={{ fontFamily: "var(--font-mono), monospace" }}
                 placeholder="type a command... (press Esc to close)"
                 value={command}
@@ -370,7 +370,7 @@ export function TerminalDrawer({ isOpen, setIsOpen, onExecute, isAgentLoading }:
                   className={`p-2.5 rounded-lg transition-all duration-200 flex items-center justify-center ${
                     isListening
                       ? "bg-[#E8593C]/10 text-[#E8593C] animate-pulse"
-                      : "text-[rgba(36,27,20,0.4)] hover:text-[#241B14] hover:bg-[rgba(36,27,20,0.04)]"
+                      : "text-[rgba(36,27,20,0.4)] dark:text-[rgba(255,255,255,0.4)] hover:text-[#241B14] dark:text-[#F4F4F5] hover:bg-[rgba(36,27,20,0.04)] dark:bg-[rgba(255,255,255,0.04)]"
                   }`}
                   title="Voice Input (Speech-to-Text)"
                 >

@@ -276,7 +276,7 @@ export function MorphPanel({ onExecute, isAgentLoading = false }: MorphPanelProp
         ref={wrapperRef}
         data-panel
         className={cx(
-          "bg-[#FAF8F5] z-50 flex flex-col items-center overflow-hidden border border-[rgba(36,27,20,0.08)] shadow-[0_12px_40px_rgba(0,0,0,0.08)]"
+          "bg-[#FAF8F5] dark:bg-[#383838] z-50 flex flex-col items-center overflow-hidden border border-[rgba(36,27,20,0.08)] dark:border-[rgba(255,255,255,0.08)] shadow-[0_12px_40px_rgba(0,0,0,0.08)]"
         )}
         drag
         dragControls={dragControls}
@@ -353,7 +353,7 @@ function DockBar() {
           variant="ghost"
           onClick={triggerOpen}
         >
-          <span className="truncate text-[#241B14] font-medium text-[13px]">Ask Auren AI</span>
+          <span className="truncate text-[#241B14] dark:text-[#F4F4F5] font-medium text-[13px]">Ask Auren AI</span>
         </Button>
       </div>
     </footer>
@@ -444,7 +444,7 @@ function InputForm({ inputRef, onSuccess, onExecute }: { inputRef: React.RefObje
     return parts.map((part, i) => {
       if (MOCK_MENTIONS.some(m => m.value === part)) {
          if (role === "user") {
-            return <span key={i} className="text-[#E8593C] bg-white px-1.5 py-[2px] rounded border border-white/20 mx-[2px] font-bold shadow-sm">{part}</span>
+            return <span key={i} className="text-[#E8593C] bg-white dark:bg-[#383838] px-1.5 py-[2px] rounded border border-white/20 mx-[2px] font-bold shadow-sm">{part}</span>
          } else {
             return <span key={i} className="text-[#E8593C] font-semibold bg-[#E8593C]/10 border border-[#E8593C]/20 px-1.5 py-[2px] rounded mx-[2px]">{part}</span>
          }
@@ -527,7 +527,9 @@ function InputForm({ inputRef, onSuccess, onExecute }: { inputRef: React.RefObje
         })
       }
       
-      inputRef.current.value = ""
+      if (inputRef.current) {
+        inputRef.current.value = ""
+      }
     }
     onSuccess()
   }
@@ -621,19 +623,19 @@ function InputForm({ inputRef, onSuccess, onExecute }: { inputRef: React.RefObje
                   onMouseDown={startResize}
                   title="Drag to resize"
                 >
-                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" className="text-[rgba(36,27,20,0.4)] absolute top-2 left-2">
+                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" className="text-[rgba(36,27,20,0.4)] dark:text-[rgba(255,255,255,0.4)] absolute top-2 left-2">
                     <path d="M21 3L3 21M21 9L9 21M21 15L15 21" />
                   </svg>
                 </div>
               )}
-              <p className="text-[#241B14] z-2 ml-[38px] flex items-center gap-[6px] select-none font-medium text-[13px]">
+              <p className="text-[#241B14] dark:text-[#F4F4F5] z-2 ml-[38px] flex items-center gap-[6px] select-none font-medium text-[13px]">
                 Auren AI Agent
               </p>
               <div className="flex items-center gap-1 right-4 mt-1 -translate-y-[3px]">
                 <button
                   type="button"
                   onClick={() => setIsFullscreen(!isFullscreen)}
-                  className="flex items-center justify-center p-1.5 rounded-[8px] transition-colors text-[rgba(36,27,20,0.5)] hover:text-[#241B14] hover:bg-[rgba(36,27,20,0.04)]"
+                  className="flex items-center justify-center p-1.5 rounded-[8px] transition-colors text-[rgba(36,27,20,0.5)] dark:text-[rgba(255,255,255,0.5)] hover:text-[#241B14] dark:text-[#F4F4F5] hover:bg-[rgba(36,27,20,0.04)] dark:bg-[rgba(255,255,255,0.04)]"
                   title={isFullscreen ? "Minimize" : "Full Screen"}
                 >
                   {isFullscreen ? <Minimize2 size={14} /> : <Maximize2 size={14} />}
@@ -642,7 +644,7 @@ function InputForm({ inputRef, onSuccess, onExecute }: { inputRef: React.RefObje
                   type="submit"
                   ref={btnRef}
                   disabled={isAgentLoading}
-                  className="text-[rgba(36,27,20,0.5)] flex cursor-pointer items-center justify-center gap-1 rounded-[12px] bg-transparent pr-1 text-center select-none hover:text-[#241B14] transition-colors disabled:opacity-50 disabled:pointer-events-none"
+                  className="text-[rgba(36,27,20,0.5)] dark:text-[rgba(255,255,255,0.5)] flex cursor-pointer items-center justify-center gap-1 rounded-[12px] bg-transparent pr-1 text-center select-none hover:text-[#241B14] dark:text-[#F4F4F5] transition-colors disabled:opacity-50 disabled:pointer-events-none"
                 >
                   <KeyHint className="w-fit">Enter</KeyHint>
                 </button>
@@ -672,33 +674,33 @@ function InputForm({ inputRef, onSuccess, onExecute }: { inputRef: React.RefObje
                           </div>
                           
                           {msg.isTyping ? (
-                            <div className="bg-white border border-[rgba(36,27,20,0.08)] text-[rgba(36,27,20,0.6)] px-4 py-3 rounded-2xl rounded-tl-sm text-[13.5px] shadow-sm flex items-center gap-2">
+                            <div className="bg-white dark:bg-[#383838] border border-[rgba(36,27,20,0.08)] dark:border-[rgba(255,255,255,0.08)] text-[rgba(36,27,20,0.6)] dark:text-[rgba(255,255,255,0.6)] px-4 py-3 rounded-2xl rounded-tl-sm text-[13.5px] shadow-sm flex items-center gap-2">
                               <motion.div className="w-1.5 h-1.5 rounded-full bg-[#E8593C]" animate={{ opacity: [0.3, 1, 0.3] }} transition={{ repeat: Infinity, duration: 1.2, delay: 0 }} />
                               <motion.div className="w-1.5 h-1.5 rounded-full bg-[#E8593C]" animate={{ opacity: [0.3, 1, 0.3] }} transition={{ repeat: Infinity, duration: 1.2, delay: 0.2 }} />
                               <motion.div className="w-1.5 h-1.5 rounded-full bg-[#E8593C]" animate={{ opacity: [0.3, 1, 0.3] }} transition={{ repeat: Infinity, duration: 1.2, delay: 0.4 }} />
                             </div>
                           ) : msg.content ? (
-                            <div className="bg-white border border-[rgba(36,27,20,0.08)] text-[#241B14] px-4 py-2.5 rounded-2xl rounded-tl-sm text-[13.5px] leading-relaxed shadow-sm max-w-[85%]">
+                            <div className="bg-white dark:bg-[#383838] border border-[rgba(36,27,20,0.08)] dark:border-[rgba(255,255,255,0.08)] text-[#241B14] dark:text-[#F4F4F5] px-4 py-2.5 rounded-2xl rounded-tl-sm text-[13.5px] leading-relaxed shadow-sm max-w-[85%]">
                               {renderHighlightedText(msg.content || "", "agent")}
                             </div>
                           ) : msg.plan?.briefing ? (
-                            <div className="bg-white border border-[rgba(36,27,20,0.08)] text-[#241B14] px-4 py-2.5 rounded-2xl rounded-tl-sm text-[13.5px] leading-relaxed shadow-sm max-w-[85%]">
+                            <div className="bg-white dark:bg-[#383838] border border-[rgba(36,27,20,0.08)] dark:border-[rgba(255,255,255,0.08)] text-[#241B14] dark:text-[#F4F4F5] px-4 py-2.5 rounded-2xl rounded-tl-sm text-[13.5px] leading-relaxed shadow-sm max-w-[85%]">
                               {renderHighlightedText("I've loaded your morning briefing on the screen. Have a great day!", "agent")}
                             </div>
                           ) : msg.plan ? (
                             <div className="flex flex-col gap-3 w-full">
-                              <div className="bg-white border border-[rgba(36,27,20,0.08)] text-[#241B14] px-4 py-2.5 rounded-2xl rounded-tl-sm text-[13.5px] leading-relaxed shadow-sm">
+                              <div className="bg-white dark:bg-[#383838] border border-[rgba(36,27,20,0.08)] dark:border-[rgba(255,255,255,0.08)] text-[#241B14] dark:text-[#F4F4F5] px-4 py-2.5 rounded-2xl rounded-tl-sm text-[13.5px] leading-relaxed shadow-sm">
                                 {renderHighlightedText(msg.plan.explanation || "I've drafted the plan. Please review and confirm the actions.", "agent")}
                               </div>
                               <div className="flex flex-col gap-2 w-full pl-2 border-l-2 border-[#E8593C]/20 ml-2">
                                 {msg.plan.actions?.map((action: any, idx: number) => (
-                                  <div key={idx} className="bg-white border border-[rgba(36,27,20,0.08)] rounded-[10px] p-2.5 flex items-center gap-3 shadow-sm">
-                                    <div className="w-8 h-8 bg-[#FAF8F5] text-[rgba(36,27,20,0.7)] rounded-md flex items-center justify-center shrink-0 border border-[rgba(36,27,20,0.08)]">
+                                  <div key={idx} className="bg-white dark:bg-[#383838] border border-[rgba(36,27,20,0.08)] dark:border-[rgba(255,255,255,0.08)] rounded-[10px] p-2.5 flex items-center gap-3 shadow-sm">
+                                    <div className="w-8 h-8 bg-[#FAF8F5] dark:bg-[#2C2C2C] text-[rgba(36,27,20,0.7)] dark:text-[rgba(255,255,255,0.7)] rounded-md flex items-center justify-center shrink-0 border border-[rgba(36,27,20,0.08)] dark:border-[rgba(255,255,255,0.08)]">
                                       <Check size={14} className="text-[#E8593C]" strokeWidth={3} />
                                     </div>
                                     <div className="flex flex-col flex-1 min-w-0">
-                                      <span className="font-semibold text-[#241B14] text-[13px] capitalize">{action.tool.replace(/_/g, " ")}</span>
-                                      <span className="text-[rgba(36,27,20,0.5)] text-[12px] truncate">{action.description}</span>
+                                      <span className="font-semibold text-[#241B14] dark:text-[#F4F4F5] text-[13px] capitalize">{action.tool.replace(/_/g, " ")}</span>
+                                      <span className="text-[rgba(36,27,20,0.5)] dark:text-[rgba(255,255,255,0.5)] text-[12px] truncate">{action.description}</span>
                                     </div>
                                   </div>
                                 ))}
@@ -714,8 +716,8 @@ function InputForm({ inputRef, onSuccess, onExecute }: { inputRef: React.RefObje
             </div>
 
             {/* Input area at bottom */}
-            <div className="mt-auto shrink-0 bg-[#FAF8F5] p-3 border-t border-[rgba(36,27,20,0.04)] shadow-[0_-4px_12px_rgba(0,0,0,0.02)]">
-              <div className="relative border border-[rgba(36,27,20,0.15)] focus-within:border-[#E8593C] rounded-xl bg-white shadow-sm transition-all overflow-visible group">
+            <div className="mt-auto shrink-0 bg-[#FAF8F5] dark:bg-[#2C2C2C] p-3 border-t border-[rgba(36,27,20,0.04)] dark:border-[rgba(255,255,255,0.04)] shadow-[0_-4px_12px_rgba(0,0,0,0.02)]">
+              <div className="relative border border-[rgba(36,27,20,0.15)] dark:border-[rgba(255,255,255,0.15)] focus-within:border-[#E8593C] rounded-xl bg-white dark:bg-[#383838] shadow-sm transition-all overflow-visible group">
                 
                 {/* Mention Popover */}
                 <AnimatePresence>
@@ -725,10 +727,10 @@ function InputForm({ inputRef, onSuccess, onExecute }: { inputRef: React.RefObje
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, y: 10 }}
                       transition={{ duration: 0.15 }}
-                      className="absolute bottom-[calc(100%+8px)] left-0 w-[280px] max-h-[220px] overflow-y-auto bg-white border border-[rgba(36,27,20,0.08)] shadow-lg rounded-xl flex flex-col p-1.5 z-50 scrollbar-hide"
+                      className="absolute bottom-[calc(100%+8px)] left-0 w-[280px] max-h-[220px] overflow-y-auto bg-white dark:bg-[#383838] border border-[rgba(36,27,20,0.08)] dark:border-[rgba(255,255,255,0.08)] shadow-lg rounded-xl flex flex-col p-1.5 z-50 scrollbar-hide"
                     >
                       <div className="px-2 py-1 mb-1">
-                        <span className="text-[10px] font-semibold tracking-wider text-[rgba(36,27,20,0.4)] uppercase">Suggestions</span>
+                        <span className="text-[10px] font-semibold tracking-wider text-[rgba(36,27,20,0.4)] dark:text-[rgba(255,255,255,0.4)] uppercase">Suggestions</span>
                       </div>
                       {filteredMentions.map((m, idx) => (
                         <button
@@ -737,15 +739,15 @@ function InputForm({ inputRef, onSuccess, onExecute }: { inputRef: React.RefObje
                           onClick={() => insertMention(m.value)}
                           className={cx(
                             "flex items-center gap-2.5 p-2 rounded-lg text-left transition-colors",
-                            idx === mentionIndex ? "bg-[#FAF8F5] border border-[rgba(36,27,20,0.04)]" : "hover:bg-[#FAF8F5] border border-transparent"
+                            idx === mentionIndex ? "bg-[#FAF8F5] dark:bg-[#2C2C2C] border border-[rgba(36,27,20,0.04)] dark:border-[rgba(255,255,255,0.04)]" : "hover:bg-[#FAF8F5] dark:bg-[#2C2C2C] border border-transparent"
                           )}
                         >
-                           <div className="w-7 h-7 rounded-md bg-white border border-[rgba(36,27,20,0.08)] shadow-sm flex items-center justify-center shrink-0 text-[#E8593C] font-semibold text-[13px]">
+                           <div className="w-7 h-7 rounded-md bg-white dark:bg-[#383838] border border-[rgba(36,27,20,0.08)] dark:border-[rgba(255,255,255,0.08)] shadow-sm flex items-center justify-center shrink-0 text-[#E8593C] font-semibold text-[13px]">
                               {m.icon}
                            </div>
                            <div className="flex flex-col min-w-0">
-                              <span className="text-[13px] font-medium text-[#241B14] truncate">{m.label}</span>
-                              <span className="text-[11px] text-[rgba(36,27,20,0.5)] truncate">{m.displayValue}</span>
+                              <span className="text-[13px] font-medium text-[#241B14] dark:text-[#F4F4F5] truncate">{m.label}</span>
+                              <span className="text-[11px] text-[rgba(36,27,20,0.5)] dark:text-[rgba(255,255,255,0.5)] truncate">{m.displayValue}</span>
                            </div>
                         </button>
                       ))}
@@ -758,7 +760,7 @@ function InputForm({ inputRef, onSuccess, onExecute }: { inputRef: React.RefObje
                   onChange={handleInput}
                   placeholder="Ask Auren to summarize, schedule, or manage tasks..."
                   name="message"
-                  className="w-full resize-none p-3 pr-[44px] outline-none text-[#241B14] bg-transparent placeholder:text-[rgba(36,27,20,0.3)] text-[13px] min-h-[44px] max-h-[120px] font-sans"
+                  className="w-full resize-none p-3 pr-[44px] outline-none text-[#241B14] dark:text-[#F4F4F5] bg-transparent placeholder:text-[rgba(36,27,20,0.3)] dark:placeholder:text-[rgba(255,255,255,0.3)] text-[13px] min-h-[44px] max-h-[120px] font-sans"
                   required
                   onKeyDown={handleKeys}
                   spellCheck={false}
@@ -771,7 +773,7 @@ function InputForm({ inputRef, onSuccess, onExecute }: { inputRef: React.RefObje
                   onClick={toggleMic}
                   className={cx(
                     "absolute right-2 top-1/2 -translate-y-1/2 p-2 rounded-[8px] transition-colors flex items-center justify-center",
-                    isListening ? "bg-[#E8593C]/10 text-[#E8593C]" : "text-[rgba(36,27,20,0.4)] hover:text-[#241B14] hover:bg-neutral-100"
+                    isListening ? "bg-[#E8593C]/10 text-[#E8593C]" : "text-[rgba(36,27,20,0.4)] dark:text-[rgba(255,255,255,0.4)] hover:text-[#241B14] dark:hover:text-[#F4F4F5] hover:bg-neutral-100 dark:hover:bg-[rgba(255,255,255,0.04)]"
                   )}
                   title="Voice Input"
                 >
@@ -780,7 +782,7 @@ function InputForm({ inputRef, onSuccess, onExecute }: { inputRef: React.RefObje
               </div>
               
               <div className="flex justify-between items-center px-1 pt-2 opacity-60">
-                <span className="text-[10px] font-medium text-[#241B14]">Connected: Google Workspace, GitHub</span>
+                <span className="text-[10px] font-medium text-[#241B14] dark:text-[#F4F4F5]">Connected: Google Workspace, GitHub</span>
                 <span className="text-[10px] font-medium text-[#E8593C]">Auren AI</span>
               </div>
             </div>
@@ -811,7 +813,7 @@ function KeyHint({ children, className }: { children: string; className?: string
   return (
     <kbd
       className={cx(
-        "text-[rgba(36,27,20,0.6)] flex h-6 w-fit items-center justify-center rounded-sm border border-[rgba(36,27,20,0.08)] bg-[#FAF8F5] px-[6px] font-mono text-[10px]",
+        "text-[rgba(36,27,20,0.6)] dark:text-[rgba(255,255,255,0.6)] flex h-6 w-fit items-center justify-center rounded-sm border border-[rgba(36,27,20,0.08)] dark:border-[rgba(255,255,255,0.08)] bg-[#FAF8F5] dark:bg-[#2C2C2C] px-[6px] font-mono text-[10px]",
         className
       )}
     >

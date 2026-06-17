@@ -69,6 +69,41 @@
     --border-hsl:         105 10% 90%;
     --input:              105 10% 90%;
     --ring:               165 83% 24%;
+
+    /* ── AUREN DYNAMIC THEME ── */
+    --auren-bg: #FAF8F5;
+    --auren-fg: #241B14;
+    --auren-surface: #FFFFFF;
+    --auren-surface-hover: rgba(36, 27, 20, 0.04);
+    --auren-surface-active: rgba(36, 27, 20, 0.08);
+    --auren-border: rgba(36, 27, 20, 0.08);
+    --auren-border-strong: rgba(36, 27, 20, 0.15);
+    --auren-muted: rgba(36, 27, 20, 0.5);
+    --auren-muted-light: rgba(36, 27, 20, 0.3);
+    
+    --auren-brand: #E8593C;
+    --auren-brand-hover: #D14F31;
+    --auren-success: #10B981;
+    --auren-info: #4285F4;
+    --auren-danger: #EF4444;
+  }
+
+  .dark {
+    --auren-bg: #1A1512;
+    --auren-fg: #FAF8F5;
+    --auren-surface: #241B14;
+    --auren-surface-hover: rgba(250, 248, 245, 0.06);
+    --auren-surface-active: rgba(250, 248, 245, 0.1);
+    --auren-border: rgba(250, 248, 245, 0.08);
+    --auren-border-strong: rgba(250, 248, 245, 0.15);
+    --auren-muted: rgba(250, 248, 245, 0.5);
+    --auren-muted-light: rgba(250, 248, 245, 0.3);
+
+    --auren-brand: #E8593C;
+    --auren-brand-hover: #D14F31;
+    --auren-success: #10B981;
+    --auren-info: #4285F4;
+    --auren-danger: #EF4444;
   }
 }
 

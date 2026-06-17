@@ -5,13 +5,11 @@ import { motion, AnimatePresence } from "framer-motion";
 import { 
   Clock, CheckCircle2, XCircle, Terminal, Mail, Calendar, 
   GitBranch, Search, ChevronRight, ChevronDown, Activity, 
-  HelpCircle, Eye, AlertCircle, Sparkles, Filter 
+  Eye, AlertCircle 
 } from "lucide-react";
 import { getAgentHistory } from "@/app/actions/history";
 import type { AgentAction } from "@/types";
 import { ClockHistoryIcon } from "./app-shell";
-import Image from "next/image";
-import Link from "next/link";
 
 export function HistoryPanel() {
   const [history, setHistory] = useState<AgentAction[]>([]);
@@ -27,7 +25,6 @@ export function HistoryPanel() {
       const res = await getAgentHistory(50);
       if (res.success && res.data) {
         setHistory(res.data);
-        // Expand the most recent run by default
         if (res.data.length > 0) {
           setExpandedIds({ [res.data[0].id]: true });
         }
@@ -45,16 +42,12 @@ export function HistoryPanel() {
     setInspectingStepId(prev => ({ ...prev, [stepKey]: !prev[stepKey] }));
   };
 
-  // Filters logic
   const filteredHistory = history.filter((action) => {
-    // 1. Sidebar filter
     if (activeFilter !== "all") {
       const hasTool = action.actionsTaken.some(step => step.tool?.toLowerCase() === `${activeFilter}_send` || step.tool?.toLowerCase() === `${activeFilter}_create` || step.tool?.toLowerCase() === `${activeFilter}_create_issue`);
-      // Fallback matching
       const matchesCategory = action.actionsTaken.some(step => step.tool?.toLowerCase().includes(activeFilter));
       if (!hasTool && !matchesCategory) return false;
     }
-    // 2. Search query filter
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase();
       const matchesCommand = action.command.toLowerCase().includes(q);
@@ -64,7 +57,6 @@ export function HistoryPanel() {
     return true;
   });
 
-  // Render detail fields for steps
   const renderActionStep = (step: any, actionId: string, stepIdx: number) => {
     const tool = step.tool?.toLowerCase();
     const input = step.input || {};
@@ -72,130 +64,108 @@ export function HistoryPanel() {
     const stepKey = `${actionId}-${stepIdx}`;
     const isInspecting = inspectingStepId[stepKey] || false;
 
-    // Resolve icons and tool details
-    let toolIcon = <Terminal size={12} />;
+    let toolIcon = <Terminal size={18} />;
     let toolName = "Custom Action";
-    let accentColor = "text-[rgba(36,27,20,0.6)]";
-    let badgeBg = "bg-[rgba(36,27,20,0.04)] border-[rgba(36,27,20,0.06)]";
+    let iconBg = "bg-[rgba(36,27,20,0.08)] dark:bg-[rgba(255,255,255,0.15)] text-[#241B14] dark:text-[#F4F4F5]";
 
     if (tool === "gmail_send") {
-      toolIcon = <Mail size={12} />;
+      toolIcon = <Mail size={18} />;
       toolName = "Gmail Dispatch";
-      accentColor = "text-[#EA4335]";
-      badgeBg = "bg-[#EA4335]/5 border-[#EA4335]/10 text-[#EA4335]";
+      iconBg = "bg-[#E8593C]/10 text-[#E8593C]";
     } else if (tool === "calendar_create") {
-      toolIcon = <Calendar size={12} />;
+      toolIcon = <Calendar size={18} />;
       toolName = "Calendar Invite";
-      accentColor = "text-[#4285F4]";
-      badgeBg = "bg-[#4285F4]/5 border-[#4285F4]/10 text-[#4285F4]";
+      iconBg = "bg-[#4285F4]/10 text-[#4285F4]";
     } else if (tool === "github_create_issue") {
-      toolIcon = <GitBranch size={12} />;
+      toolIcon = <GitBranch size={18} />;
       toolName = "GitHub Issue";
-      accentColor = "text-[#241B14]";
-      badgeBg = "bg-[rgba(36,27,20,0.04)] border-[rgba(36,27,20,0.06)] text-[#241B14]";
+      iconBg = "bg-[#241B14]/10 text-[#241B14] dark:text-[#F4F4F5]";
     }
 
-    let dateStr = "";
-    try {
-      if (input.startAt) {
-        dateStr = new Date(input.startAt).toLocaleString([], { dateStyle: "medium", timeStyle: "short" });
-      }
-    } catch {}
-
     return (
-      <div className="w-full flex flex-col gap-2 font-sans">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <span className={`px-2 py-0.5 border rounded-full text-[10px] font-bold uppercase tracking-wider flex items-center gap-1.5 ${badgeBg}`}>
-              {toolIcon}
-              {toolName}
-            </span>
+      <div className="w-full flex flex-col font-sans relative">
+        <div className="flex items-start gap-4">
+          <div className={`w-10 h-10 rounded-[12px] flex items-center justify-center shrink-0 shadow-sm border border-[rgba(36,27,20,0.04)] dark:border-[rgba(255,255,255,0.04)] ${iconBg}`}>
+            {toolIcon}
           </div>
+          
+          <div className="flex-1 min-w-0 pt-0.5">
+            <div className="flex items-center justify-between">
+              <span className="font-bold text-[14px] text-[#241B14] dark:text-[#F4F4F5]">{toolName}</span>
+              <button
+                onClick={() => toggleInspect(stepKey)}
+                className="flex items-center gap-1.5 text-[10px] text-[rgba(36,27,20,0.5)] dark:text-[rgba(255,255,255,0.5)] hover:text-[#E8593C] font-bold transition-colors uppercase tracking-widest bg-[rgba(36,27,20,0.04)] dark:bg-[rgba(255,255,255,0.1)] hover:bg-[#E8593C]/10 px-2.5 py-1 rounded-full"
+              >
+                <Eye size={12} />
+                <span>{isInspecting ? "Hide Raw" : "Inspect"}</span>
+              </button>
+            </div>
 
-          <button
-            onClick={() => toggleInspect(stepKey)}
-            className="flex items-center gap-1 text-[10px] text-[rgba(36,27,20,0.4)] hover:text-[#E8593C] font-semibold transition-colors"
-          >
-            <Eye size={10} />
-            <span>{isInspecting ? "Hide Raw JSON" : "Inspect JSON"}</span>
-          </button>
+            <div className="mt-2 space-y-1">
+              {tool === "gmail_send" && (
+                <>
+                  <div className="text-[13px] text-[rgba(36,27,20,0.5)] dark:text-[rgba(255,255,255,0.5)]">
+                    To: <span className="font-semibold text-[#241B14] dark:text-[#F4F4F5]">{input.to || "Unknown Contact"}</span>
+                  </div>
+                  {input.subject && (
+                    <div className="text-[16px] text-[#241B14] dark:text-[#F4F4F5] font-bold tracking-tight mt-1" style={{ fontFamily: "var(--font-civane, Georgia, serif)" }}>
+                      &quot;{input.subject}&quot;
+                    </div>
+                  )}
+                </>
+              )}
+
+              {tool === "calendar_create" && (
+                <>
+                  {input.title && (
+                    <div className="text-[16px] text-[#241B14] dark:text-[#F4F4F5] font-bold tracking-tight" style={{ fontFamily: "var(--font-civane, Georgia, serif)" }}>
+                      {input.title}
+                    </div>
+                  )}
+                </>
+              )}
+
+              {tool === "github_create_issue" && (
+                <>
+                  {input.title && (
+                    <div className="text-[16px] text-[#241B14] dark:text-[#F4F4F5] font-bold tracking-tight" style={{ fontFamily: "var(--font-civane, Georgia, serif)" }}>
+                      {input.title}
+                    </div>
+                  )}
+                  <div className="text-[11px] text-[#241B14] dark:text-[#F4F4F5] bg-[rgba(36,27,20,0.04)] dark:bg-[rgba(255,255,255,0.1)] px-2 py-0.5 rounded-md w-max font-medium mt-1.5 border border-[rgba(36,27,20,0.08)] dark:border-[rgba(255,255,255,0.08)]">
+                    {input.owner}/{input.repo}
+                  </div>
+                </>
+              )}
+
+              {tool !== "gmail_send" && tool !== "calendar_create" && tool !== "github_create_issue" && (
+                <div className="font-mono text-[10px] text-[rgba(36,27,20,0.7)] dark:text-[rgba(255,255,255,0.7)] bg-[rgba(36,27,20,0.04)] dark:bg-[rgba(255,255,255,0.1)] p-3 rounded-lg border border-[rgba(36,27,20,0.08)] dark:border-[rgba(255,255,255,0.08)] overflow-x-auto shadow-inner mt-2">
+                  {JSON.stringify(input)}
+                </div>
+              )}
+            </div>
+          </div>
         </div>
 
-        {/* Content Field Layouts */}
-        <div className="pl-2.5 pt-0.5 space-y-2">
-          {tool === "gmail_send" && (
-            <div className="space-y-1.5">
-              <div className="text-[11px] text-[rgba(36,27,20,0.6)]">
-                Recipient: <span className="font-mono text-[#241B14] font-semibold bg-[rgba(36,27,20,0.03)] px-1.5 py-0.5 rounded border border-[rgba(36,27,20,0.02)]">{input.to || "Unknown Contact"}</span>
-              </div>
-              {input.subject && (
-                <div className="text-[12.5px] text-[#241B14] font-bold tracking-tight">
-                  {input.subject}
-                </div>
-              )}
-              {input.body && (
-                <p className="text-[11.5px] text-[rgba(36,27,20,0.5)] leading-relaxed italic border-l-2 border-[rgba(36,27,20,0.08)] pl-2.5">
-                  &ldquo;{input.body}&rdquo;
-                </p>
-              )}
-            </div>
-          )}
-
-          {tool === "calendar_create" && (
-            <div className="space-y-1.5">
-              {input.title && (
-                <div className="text-[12.5px] text-[#241B14] font-bold tracking-tight">
-                  {input.title}
-                </div>
-              )}
-              {dateStr && (
-                <div className="text-[10px] text-[#4285F4] font-mono font-medium bg-[#4285F4]/5 border border-[#4285F4]/10 rounded px-2 py-0.5 w-max">
-                  {dateStr}
-                </div>
-              )}
-            </div>
-          )}
-
-          {tool === "github_create_issue" && (
-            <div className="space-y-1.5">
-              {input.title && (
-                <div className="text-[12.5px] text-[#241B14] font-bold tracking-tight">
-                  {input.title}
-                </div>
-              )}
-              <div className="text-[10px] text-[rgba(36,27,20,0.65)] bg-[rgba(36,27,20,0.03)] border border-[rgba(36,27,20,0.06)] px-2 py-0.5 rounded w-max font-mono">
-                Target: {input.owner}/{input.repo}
-              </div>
-            </div>
-          )}
-
-          {tool !== "gmail_send" && tool !== "calendar_create" && tool !== "github_create_issue" && (
-            <div className="font-mono text-[10px] text-[rgba(36,27,20,0.7)] bg-[rgba(36,27,20,0.02)] p-2.5 rounded border border-[rgba(36,27,20,0.04)] overflow-x-auto">
-              {JSON.stringify(input)}
-            </div>
-          )}
-        </div>
-
-        {/* Collapsible raw JSON inspector */}
         <AnimatePresence>
           {isInspecting && (
             <motion.div
               initial={{ height: 0, opacity: 0 }}
               animate={{ height: "auto", opacity: 1 }}
               exit={{ height: 0, opacity: 0 }}
-              className="overflow-hidden mt-1 pl-2.5"
+              className="overflow-hidden mt-4"
             >
-              <div className="bg-[#FAF6F0]/60 border border-[rgba(36,27,20,0.06)] p-3 rounded-lg font-mono text-[9px] text-[rgba(36,27,20,0.75)] space-y-2">
+              <div className="bg-[#241B14] p-4 rounded-xl font-mono text-[11px] space-y-3 shadow-inner">
                 <div>
-                  <span className="text-[#E8593C] font-semibold">Inputs:</span>
-                  <pre className="overflow-x-auto whitespace-pre-wrap mt-0.5 text-[8.5px] leading-relaxed bg-white border border-[rgba(36,27,20,0.04)] p-2 rounded">
+                  <span className="text-white/40 font-bold tracking-wider uppercase text-[9px] mb-1.5 block">Inputs payload</span>
+                  <pre className="overflow-x-auto whitespace-pre-wrap text-[#EBE5DE] leading-relaxed bg-[#1A130E] border border-white/5 p-3 rounded-lg">
                     {JSON.stringify(input, null, 2)}
                   </pre>
                 </div>
                 {output && (
                   <div>
-                    <span className="text-emerald-700 font-semibold">Outputs:</span>
-                    <pre className="overflow-x-auto whitespace-pre-wrap mt-0.5 text-[8.5px] leading-relaxed bg-white border border-[rgba(36,27,20,0.04)] p-2 rounded">
+                    <span className="text-[#10B981]/70 font-bold tracking-wider uppercase text-[9px] mb-1.5 block">Outputs payload</span>
+                    <pre className="overflow-x-auto whitespace-pre-wrap text-[#EBE5DE] leading-relaxed bg-[#1A130E] border border-white/5 p-3 rounded-lg">
                       {JSON.stringify(output, null, 2)}
                     </pre>
                   </div>
@@ -209,273 +179,239 @@ export function HistoryPanel() {
   };
 
   return (
-    <div className="flex h-screen overflow-hidden bg-[#FAF8F5] text-[#241B14] text-[14px] w-full">
-      {/* ─── LEFT SIDEBAR TABS (ADMIN-STYLE) ─── */}
-      <aside className="w-[240px] border-r border-[rgba(36,27,20,0.08)] flex flex-col bg-[#FAF8F5] shrink-0 z-10 justify-between">
+    <div className="flex h-screen overflow-hidden bg-[#FAF8F5] dark:bg-[#2C2C2C] text-[#241B14] dark:text-[#F4F4F5] text-[13px] w-full font-sans antialiased">
+      <aside className="w-[220px] border-r border-[rgba(36,27,20,0.08)] dark:border-[rgba(255,255,255,0.08)] flex flex-col bg-[#FAF8F5] dark:bg-[#2C2C2C] shrink-0 z-10 justify-between">
         <div className="flex flex-col">
-          <div className="h-14 px-4 flex items-center border-b border-[rgba(36,27,20,0.08)]">
-            <div className="flex items-center gap-2 font-medium text-[14px]" style={{ fontFamily: "var(--font-civane, Georgia, serif)" }}>
-              <div className="w-5 h-5 relative rounded-[4px] overflow-hidden">
-                <Image src="/auren_logo.webp" alt="Auren Logo" fill style={{ objectFit: "cover" }} />
-              </div>
-              Auren History
+          <div className="h-14 px-4 flex items-center border-b border-[rgba(36,27,20,0.08)] dark:border-[rgba(255,255,255,0.08)]">
+            <div className="flex items-center gap-2 font-medium text-[22px]" style={{ fontFamily: "var(--font-civane, Georgia, serif)" }}>
+              History
             </div>
           </div>
           
           <div className="flex-1 py-4 px-3 flex flex-col gap-1">
             <button 
               onClick={() => setActiveFilter("all")}
-              className={`flex items-center justify-between px-3 py-2 rounded-md transition-colors text-[13px] ${activeFilter === "all" ? "bg-white border border-[rgba(36,27,20,0.08)] shadow-sm font-medium text-[#241B14]" : "text-[rgba(36,27,20,0.6)] hover:text-[#241B14] hover:bg-[rgba(36,27,20,0.04)] border border-transparent"}`}
+              className={`flex items-center justify-between px-3 py-1.5 rounded-md transition-colors text-[12px] ${activeFilter === "all" ? "bg-white dark:bg-[#383838] border border-[rgba(36,27,20,0.08)] dark:border-[rgba(255,255,255,0.08)] shadow-sm font-medium text-[#241B14] dark:text-[#F4F4F5]" : "text-[rgba(36,27,20,0.5)] dark:text-[rgba(255,255,255,0.5)] hover:text-[#241B14] dark:text-[#F4F4F5] hover:bg-[rgba(36,27,20,0.04)] dark:bg-[rgba(255,255,255,0.1)] border border-transparent"}`}
             >
               <div className="flex items-center gap-2.5">
-                <Clock size={16} /> All Runs
+                <Clock size={14} /> All Runs
               </div>
-              <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-mono font-medium ${activeFilter === "all" ? "bg-[#E8593C]/10 text-[#E8593C]" : "bg-[rgba(36,27,20,0.04)] text-[rgba(36,27,20,0.5)]"}`}>
+              <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold ${activeFilter === "all" ? "bg-[#E8593C] text-white" : "bg-[rgba(36,27,20,0.08)] dark:bg-[rgba(255,255,255,0.15)] text-[rgba(36,27,20,0.5)] dark:text-[rgba(255,255,255,0.5)]"}`}>
                 {history.length}
               </span>
             </button>
             
             <button 
               onClick={() => setActiveFilter("gmail")}
-              className={`flex items-center justify-between px-3 py-2 rounded-md transition-colors text-[13px] ${activeFilter === "gmail" ? "bg-white border border-[rgba(36,27,20,0.08)] shadow-sm font-medium text-[#241B14]" : "text-[rgba(36,27,20,0.6)] hover:text-[#241B14] hover:bg-[rgba(36,27,20,0.04)] border border-transparent"}`}
+              className={`flex items-center justify-between px-3 py-1.5 rounded-md transition-colors text-[12px] ${activeFilter === "gmail" ? "bg-white dark:bg-[#383838] border border-[rgba(36,27,20,0.08)] dark:border-[rgba(255,255,255,0.08)] shadow-sm font-medium text-[#241B14] dark:text-[#F4F4F5]" : "text-[rgba(36,27,20,0.5)] dark:text-[rgba(255,255,255,0.5)] hover:text-[#241B14] dark:text-[#F4F4F5] hover:bg-[rgba(36,27,20,0.04)] dark:bg-[rgba(255,255,255,0.1)] border border-transparent"}`}
             >
               <div className="flex items-center gap-2.5">
-                <Mail size={16} /> Gmail Tasks
+                <Mail size={14} /> Gmail Tasks
               </div>
-              <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-mono font-medium ${activeFilter === "gmail" ? "bg-[#E8593C]/10 text-[#E8593C]" : "bg-[rgba(36,27,20,0.04)] text-[rgba(36,27,20,0.5)]"}`}>
+              <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold ${activeFilter === "gmail" ? "bg-[#E8593C] text-white" : "bg-[rgba(36,27,20,0.08)] dark:bg-[rgba(255,255,255,0.15)] text-[rgba(36,27,20,0.5)] dark:text-[rgba(255,255,255,0.5)]"}`}>
                 {history.filter(a => a.actionsTaken.some(s => s.tool?.toLowerCase() === "gmail_send")).length}
               </span>
             </button>
 
             <button 
               onClick={() => setActiveFilter("calendar")}
-              className={`flex items-center justify-between px-3 py-2 rounded-md transition-colors text-[13px] ${activeFilter === "calendar" ? "bg-white border border-[rgba(36,27,20,0.08)] shadow-sm font-medium text-[#241B14]" : "text-[rgba(36,27,20,0.6)] hover:text-[#241B14] hover:bg-[rgba(36,27,20,0.04)] border border-transparent"}`}
+              className={`flex items-center justify-between px-3 py-1.5 rounded-md transition-colors text-[12px] ${activeFilter === "calendar" ? "bg-white dark:bg-[#383838] border border-[rgba(36,27,20,0.08)] dark:border-[rgba(255,255,255,0.08)] shadow-sm font-medium text-[#241B14] dark:text-[#F4F4F5]" : "text-[rgba(36,27,20,0.5)] dark:text-[rgba(255,255,255,0.5)] hover:text-[#241B14] dark:text-[#F4F4F5] hover:bg-[rgba(36,27,20,0.04)] dark:bg-[rgba(255,255,255,0.1)] border border-transparent"}`}
             >
               <div className="flex items-center gap-2.5">
-                <Calendar size={16} /> Calendar Tasks
+                <Calendar size={14} /> Calendar Tasks
               </div>
-              <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-mono font-medium ${activeFilter === "calendar" ? "bg-[#E8593C]/10 text-[#E8593C]" : "bg-[rgba(36,27,20,0.04)] text-[rgba(36,27,20,0.5)]"}`}>
+              <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold ${activeFilter === "calendar" ? "bg-[#E8593C] text-white" : "bg-[rgba(36,27,20,0.08)] dark:bg-[rgba(255,255,255,0.15)] text-[rgba(36,27,20,0.5)] dark:text-[rgba(255,255,255,0.5)]"}`}>
                 {history.filter(a => a.actionsTaken.some(s => s.tool?.toLowerCase() === "calendar_create")).length}
               </span>
             </button>
 
             <button 
               onClick={() => setActiveFilter("github")}
-              className={`flex items-center justify-between px-3 py-2 rounded-md transition-colors text-[13px] ${activeFilter === "github" ? "bg-white border border-[rgba(36,27,20,0.08)] shadow-sm font-medium text-[#241B14]" : "text-[rgba(36,27,20,0.6)] hover:text-[#241B14] hover:bg-[rgba(36,27,20,0.04)] border border-transparent"}`}
+              className={`flex items-center justify-between px-3 py-1.5 rounded-md transition-colors text-[12px] ${activeFilter === "github" ? "bg-white dark:bg-[#383838] border border-[rgba(36,27,20,0.08)] dark:border-[rgba(255,255,255,0.08)] shadow-sm font-medium text-[#241B14] dark:text-[#F4F4F5]" : "text-[rgba(36,27,20,0.5)] dark:text-[rgba(255,255,255,0.5)] hover:text-[#241B14] dark:text-[#F4F4F5] hover:bg-[rgba(36,27,20,0.04)] dark:bg-[rgba(255,255,255,0.1)] border border-transparent"}`}
             >
               <div className="flex items-center gap-2.5">
-                <GitBranch size={16} /> GitHub Tasks
+                <GitBranch size={14} /> GitHub Tasks
               </div>
-              <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-mono font-medium ${activeFilter === "github" ? "bg-[#E8593C]/10 text-[#E8593C]" : "bg-[rgba(36,27,20,0.04)] text-[rgba(36,27,20,0.5)]"}`}>
+              <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold ${activeFilter === "github" ? "bg-[#E8593C] text-white" : "bg-[rgba(36,27,20,0.08)] dark:bg-[rgba(255,255,255,0.15)] text-[rgba(36,27,20,0.5)] dark:text-[rgba(255,255,255,0.5)]"}`}>
                 {history.filter(a => a.actionsTaken.some(s => s.tool?.toLowerCase() === "github_create_issue")).length}
               </span>
             </button>
           </div>
         </div>
 
-        {/* Bottom stats card */}
-        <div className="p-4 border-t border-[rgba(36,27,20,0.08)] flex flex-col gap-3">
-          <div className="text-[10px] font-sans font-bold uppercase tracking-wider text-[rgba(36,27,20,0.4)]">
+        <div className="p-4 border-t border-[rgba(36,27,20,0.08)] dark:border-[rgba(255,255,255,0.08)] flex flex-col gap-2">
+          <div className="text-[10px] font-sans font-bold uppercase tracking-wider text-[rgba(36,27,20,0.4)] dark:text-[rgba(255,255,255,0.4)]">
             Execution Stats
           </div>
           <div className="grid grid-cols-2 gap-2">
             <div className="flex flex-col">
-              <span className="text-[20px] font-bold text-[#241B14] tracking-tight leading-none">{history.length}</span>
-              <span className="text-[9px] text-[rgba(36,27,20,0.5)] mt-1.5">Total Runs</span>
+              <span className="text-[18px] font-bold text-[#241B14] dark:text-[#F4F4F5] tracking-tight leading-none">{history.length}</span>
+              <span className="text-[9px] font-medium text-[rgba(36,27,20,0.5)] dark:text-[rgba(255,255,255,0.5)] mt-1">Total Runs</span>
             </div>
             <div className="flex flex-col">
-              <span className="text-[20px] font-bold text-[#0F6E56] tracking-tight leading-none">
+              <span className="text-[18px] font-bold text-[#10B981] tracking-tight leading-none">
                 {history.length > 0 
                   ? Math.round((history.filter(a => a.status === "completed").length / history.length) * 100) 
                   : 100}%
               </span>
-              <span className="text-[9px] text-[rgba(36,27,20,0.5)] mt-1.5">Success Rate</span>
+              <span className="text-[9px] font-medium text-[rgba(36,27,20,0.5)] dark:text-[rgba(255,255,255,0.5)] mt-1">Success Rate</span>
             </div>
           </div>
         </div>
       </aside>
 
-      {/* Main panel */}
-      <main className="flex-1 flex flex-col min-w-0 overflow-y-auto z-10 relative">
+      <main className="flex-1 flex flex-col min-w-0 overflow-y-auto z-10 relative bg-[#FAF8F5] dark:bg-[#2C2C2C]">
         
-        {/* Search bar floating or top right */}
-        <div className="absolute top-6 right-8 h-[32px] bg-white rounded-md border border-[rgba(36,27,20,0.08)] shadow-sm flex items-center px-3 gap-2 w-[240px] focus-within:w-[280px] focus-within:border-[#241B14] transition-all duration-200 z-20">
-          <Search size={13} className="text-[rgba(36,27,20,0.5)] shrink-0" />
+        <div className="absolute top-6 right-6 h-[38px] bg-white dark:bg-[#383838] rounded-[10px] border border-[rgba(36,27,20,0.08)] dark:border-[rgba(255,255,255,0.08)] shadow-sm flex items-center px-3 gap-2 w-[240px] focus-within:w-[280px] focus-within:border-[#E8593C]/50 focus-within:ring-2 focus-within:ring-[#E8593C]/20 transition-all duration-300 z-20">
+          <Search size={16} className="text-[rgba(36,27,20,0.4)] dark:text-[rgba(255,255,255,0.4)] shrink-0" />
           <input 
             type="text" 
             placeholder="Search past logs..." 
-            className="bg-transparent border-none outline-none font-sans text-[13px] text-[#241B14] placeholder:text-[rgba(36,27,20,0.4)] w-full"
+            className="bg-transparent border-none outline-none font-sans text-[13px] text-[#241B14] dark:text-[#F4F4F5] placeholder:text-[rgba(36,27,20,0.4)] dark:text-[rgba(255,255,255,0.4)] w-full"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
           />
           {searchQuery && (
             <button 
               onClick={() => setSearchQuery("")}
-              className="text-[rgba(36,27,20,0.3)] hover:text-[#241B14] transition-colors"
+              className="text-[rgba(36,27,20,0.4)] dark:text-[rgba(255,255,255,0.4)] hover:text-[#E8593C] transition-colors"
             >
-              <XCircle size={12} />
+              <XCircle size={16} />
             </button>
           )}
         </div>
 
-        {/* Scrollable feed */}
-        <div className="flex-1 p-8 pt-20 max-w-[800px] w-full mx-auto">
-          <div className="max-w-[720px] mx-auto flex flex-col gap-5">
+        <div className="flex-1 p-6 pt-16 max-w-[800px] w-full mx-auto pb-20">
+          <div className="flex flex-col gap-6">
+            
+            <div className="mb-4">
+               <h2 className="text-[28px] tracking-tight text-[#241B14] dark:text-[#F4F4F5]" style={{ fontFamily: "var(--font-civane, Georgia, serif)" }}>
+                 Action History
+               </h2>
+               <p className="font-sans text-[14px] text-[rgba(36,27,20,0.5)] dark:text-[rgba(255,255,255,0.5)] mt-1.5">Review the execution traces, payloads, and results of all Auren actions.</p>
+            </div>
+
             {isLoading ? (
-              <div className="flex items-center justify-center py-20 text-[rgba(36,27,20,0.4)] text-[13px] font-sans bg-white border border-[rgba(36,27,20,0.05)] rounded-2xl shadow-sm">
+              <div className="flex items-center justify-center py-20 text-[rgba(36,27,20,0.5)] dark:text-[rgba(255,255,255,0.5)] text-[14px] font-sans bg-white dark:bg-[#383838] border border-[rgba(36,27,20,0.08)] dark:border-[rgba(255,255,255,0.08)] rounded-[16px] shadow-sm">
                 <Activity size={18} className="animate-spin text-[#E8593C]" />
-                <span className="ml-2">Loading logs workspace...</span>
+                <span className="ml-2.5" style={{ fontFamily: "var(--font-civane, Georgia, serif)" }}>Loading logs workspace...</span>
               </div>
             ) : filteredHistory.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-20 text-[rgba(36,27,20,0.4)] text-[13px] gap-3 font-sans bg-white border border-[rgba(36,27,20,0.08)] rounded-[16px] shadow-sm">
-                <ClockHistoryIcon size={32} className="text-[rgba(36,27,20,0.3)]" />
-                <p>No matches in execution history.</p>
+              <div className="flex flex-col items-center justify-center py-24 text-[rgba(36,27,20,0.4)] dark:text-[rgba(255,255,255,0.4)] text-[14px] gap-4 font-sans bg-white dark:bg-[#383838] border border-[rgba(36,27,20,0.08)] dark:border-[rgba(255,255,255,0.08)] rounded-[16px] shadow-sm">
+                <ClockHistoryIcon size={40} className="text-auren-border-strong" />
+                <p className="text-[18px] text-[#241B14] dark:text-[#F4F4F5]" style={{ fontFamily: "var(--font-civane, Georgia, serif)" }}>No matches in execution history.</p>
               </div>
             ) : (
-              filteredHistory.map((action) => {
-                const isExpanded = expandedIds[action.id] || false;
-                const dominantTool = action.actionsTaken[0]?.tool?.toLowerCase();
-                
-                // Color accent borders
-                let stripeBg = "bg-[rgba(36,27,20,0.12)]";
-                let stripeText = "text-[rgba(36,27,20,0.7)]";
-                if (dominantTool === "gmail_send") {
-                  stripeBg = "bg-[#EA4335]";
-                  stripeText = "text-[#EA4335]";
-                } else if (dominantTool === "calendar_create") {
-                  stripeBg = "bg-[#4285F4]";
-                  stripeText = "text-[#4285F4]";
-                } else if (dominantTool === "github_create_issue") {
-                  stripeBg = "bg-[#241B14]";
-                  stripeText = "text-[#241B14]";
-                }
+              <div className="flex flex-col gap-4">
+                {filteredHistory.map((action) => {
+                  const isExpanded = expandedIds[action.id] || false;
+                  const uniqueTools = Array.from(new Set(action.actionsTaken.map(s => s.tool?.toLowerCase())));
 
-                // Render list of executed tool types in badge
-                const uniqueTools = Array.from(new Set(action.actionsTaken.map(s => s.tool?.toLowerCase())));
-
-                return (
-                  <div 
-                    key={action.id}
-                    className="bg-white border border-[rgba(36,27,20,0.05)] rounded-[16px] shadow-[0_2px_12px_rgba(36,27,20,0.015)] overflow-hidden transition-all duration-200"
-                  >
-                    {/* Accordion Trigger Header */}
+                  return (
                     <div 
-                      onClick={() => toggleExpand(action.id)}
-                      className="p-5 flex items-center justify-between gap-4 cursor-pointer hover:bg-[rgba(36,27,20,0.01)] select-none relative"
+                      key={action.id}
+                      className={`bg-white dark:bg-[#383838] rounded-[16px] overflow-hidden transition-all duration-300 border ${
+                        isExpanded 
+                          ? "border-[#E8593C]/30 shadow-md ring-4 ring-[#E8593C]/5" 
+                          : "border-[rgba(36,27,20,0.08)] dark:border-[rgba(255,255,255,0.08)] shadow-sm hover:shadow-md hover:border-[rgba(36,27,20,0.15)] dark:border-[rgba(255,255,255,0.12)]"
+                      }`}
                     >
-                      {/* Accent stripe */}
-                      <div className={`absolute top-0 bottom-0 left-0 w-[4.5px] ${stripeBg}`} />
-                      
-                      <div className="pl-2.5 flex-1 min-w-0 flex items-center gap-3">
-                        {/* Status Light */}
-                        <div className={`w-2 h-2 rounded-full shrink-0 ${
-                          action.status === "completed" 
-                            ? "bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.4)]" 
-                            : action.status === "failed" 
-                            ? "bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.4)]" 
-                            : "bg-indigo-500 animate-pulse shadow-[0_0_8px_rgba(99,102,241,0.4)]"
-                        }`} />
+                      <div 
+                        onClick={() => toggleExpand(action.id)}
+                        className="p-5 flex items-center justify-between gap-4 cursor-pointer hover:bg-[#FAF8F5] dark:bg-[#2C2C2C]/30 select-none"
+                      >
+                        <div className="flex-1 min-w-0 flex items-center gap-4">
+                          <div className={`w-3 h-3 rounded-full shrink-0 flex items-center justify-center ${
+                            action.status === "completed" 
+                              ? "bg-[#10B981] shadow-[0_0_12px_rgba(16,185,129,0.5)]" 
+                              : action.status === "failed" 
+                              ? "bg-[#EF4444] shadow-[0_0_12px_rgba(239,68,68,0.5)]" 
+                              : "bg-[#E8593C] animate-pulse shadow-[0_0_12px_rgba(232,89,60,0.5)]"
+                          }`} />
 
-                        <div className="flex-1 min-w-0 space-y-0.5">
-                          <h3 className="font-sans font-bold text-[13.5px] text-[#241B14] leading-snug truncate">
-                            {action.command}
-                          </h3>
-                          <div className="flex items-center gap-2 font-mono text-[9px] text-[rgba(36,27,20,0.4)]">
-                            <span>
-                              {new Date(action.createdAt).toLocaleDateString([], { month: 'short', day: 'numeric' })} &middot; {new Date(action.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                          <div className="flex-1 min-w-0 flex flex-col justify-center">
+                            <h3 className="text-[15px] text-[#241B14] dark:text-[#F4F4F5] leading-snug truncate font-bold font-sans">
+                              {action.command}
+                            </h3>
+                            <div className="flex items-center gap-2 font-medium text-[11px] text-[rgba(36,27,20,0.4)] dark:text-[rgba(255,255,255,0.4)] mt-1.5">
+                              <span>
+                                {new Date(action.createdAt).toLocaleDateString([], { month: 'short', day: 'numeric' })} &middot; {new Date(action.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                              </span>
+                              {uniqueTools.length > 0 && (
+                                <>
+                                  <span className="text-[rgba(36,27,20,0.2)]">&bull;</span>
+                                  <div className="flex items-center gap-1.5">
+                                    {uniqueTools.map((t, idx) => (
+                                      <span key={idx} className="bg-[rgba(36,27,20,0.04)] dark:bg-[rgba(255,255,255,0.1)] border border-[rgba(36,27,20,0.08)] dark:border-[rgba(255,255,255,0.08)] px-1.5 py-0.5 rounded text-[9px] text-[#241B14] dark:text-[#F4F4F5] uppercase tracking-wider font-bold">
+                                        {t?.replace(/_/g, " ")}
+                                      </span>
+                                    ))}
+                                  </div>
+                                </>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center gap-3 shrink-0">
+                          {action.status === "failed" && (
+                            <span className="text-[10px] font-sans font-bold px-2.5 py-1 rounded-md bg-[#EF4444]/10 text-[#EF4444] uppercase tracking-wider border border-[#EF4444]/20">
+                              Failed
                             </span>
-                            {uniqueTools.length > 0 && (
-                              <>
-                                <span>&middot;</span>
-                                <div className="flex items-center gap-1">
-                                  {uniqueTools.map((t, idx) => (
-                                    <span key={idx} className="bg-[rgba(36,27,20,0.04)] border border-[rgba(36,27,20,0.04)] px-1 py-0.5 rounded capitalize text-[8px] text-[rgba(36,27,20,0.5)]">
-                                      {t?.replace(/_/g, " ")}
-                                    </span>
-                                  ))}
-                                </div>
-                              </>
+                          )}
+                          <div className={`w-8 h-8 rounded-full flex items-center justify-center transition-colors ${isExpanded ? "bg-[#E8593C]/10 text-[#E8593C]" : "bg-[rgba(36,27,20,0.04)] dark:bg-[rgba(255,255,255,0.1)] text-[rgba(36,27,20,0.4)] dark:text-[rgba(255,255,255,0.4)]"}`}>
+                            {isExpanded ? (
+                              <ChevronDown size={18} />
+                            ) : (
+                              <ChevronRight size={18} />
                             )}
                           </div>
                         </div>
                       </div>
 
-                      <div className="flex items-center gap-3 shrink-0">
-                        <span className={`text-[10px] font-sans font-bold px-2 py-0.5 rounded-full border ${
-                          action.status === "completed" 
-                            ? "bg-emerald-50 border-emerald-500/10 text-emerald-700" 
-                            : action.status === "failed" 
-                            ? "bg-red-50 border-red-500/10 text-red-700" 
-                            : "bg-indigo-50 border-indigo-500/10 text-indigo-700"
-                        }`}>
-                          {action.status === "completed" ? "Success" : action.status === "failed" ? "Failed" : "Running"}
-                        </span>
-                        
-                        {isExpanded ? (
-                          <ChevronDown size={16} className="text-[rgba(36,27,20,0.4)]" />
-                        ) : (
-                          <ChevronRight size={16} className="text-[rgba(36,27,20,0.4)]" />
-                        )}
-                      </div>
-                    </div>
-
-                    {/* Accordion Expansion Block */}
-                    <AnimatePresence initial={false}>
-                      {isExpanded && (
-                        <motion.div
-                          initial={{ height: 0, opacity: 0 }}
-                          animate={{ height: "auto", opacity: 1 }}
-                          exit={{ height: 0, opacity: 0 }}
-                          transition={{ duration: 0.2, ease: "easeInOut" }}
-                          className="overflow-hidden border-t border-[rgba(36,27,20,0.04)]"
-                        >
-                          <div className="p-6 bg-[#FCFAF7] space-y-5 relative">
-                            {/* Connector line for trace flow */}
-                            {action.actionsTaken.length > 1 && (
-                              <div className="absolute left-[36px] top-6 bottom-6 w-px bg-[rgba(36,27,20,0.06)] z-0" />
-                            )}
-
-                            {/* Detailed steps list */}
-                            {action.actionsTaken.length > 0 ? (
-                              <div className="flex flex-col gap-5 relative z-10">
-                                {action.actionsTaken.map((step, idx) => (
-                                  <div key={idx} className="flex gap-4 items-start">
-                                    {/* Small trace dot on connector line */}
-                                    <div className="w-[20px] h-[20px] shrink-0 rounded-full bg-white border border-[rgba(36,27,20,0.1)] flex items-center justify-center shadow-sm text-[8px] font-mono text-[rgba(36,27,20,0.5)]">
-                                      {idx + 1}
-                                    </div>
-                                    <div className="flex-1 bg-white border border-[rgba(36,27,20,0.04)] rounded-[12px] p-4 shadow-[0_1px_4px_rgba(36,27,20,0.01)]">
+                      <AnimatePresence initial={false}>
+                        {isExpanded && (
+                          <motion.div
+                            initial={{ height: 0, opacity: 0 }}
+                            animate={{ height: "auto", opacity: 1 }}
+                            exit={{ height: 0, opacity: 0 }}
+                            transition={{ duration: 0.25, ease: "easeInOut" }}
+                          >
+                            <div className="p-5 bg-[#FAF8F5] dark:bg-[#2C2C2C]/80 border-t border-[rgba(36,27,20,0.04)] dark:border-[rgba(255,255,255,0.04)] shadow-inner">
+                              {action.actionsTaken.length > 0 ? (
+                                <div className="flex flex-col gap-3">
+                                  {action.actionsTaken.map((step, idx) => (
+                                    <div key={idx} className="bg-white dark:bg-[#383838] border border-[rgba(36,27,20,0.08)] dark:border-[rgba(255,255,255,0.08)] rounded-[12px] p-4 shadow-sm hover:shadow-md transition-shadow">
                                       {renderActionStep(step, action.id, idx)}
                                     </div>
-                                  </div>
-                                ))}
-                              </div>
-                            ) : (
-                              <div className="flex items-center gap-2.5 text-[12px] text-[rgba(36,27,20,0.5)] pl-2.5">
-                                <AlertCircle size={14} className="text-[#E8593C]" />
-                                <span>
-                                  {action.status === "pending" ? "Auren is processing intent..." : action.errorMessage || "No execution steps logged."}
-                                </span>
-                              </div>
-                            )}
-
-                            {/* Error Message Trace */}
-                            {action.errorMessage && (
-                              <div className="pl-2.5 border-l-2 border-l-red-500 bg-red-500/5 p-3 rounded-r-lg text-[11px] text-red-700 font-sans flex items-start gap-2">
-                                <AlertCircle size={12} className="mt-[2px] shrink-0" />
-                                <div className="space-y-0.5">
-                                  <div className="font-bold">Execution Error Trace:</div>
-                                  <div className="font-mono text-[10px] break-all">{action.errorMessage}</div>
+                                  ))}
                                 </div>
-                              </div>
-                            )}
-                          </div>
-                        </motion.div>
-                      )}
-                    </AnimatePresence>
-                  </div>
-                );
-              })
+                              ) : (
+                                <div className="flex items-center gap-3 text-[13px] text-[#241B14] dark:text-[#F4F4F5] p-4 bg-white dark:bg-[#383838] rounded-[12px] border border-[rgba(36,27,20,0.08)] dark:border-[rgba(255,255,255,0.08)] shadow-sm">
+                                  <Activity size={16} className="text-[#E8593C] animate-spin" />
+                                  <span style={{ fontFamily: "var(--font-civane, Georgia, serif)" }}>
+                                    {action.status === "pending" ? "Auren is processing intent..." : action.errorMessage || "No execution steps logged."}
+                                  </span>
+                                </div>
+                              )}
+
+                              {action.errorMessage && (
+                                <div className="mt-4 border border-[#EF4444]/20 bg-[#EF4444]/5 p-4 rounded-[12px] text-[12px] text-[#EF4444] font-sans flex items-start gap-3 shadow-sm">
+                                  <AlertCircle size={16} className="mt-0.5 shrink-0" />
+                                  <div className="space-y-1.5 w-full">
+                                    <div className="font-bold tracking-wider uppercase text-[10px]">Execution Error Trace</div>
+                                    <div className="font-mono text-[10px] break-all leading-relaxed bg-white dark:bg-[#383838] border border-[#EF4444]/10 p-3 rounded-lg w-full shadow-inner">{action.errorMessage}</div>
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
+                    </div>
+                  );
+                })}
+              </div>
             )}
           </div>
         </div>

@@ -58,6 +58,7 @@ function mapDbEventsToCalendarResults(dbEvents: any[]): CalendarEventResult[] {
     description: evt.description || "",
     location: evt.location || "",
     attendees: evt.attendees || [],
-    htmlLink: evt.html_link || ""
+    htmlLink: evt.html_link || "",
+    zoomLink: evt.zoom_link || ""
   }));
 }

@@ -54,16 +54,16 @@ export function Topbar() {
 
       {/* CENTER: Links */}
       <div className="hidden md:flex" style={{ position: "absolute", left: "50%", transform: "translateX(-50%)", display: "flex", gap: "26px" }}>
-        <Link href="/how-it-works" onClick={(e) => handleNavClick(e, "/how-it-works", "how-it-works")} className="text-[rgba(36,27,20,0.6)] hover:text-[#E8593C] transition-colors duration-200" style={{ fontFamily: FONT_BODY, fontWeight: 400, fontSize: "14px", textDecoration: "none" }}>
+        <Link href="/how-it-works" onClick={(e) => handleNavClick(e, "/how-it-works", "how-it-works")} className="text-[rgba(36,27,20,0.6)] dark:text-[rgba(255,255,255,0.6)] hover:text-[#E8593C] transition-colors duration-200" style={{ fontFamily: FONT_BODY, fontWeight: 400, fontSize: "14px", textDecoration: "none" }}>
           How it works
         </Link>
-        <Link href="/features" onClick={(e) => handleNavClick(e, "/features", "features")} className="text-[rgba(36,27,20,0.6)] hover:text-[#E8593C] transition-colors duration-200" style={{ fontFamily: FONT_BODY, fontWeight: 400, fontSize: "14px", textDecoration: "none" }}>
+        <Link href="/features" onClick={(e) => handleNavClick(e, "/features", "features")} className="text-[rgba(36,27,20,0.6)] dark:text-[rgba(255,255,255,0.6)] hover:text-[#E8593C] transition-colors duration-200" style={{ fontFamily: FONT_BODY, fontWeight: 400, fontSize: "14px", textDecoration: "none" }}>
           Features
         </Link>
-        <Link href="/integrations" onClick={(e) => handleNavClick(e, "/integrations", "integrations")} className="text-[rgba(36,27,20,0.6)] hover:text-[#E8593C] transition-colors duration-200" style={{ fontFamily: FONT_BODY, fontWeight: 400, fontSize: "14px", textDecoration: "none" }}>
+        <Link href="/integrations" onClick={(e) => handleNavClick(e, "/integrations", "integrations")} className="text-[rgba(36,27,20,0.6)] dark:text-[rgba(255,255,255,0.6)] hover:text-[#E8593C] transition-colors duration-200" style={{ fontFamily: FONT_BODY, fontWeight: 400, fontSize: "14px", textDecoration: "none" }}>
           Integrations
         </Link>
-        <Link href="/docs" className="text-[rgba(36,27,20,0.6)] hover:text-[#E8593C] transition-colors duration-200" style={{ fontFamily: FONT_BODY, fontWeight: 400, fontSize: "14px", textDecoration: "none" }}>
+        <Link href="/docs" className="text-[rgba(36,27,20,0.6)] dark:text-[rgba(255,255,255,0.6)] hover:text-[#E8593C] transition-colors duration-200" style={{ fontFamily: FONT_BODY, fontWeight: 400, fontSize: "14px", textDecoration: "none" }}>
           Docs
         </Link>
       </div>

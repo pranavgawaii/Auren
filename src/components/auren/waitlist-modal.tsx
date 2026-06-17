@@ -29,19 +29,19 @@ export function WaitlistModal() {
       onClick={() => setIsOpen(false)}
     >
       <div 
-        className="relative w-full max-w-[420px] bg-[#FBF3EC] rounded-[24px] shadow-[0_20px_50px_-16px_rgba(36,27,20,0.2)] p-8 border border-[rgba(36,27,20,0.08)]"
+        className="relative w-full max-w-[420px] bg-[#FBF3EC] rounded-[24px] shadow-[0_20px_50px_-16px_rgba(36,27,20,0.2)] p-8 border border-[rgba(36,27,20,0.08)] dark:border-[rgba(255,255,255,0.08)]"
         onClick={(e) => e.stopPropagation()}
       >
         <button 
           onClick={() => setIsOpen(false)}
-          className="absolute top-4 right-4 p-2 text-[rgba(36,27,20,0.5)] hover:text-[#241B14] transition-colors rounded-full hover:bg-[rgba(36,27,20,0.05)]"
+          className="absolute top-4 right-4 p-2 text-[rgba(36,27,20,0.5)] dark:text-[rgba(255,255,255,0.5)] hover:text-[#241B14] dark:text-[#F4F4F5] transition-colors rounded-full hover:bg-[rgba(36,27,20,0.05)]"
         >
           <X size={20} />
         </button>
         
         <div className="text-center mb-6">
-          <h2 className="font-civane text-[28px] text-[#241B14] mb-2">Secure Your Spot</h2>
-          <p className="font-sans text-[14px] text-[rgba(36,27,20,0.6)]">
+          <h2 className="font-civane text-[28px] text-[#241B14] dark:text-[#F4F4F5] mb-2">Secure Your Spot</h2>
+          <p className="font-sans text-[14px] text-[rgba(36,27,20,0.6)] dark:text-[rgba(255,255,255,0.6)]">
             Join the waitlist to get early access to Auren.
           </p>
         </div>

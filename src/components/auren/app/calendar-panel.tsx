@@ -16,6 +16,8 @@ interface CalendarEvent {
   description?: string;
   location?: string;
   attendees?: any[];
+  zoomLink?: string;
+  htmlLink?: string;
 }
 
 // No mock events
@@ -81,24 +83,26 @@ export function CalendarPanel({ onClose }: { onClose?: () => void }) {
         isDb: true,
         description: evt.description,
         location: evt.location,
-        attendees: evt.attendees
+        attendees: evt.attendees,
+        zoomLink: evt.zoomLink,
+        htmlLink: evt.htmlLink
       };
     }).filter(evt => evt.dayIndex !== -1)
   ];
 
   return (
-    <div className="w-full flex-1 flex flex-col bg-white overflow-hidden">
+    <div className="w-full flex-1 flex flex-col bg-white dark:bg-[#383838] overflow-hidden">
       
       {/* Header */}
-      <div className="h-[56px] px-4 flex items-center justify-between border-b border-[rgba(36,27,20,0.08)] shrink-0">
+      <div className="h-[56px] px-4 flex items-center justify-between border-b border-[rgba(36,27,20,0.08)] dark:border-[rgba(255,255,255,0.08)] shrink-0">
         <div>
-          <h2 className="font-sans font-semibold text-[14px] text-[#241B14]">Upcoming</h2>
-          <div className="font-sans text-[12px] text-[rgba(36,27,20,0.35)] mt-[2px]">{dateRangeStr}</div>
+          <h2 className="font-sans font-semibold text-[14px] text-[#241B14] dark:text-[#F4F4F5]">Upcoming</h2>
+          <div className="font-sans text-[12px] text-[rgba(36,27,20,0.35)] dark:text-[rgba(255,255,255,0.35)] mt-[2px]">{dateRangeStr}</div>
         </div>
         {onClose && (
           <button 
             onClick={onClose}
-            className="p-1.5 rounded-[8px] text-[rgba(36,27,20,0.4)] hover:bg-[rgba(36,27,20,0.04)] hover:text-[#241B14] transition-colors"
+            className="p-1.5 rounded-[8px] text-[rgba(36,27,20,0.4)] dark:text-[rgba(255,255,255,0.4)] hover:bg-[rgba(36,27,20,0.04)] dark:bg-[rgba(255,255,255,0.04)] hover:text-[#241B14] dark:text-[#F4F4F5] transition-colors"
           >
             <X size={16} />
           </button>
@@ -115,12 +119,12 @@ export function CalendarPanel({ onClose }: { onClose?: () => void }) {
               <div key={day.abbrev} className="flex flex-col gap-2">
                 {/* Day Header */}
                 <div className="flex items-center gap-2">
-                  <span className="font-sans text-[10px] uppercase text-[rgba(36,27,20,0.35)] w-[28px]">
+                  <span className="font-sans text-[10px] uppercase text-[rgba(36,27,20,0.35)] dark:text-[rgba(255,255,255,0.35)] w-[28px]">
                     {day.abbrev}
                   </span>
                   <div className={cn(
                     "w-[24px] h-[24px] flex items-center justify-center font-sans font-bold text-[14px] rounded-full",
-                    day.isToday ? "bg-[#E8593C] text-white" : "text-[#241B14]"
+                    day.isToday ? "bg-[#E8593C] text-white" : "text-[#241B14] dark:text-[#F4F4F5]"
                   )}>
                     {day.date}
                   </div>
@@ -138,12 +142,12 @@ export function CalendarPanel({ onClose }: { onClose?: () => void }) {
                         className={cn(
                           "rounded-lg p-2.5 cursor-pointer hover:opacity-90 transition-opacity border-l-2",
                           event.isDb 
-                            ? "bg-[#E1F5EE] border-[#0F6E56] text-[#085041]" 
-                            : "bg-[#FCE0D2] border-[#E8593C] text-[#241B14]"
+                            ? "bg-[#E1F5EE] dark:bg-[#0F6E56]/20 border-[#0F6E56] dark:border-[#0F6E56]/50 text-[#085041] dark:text-[#E1F5EE]" 
+                            : "bg-[#FCE0D2] dark:bg-[#E8593C]/20 border-[#E8593C] dark:border-[#E8593C]/50 text-[#241B14] dark:text-[#FCE0D2]"
                         )}
                       >
                         <div className="font-sans font-semibold text-[11px] mb-[2px]">{event.title}</div>
-                        <div className={cn("font-sans text-[10px] font-medium", event.isDb ? "text-[#0F6E56]" : "text-[#E8593C]")}>
+                        <div className={cn("font-sans text-[10px] font-medium", event.isDb ? "text-[#0F6E56] dark:text-[#52D1AD]" : "text-[#E8593C] dark:text-[#FF8C73]")}>
                           {event.time} {event.isDb && "(Synced)"}
                         </div>
                         
@@ -161,6 +165,18 @@ export function CalendarPanel({ onClose }: { onClose?: () => void }) {
                                 <span className="font-sans text-[10px] opacity-80 truncate">{event.location}</span>
                               </div>
                             )}
+                            {event.zoomLink && (
+                              <div className="flex items-center gap-1.5">
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="opacity-60 shrink-0"><path d="m16 13 5.223 3.482a.5.5 0 0 0 .777-.416V7.87a.5.5 0 0 0-.752-.432L16 10.5"/><rect x="2" y="6" width="14" height="12" rx="2"/></svg>
+                                <a href={event.zoomLink} target="_blank" rel="noopener noreferrer" className="font-sans text-[10px] text-[#0F6E56] hover:underline truncate">Join Zoom Meeting</a>
+                              </div>
+                            )}
+                            {event.htmlLink && (
+                              <div className="flex items-center gap-1.5">
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="opacity-60 shrink-0"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/></svg>
+                                <a href={event.htmlLink} target="_blank" rel="noopener noreferrer" className="font-sans text-[10px] text-[rgba(36,27,20,0.6)] dark:text-[rgba(255,255,255,0.6)] hover:underline truncate">View in Google Calendar</a>
+                              </div>
+                            )}
                             {event.attendees && event.attendees.length > 0 && (
                               <div className="flex items-start gap-1.5">
                                 <Users size={12} className="mt-[2px] opacity-60 shrink-0" />
@@ -171,7 +187,7 @@ export function CalendarPanel({ onClose }: { onClose?: () => void }) {
                                 </div>
                               </div>
                             )}
-                            {!event.description && !event.location && (!event.attendees || event.attendees.length === 0) && (
+                            {!event.description && !event.location && !event.zoomLink && !event.htmlLink && (!event.attendees || event.attendees.length === 0) && (
                               <span className="font-sans text-[10px] italic opacity-50">No additional details</span>
                             )}
                           </div>
@@ -179,7 +195,7 @@ export function CalendarPanel({ onClose }: { onClose?: () => void }) {
                       </div>
                     )})
                   ) : (
-                    <div className="font-sans text-[11px] text-[rgba(36,27,20,0.35)] py-1">
+                    <div className="font-sans text-[11px] text-[rgba(36,27,20,0.35)] dark:text-[rgba(255,255,255,0.35)] py-1">
                       No events
                     </div>
                   )}

@@ -19,11 +19,11 @@ export function TimePicker({ className, ...props }: TimeFieldProps) {
     <TimeFieldRac
       {...props}
       className={cn(
-        "flex items-center w-full min-h-[32px] border border-[rgba(36,27,20,0.12)] bg-[#FAF8F5] rounded-[8px] px-3 py-1 text-[12px] font-sans text-[#241B14] outline-none transition-all focus-within:border-[#E8593C] focus-within:ring-2 focus-within:ring-[#E8593C]/20 shadow-sm",
+        "flex items-center w-full min-h-[32px] border border-[rgba(36,27,20,0.12)] dark:border-[rgba(255,255,255,0.12)] bg-[#FAF8F5] dark:bg-[#2C2C2C] rounded-[8px] px-3 py-1 text-[12px] font-sans text-[#241B14] dark:text-[#F4F4F5] outline-none transition-all focus-within:border-[#E8593C] focus-within:ring-2 focus-within:ring-[#E8593C]/20 shadow-sm",
         className
       )}
     >
-      <Clock className="w-3.5 h-3.5 mr-2 text-[rgba(36,27,20,0.45)] shrink-0" />
+      <Clock className="w-3.5 h-3.5 mr-2 text-[rgba(36,27,20,0.45)] dark:text-[rgba(255,255,255,0.45)] shrink-0" />
       <DateInputRac className="flex w-full">
         {(segment) => (
           <DateSegmentRac

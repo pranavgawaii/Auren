@@ -22,23 +22,23 @@ export function SearchClient() {
   const [query, setQuery] = useState("Hackathon");
 
   return (
-    <div className="flex-1 flex flex-col bg-white h-full relative">
+    <div className="flex-1 flex flex-col bg-white dark:bg-[#383838] h-full relative">
       
       {/* Search Header */}
-      <div className="p-6 border-b border-[rgba(36,27,20,0.08)] bg-[#FBF3EC]">
+      <div className="p-6 border-b border-[rgba(36,27,20,0.08)] dark:border-[rgba(255,255,255,0.08)] bg-[#FBF3EC]">
         <div className="relative flex items-center mb-4">
-          <Search className="absolute left-4 w-5 h-5 text-[rgba(36,27,20,0.35)]" />
+          <Search className="absolute left-4 w-5 h-5 text-[rgba(36,27,20,0.35)] dark:text-[rgba(255,255,255,0.35)]" />
           <input 
             type="text" 
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Semantic search..."
-            className="w-full h-[48px] bg-white border border-[rgba(36,27,20,0.08)] rounded-[10px] pl-12 pr-4 text-[14px] font-mono text-[#241B14] placeholder:text-[rgba(36,27,20,0.35)] focus:outline-none focus:ring-1 focus:ring-[#E8593C] focus:border-[#E8593C] transition-all shadow-sm"
+            className="w-full h-[48px] bg-white dark:bg-[#383838] border border-[rgba(36,27,20,0.08)] dark:border-[rgba(255,255,255,0.08)] rounded-[10px] pl-12 pr-4 text-[14px] font-mono text-[#241B14] dark:text-[#F4F4F5] placeholder:text-[rgba(36,27,20,0.35)] dark:text-[rgba(255,255,255,0.35)] focus:outline-none focus:ring-1 focus:ring-[#E8593C] focus:border-[#E8593C] transition-all shadow-sm"
           />
         </div>
 
         <div className="flex items-center justify-between">
-          <span className="font-sans text-[12px] text-[rgba(36,27,20,0.5)]">
+          <span className="font-sans text-[12px] text-[rgba(36,27,20,0.5)] dark:text-[rgba(255,255,255,0.5)]">
             {MOCK_RESULTS.length} results found
           </span>
           <div className="bg-[#E1F5EE] text-[#085041] px-3 py-1 rounded-full font-sans font-semibold text-[11px]">
@@ -53,8 +53,8 @@ export function SearchClient() {
           <div 
             key={result.id}
             className={cn(
-              "h-[60px] flex items-center px-6 cursor-pointer border-b border-[rgba(36,27,20,0.04)] transition-colors hover:bg-[rgba(36,27,20,0.02)]",
-              i === 0 && "bg-[rgba(36,27,20,0.02)]" // Simulate first selected
+              "h-[60px] flex items-center px-6 cursor-pointer border-b border-[rgba(36,27,20,0.04)] dark:border-[rgba(255,255,255,0.04)] transition-colors hover:bg-[rgba(36,27,20,0.02)] dark:bg-[rgba(255,255,255,0.02)]",
+              i === 0 && "bg-[rgba(36,27,20,0.02)] dark:bg-[rgba(255,255,255,0.02)]" // Simulate first selected
             )}
           >
             <div 
@@ -65,10 +65,10 @@ export function SearchClient() {
             </div>
 
             <div className="ml-3 flex-1 min-w-0 overflow-hidden">
-              <div className="font-sans font-semibold text-[13px] text-[#241B14] truncate">
+              <div className="font-sans font-semibold text-[13px] text-[#241B14] dark:text-[#F4F4F5] truncate">
                 {result.sender}
               </div>
-              <div className="font-sans text-[12px] text-[rgba(36,27,20,0.5)] truncate mt-[2px]">
+              <div className="font-sans text-[12px] text-[rgba(36,27,20,0.5)] dark:text-[rgba(255,255,255,0.5)] truncate mt-[2px]">
                 {result.subject}
               </div>
             </div>

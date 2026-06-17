@@ -8,7 +8,7 @@ export function ShiningText({ text, className }: { text: string; className?: str
   return (
     <motion.h1
       className={cn(
-        "bg-[linear-gradient(110deg,#a39d9a,35%,#241b14,50%,#a39d9a,75%,#a39d9a)] bg-[length:200%_100%] bg-clip-text text-base font-medium text-transparent",
+        "bg-[linear-gradient(110deg,#a39d9a,35%,#241b14,50%,#a39d9a,75%,#a39d9a)] dark:bg-[linear-gradient(110deg,#a39d9a,35%,#ffffff,50%,#a39d9a,75%,#a39d9a)] bg-[length:200%_100%] bg-clip-text text-base font-medium text-transparent",
         className
       )}
       initial={{ backgroundPosition: "200% 0" }}

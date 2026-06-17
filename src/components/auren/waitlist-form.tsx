@@ -93,8 +93,8 @@ export function WaitlistForm({ theme = "dark" }: { theme?: "light" | "dark" }) {
       {(status === "step2" || status === "loading2") && (
         <form onSubmit={handleDetailsSubmit} className="flex flex-col w-full gap-[12px]">
           <div className="text-left mb-2">
-            <p className={`font-sans text-[14px] font-medium mb-1 ${theme === "light" ? "text-[#241B14]" : "text-white"}`}>You&apos;re on the Auren Premium waitlist ✦</p>
-            <p className={`font-sans text-[13px] ${theme === "light" ? "text-[rgba(36,27,20,0.6)]" : "text-[rgba(255,255,255,0.7)]"}`}>Help us tailor Auren for you (optional):</p>
+            <p className={`font-sans text-[14px] font-medium mb-1 ${theme === "light" ? "text-[#241B14] dark:text-[#F4F4F5]" : "text-white"}`}>You&apos;re on the Auren Premium waitlist ✦</p>
+            <p className={`font-sans text-[13px] ${theme === "light" ? "text-[rgba(36,27,20,0.6)] dark:text-[rgba(255,255,255,0.6)]" : "text-[rgba(255,255,255,0.7)]"}`}>Help us tailor Auren for you (optional):</p>
           </div>
           <select
             value={useCase}
@@ -141,7 +141,7 @@ export function WaitlistForm({ theme = "dark" }: { theme?: "light" | "dark" }) {
               type="button"
               onClick={handleSkip}
               disabled={status === "loading2"}
-              className={`flex-1 h-[44px] px-[20px] rounded-[8px] font-sans font-semibold text-[14px] transition-colors disabled:opacity-50 flex items-center justify-center ${theme === "light" ? "bg-[rgba(36,27,20,0.05)] text-[#241B14] hover:bg-[rgba(36,27,20,0.1)]" : "bg-[rgba(255,255,255,0.1)] text-white hover:bg-[rgba(255,255,255,0.15)]"}`}
+              className={`flex-1 h-[44px] px-[20px] rounded-[8px] font-sans font-semibold text-[14px] transition-colors disabled:opacity-50 flex items-center justify-center ${theme === "light" ? "bg-[rgba(36,27,20,0.05)] text-[#241B14] dark:text-[#F4F4F5] hover:bg-[rgba(36,27,20,0.1)]" : "bg-[rgba(255,255,255,0.1)] text-white hover:bg-[rgba(255,255,255,0.15)]"}`}
             >
               Skip
             </button>
