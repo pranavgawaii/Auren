@@ -28,6 +28,8 @@ export function ActionConfirmation({
   const [editedPlan, setEditedPlan] = useState<AgentReasoningResult | null>(null);
   const [enabledActions, setEnabledActions] = useState<boolean[]>([]);
   const [clarificationText, setClarificationText] = useState("");
+  const [panelSize, setPanelSize] = useState({ width: 640, height: typeof window !== 'undefined' ? window.innerHeight * 0.85 : 800 });
+  const [isResizing, setIsResizing] = useState(false);
   const [isSubmittingClarification, setIsSubmittingClarification] = useState(false);
   const [expandedActions, setExpandedActions] = useState<Record<number, boolean>>({});
 
@@ -60,6 +62,40 @@ export function ActionConfirmation({
       setEnabledActions([]);
     }
   }, [plan]);
+
+  const startResize = React.useCallback((e: React.MouseEvent, direction: 'tl' | 'tr' | 't') => {
+    e.preventDefault();
+    setIsResizing(true);
+    const startX = e.clientX;
+    const startY = e.clientY;
+    const startWidth = panelSize.width;
+    const startHeight = panelSize.height;
+
+    const doResize = (moveEvent: MouseEvent) => {
+      const deltaX = moveEvent.clientX - startX;
+      const deltaY = startY - moveEvent.clientY; // Dragging UP increases height
+      
+      let newWidth = startWidth;
+      if (direction === 'tr') newWidth = startWidth + deltaX * 2;
+      else if (direction === 'tl') newWidth = startWidth - deltaX * 2;
+      
+      const newHeight = startHeight + deltaY;
+      
+      setPanelSize({
+        width: Math.max(400, Math.min(1200, newWidth)),
+        height: Math.max(300, Math.min(typeof window !== 'undefined' ? window.innerHeight - 40 : 1000, newHeight)),
+      });
+    };
+
+    const stopResize = () => {
+      setIsResizing(false);
+      document.removeEventListener("mousemove", doResize);
+      document.removeEventListener("mouseup", stopResize);
+    };
+
+    document.addEventListener("mousemove", doResize);
+    document.addEventListener("mouseup", stopResize);
+  }, [panelSize]);
 
   if (!isOpen) return null;
 
@@ -111,7 +147,23 @@ export function ActionConfirmation({
       />
 
       {/* Sheet panel */}
-      <div className="relative w-[640px] max-w-full mx-auto bg-[#FDFBF9] dark:bg-[#2C2C2C] rounded-t-[24px] border-t border-[rgba(36,27,20,0.08)] dark:border-[rgba(255,255,255,0.08)] shadow-[0_-12px_48px_rgba(36,27,20,0.12)] p-6 z-10 animate-in slide-in-from-bottom-12 duration-300 flex flex-col gap-4 max-h-[85vh] overflow-y-auto scrollbar-hide text-left">
+      <div 
+        style={{ width: panelSize.width, height: panelSize.height }}
+        className="relative max-w-full mx-auto bg-[#FDFBF9] dark:bg-[#2C2C2C] rounded-t-[24px] border-t border-[rgba(36,27,20,0.08)] dark:border-[rgba(255,255,255,0.08)] shadow-[0_-12px_48px_rgba(36,27,20,0.12)] p-6 z-10 animate-in slide-in-from-bottom-12 duration-300 flex flex-col gap-4 overflow-hidden text-left transition-none"
+      >
+        {/* Resize handles */}
+        <div 
+          className="absolute top-0 left-0 right-0 h-2 cursor-ns-resize z-20"
+          onMouseDown={(e) => startResize(e, 't')}
+        />
+        <div 
+          className="absolute top-0 left-0 w-4 h-4 cursor-nwse-resize z-30"
+          onMouseDown={(e) => startResize(e, 'tl')}
+        />
+        <div 
+          className="absolute top-0 right-0 w-4 h-4 cursor-nesw-resize z-30"
+          onMouseDown={(e) => startResize(e, 'tr')}
+        />
         
         {/* Title */}
         <div className="flex items-center justify-between">
@@ -134,9 +186,10 @@ export function ActionConfirmation({
         )}
 
         {/* Actions Checklist */}
-        {hasActions && editedPlan && (
-          <div className="flex flex-col gap-3">
-            <span className="font-sans font-semibold text-[11px] text-[rgba(36,27,20,0.4)] dark:text-[rgba(255,255,255,0.4)] uppercase tracking-wider">
+        <div className="flex-1 overflow-y-auto scrollbar-hide flex flex-col gap-4 min-h-0 pr-1">
+          {hasActions && editedPlan && (
+            <div className="flex flex-col gap-3">
+              <span className="font-sans font-semibold text-[11px] text-[rgba(36,27,20,0.4)] dark:text-[rgba(255,255,255,0.4)] uppercase tracking-wider">
               Integrations Checklist & Parameters
             </span>
             <div className="flex flex-col gap-3">
@@ -514,8 +567,10 @@ export function ActionConfirmation({
           </div>
         </div>
 
+        </div>
+
         {/* Footer Buttons */}
-        <div className="flex items-center gap-3 mt-3">
+        <div className="flex items-center justify-between gap-3 pt-4 mt-auto border-t border-[rgba(36,27,20,0.08)] dark:border-[rgba(255,255,255,0.08)] bg-[#FDFBF9] dark:bg-[#2C2C2C]">
           <button 
             onClick={handleConfirmSubmit}
             disabled={isExecuting || !hasActions || !anyActionEnabled}
