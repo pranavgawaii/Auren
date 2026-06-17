@@ -806,8 +806,7 @@ function InputForm({ inputRef, onSuccess, onExecute, emails = [] }: { inputRef: 
                   {/* Backdrop for highlights */}
                   <div 
                     aria-hidden="true" 
-                    className="absolute inset-0 p-3 pr-[44px] overflow-hidden whitespace-pre-wrap break-words text-[13px] font-sans pointer-events-none"
-                    style={{ color: "transparent" }}
+                    className="absolute inset-0 p-3 pr-[44px] overflow-hidden whitespace-pre-wrap break-words text-[13px] leading-[20px] tracking-normal font-sans pointer-events-none z-0"
                   >
                     {renderInputHighlights(inputValue)}
                   </div>
@@ -818,7 +817,8 @@ function InputForm({ inputRef, onSuccess, onExecute, emails = [] }: { inputRef: 
                     value={inputValue}
                     placeholder="Ask Auren to summarize, schedule, or manage tasks..."
                     name="message"
-                    className="w-full h-full resize-none p-3 pr-[44px] outline-none text-transparent caret-[#241B14] dark:caret-[#F4F4F5] bg-transparent text-[13px] font-sans placeholder:text-[rgba(36,27,20,0.3)] dark:placeholder:text-[rgba(255,255,255,0.3)]"
+                    className="w-full h-full resize-none p-3 pr-[44px] outline-none bg-transparent text-[13px] leading-[20px] tracking-normal font-sans placeholder:text-[rgba(36,27,20,0.3)] dark:placeholder:text-[rgba(255,255,255,0.3)] absolute inset-0 z-10"
+                    style={{ color: "transparent", caretColor: "var(--tw-caret-color, #241B14)" }}
                     required
                     onKeyDown={handleKeys}
                     spellCheck={false}

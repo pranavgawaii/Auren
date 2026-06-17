@@ -216,9 +216,9 @@ export function DashboardClient() {
         {isAgentLoading && (
           <motion.div
             initial={{ opacity: 0, backdropFilter: "blur(0px)" }}
-            animate={{ opacity: 1, backdropFilter: "blur(2px)" }}
+            animate={{ opacity: 1, backdropFilter: "blur(4px)" }}
             exit={{ opacity: 0, backdropFilter: "blur(0px)" }}
-            className="fixed inset-0 z-40 bg-white dark:bg-[#383838]/20 pointer-events-none"
+            className="fixed inset-0 z-40 bg-white/20 dark:bg-[#383838]/20 pointer-events-none"
             transition={{ duration: 0.3 }}
           />
         )}

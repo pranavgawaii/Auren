@@ -94,7 +94,7 @@ export function EmailDetail({ email, thread = [], onAction, isAgentLoading }: Em
     <div className="flex-1 flex flex-col bg-white dark:bg-[#383838] h-full relative overflow-hidden">
       {/* ShiningText Thinking Overlay */}
       {isAgentLoading && (
-        <div className="absolute inset-0 bg-white dark:bg-[#383838]/70 backdrop-blur-[2px] z-50 flex flex-col items-center justify-center pointer-events-auto transition-all duration-300">
+        <div className="absolute inset-0 bg-white/60 dark:bg-[#383838]/60 backdrop-blur-md z-50 flex flex-col items-center justify-center pointer-events-auto transition-all duration-300">
           <ShiningText text="Auren is thinking..." className="text-[20px] font-sans font-medium tracking-tight" />
         </div>
       )}
