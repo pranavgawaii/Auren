@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { GitPullRequest, CircleDot, MessageSquare, ExternalLink, BookOpen, Lock } from "lucide-react";
-import { checkConnectionStatus, getConnectedGithubUsername, getConnectedGithubRepos } from "@/app/actions/connect";
+import { checkConnectionStatus } from "@/app/actions/connect";
 import { useRouter } from "next/navigation";
 import { useUser } from "@clerk/nextjs";
 
@@ -30,18 +30,20 @@ export function GitHubIntegrationView() {
         return;
       }
 
-      // Fetch the REAL authenticated username from the connected Corsair account
-      const realGithubUsername = await getConnectedGithubUsername();
-      const usernameToFetch = realGithubUsername || user?.username || "8teen";
+      // Retrieve GitHub username directly from Clerk's linked OAuth accounts
+      const githubAccount = user?.externalAccounts?.find(a => (a.provider as string) === "oauth_github" || (a.provider as string) === "github");
+      const usernameToFetch = githubAccount?.username || user?.username || "8TEEN";
       setConnectedUsername(usernameToFetch);
 
-      const [repoData, prRes, issueRes] = await Promise.all([
-        getConnectedGithubRepos(),
+      const [repoRes, prRes, issueRes] = await Promise.all([
+        fetch(`https://api.github.com/users/${usernameToFetch}/repos?sort=updated&per_page=6`),
         fetch(`https://api.github.com/search/issues?q=is:pr+is:open+author:${usernameToFetch}`),
         fetch(`https://api.github.com/search/issues?q=is:issue+is:open+assignee:${usernameToFetch}`)
       ]);
 
-      if (!prRes.ok || !issueRes.ok) throw new Error("Failed to fetch live data from GitHub. Rate limit exceeded.");
+      if (!repoRes.ok || !prRes.ok || !issueRes.ok) throw new Error("Failed to fetch live data from GitHub. Rate limit exceeded.");
+
+      const repoData = await repoRes.json();
 
       const prData = await prRes.json();
       const issueData = await issueRes.json();
