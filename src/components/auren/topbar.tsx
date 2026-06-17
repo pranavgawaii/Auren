@@ -100,7 +100,7 @@ export function Topbar() {
           </>
         ) : (
           <div style={{ marginLeft: "16px", display: "flex", alignItems: "center" }}>
-            <UserButton afterSignOutUrl="/" />
+            <UserButton />
           </div>
         )}
       </div>

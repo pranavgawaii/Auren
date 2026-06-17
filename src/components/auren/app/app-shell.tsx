@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { Search, History } from "lucide-react";
+import { showToast } from "@/components/ui/premium-toast";
 import Image from "next/image";
 import Link from "next/link";
 import { UserButton, useUser } from "@clerk/nextjs";
@@ -108,7 +109,7 @@ export function AppShell({
                   <span className="text-[#241B14] dark:text-[#F4F4F5]" style={{ fontFamily: "var(--font-civane, Georgia, serif)", fontWeight: 400, fontSize: "22px", letterSpacing: "-0.02em" }}>
                     Auren
                   </span>
-                  <span className={`px-1.5 py-0.5 rounded-[4px] font-sans font-bold text-[9px] tracking-widest ${isPro ? 'bg-[#E8593C]/10 text-[#E8593C]' : 'bg-[rgba(36,27,20,0.08)] dark:bg-[rgba(255,255,255,0.15)] text-[rgba(36,27,20,0.5)] dark:text-[rgba(255,255,255,0.5)]'}`}>
+                  <span className={`px-1.5 py-0.5 rounded-[4px] font-sans font-bold text-[9px] tracking-widest ${isPro ? 'bg-[#E8593C]/10 text-[#E8593C]' : 'border border-[rgba(36,27,20,0.12)] dark:border-[rgba(255,255,255,0.12)] text-[rgba(36,27,20,0.4)] dark:text-[rgba(255,255,255,0.4)]'}`}>
                     {isPro ? "PRO" : "FREE"}
                   </span>
                 </div>
@@ -156,6 +157,18 @@ export function AppShell({
           {/* Right: User */}
           <div className="flex items-center gap-4">
             
+          {!isPro && (
+            <button 
+              onClick={() => {
+                localStorage.setItem("auren_default_settings_tab", "billing");
+                if (onViewChange) onViewChange("settings");
+              }}
+              className="hidden md:flex h-[28px] px-3 bg-[rgba(36,27,20,0.04)] dark:bg-[rgba(255,255,255,0.08)] border border-[rgba(36,27,20,0.08)] dark:border-[rgba(255,255,255,0.08)] rounded-full items-center justify-center font-sans font-medium text-[11px] text-[rgba(36,27,20,0.6)] dark:text-[rgba(255,255,255,0.6)] hover:bg-[rgba(36,27,20,0.08)] dark:hover:bg-[rgba(255,255,255,0.12)] hover:text-[#241B14] dark:hover:text-[#F4F4F5] transition-colors"
+            >
+              Upgrade to Pro
+            </button>
+          )}
+
           <div className="flex items-center gap-1 bg-[rgba(36,27,20,0.04)] dark:bg-[rgba(255,255,255,0.1)] p-1 rounded-[10px]">
             <button 
               onClick={() => onViewChange?.("history")}
@@ -175,7 +188,7 @@ export function AppShell({
             {isMounted ? (
               <>
                 {showThemeToggle && <AnimatedThemeToggler />}
-                <UserButton afterSignOutUrl="/" />
+                <UserButton />
               </>
             ) : (
               <div className="w-[60px] h-[30px]" /> // Placeholder
