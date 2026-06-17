@@ -212,7 +212,7 @@ export function EmailDetail({ email, thread = [], onAction, isAgentLoading }: Em
             <Reply size={14} />
             Reply
           </div>
-          <kbd className="ml-1 px-1.5 py-0.5 rounded-[4px] bg-white dark:bg-[#383838]/20 text-[10px] font-mono group-hover:bg-white dark:bg-[#383838]/30 transition-colors">R</kbd>
+          <kbd className="ml-1 px-1.5 py-0.5 rounded-[4px] bg-white dark:bg-[#383838]/20 text-[#E8593C] dark:text-[rgba(255,255,255,0.7)] text-[10px] font-mono group-hover:bg-white dark:bg-[#383838]/30 transition-colors">R</kbd>
         </button>
         <button
           onClick={() => onAction?.("Schedule a 30 minute meeting based on this email")}

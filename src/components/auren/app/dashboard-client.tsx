@@ -48,20 +48,24 @@ export function DashboardClient() {
 
   const pathname = usePathname();
   
-  // Determine view from pathname
-  const view = pathname.startsWith("/settings") ? "settings" 
+  // Determine initial view from pathname
+  const initialView = pathname.startsWith("/settings") ? "settings" 
     : pathname.startsWith("/history") ? "history" 
     : pathname.startsWith("/calendar") ? "calendar" 
     : pathname.startsWith("/search") ? "search"
     : pathname.startsWith("/github") ? "github"
     : "inbox";
 
+  const [view, setViewInternal] = useState<"search" | "github" | "calendar" | "inbox" | "settings" | "history">(initialView as any);
+
   const setView = (newView: string) => {
     if (newView === "inbox") {
       setIsZenMode(false);
-      router.push("/app");
+      window.history.pushState(null, "", "/app");
+      setViewInternal("inbox");
     } else {
-      router.push(`/${newView}`);
+      window.history.pushState(null, "", `/${newView}`);
+      setViewInternal(newView as any);
     }
   };
 
