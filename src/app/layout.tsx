@@ -46,6 +46,7 @@ export const metadata: Metadata = {
 
 import { ClerkProvider } from '@clerk/nextjs'
 import { SmoothScroll } from "@/components/auren/smooth-scroll";
+import { Analytics } from '@vercel/analytics/next';
 
 export default function RootLayout({
   children,
@@ -71,6 +72,7 @@ export default function RootLayout({
           <SmoothScroll />
           {children}
           <Toaster />
+          <Analytics />
         </body>
       </html>
     </ClerkProvider>
