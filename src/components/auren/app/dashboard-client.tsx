@@ -385,7 +385,7 @@ export function DashboardClient() {
         isAgentLoading={isAgentLoading} 
       />
       <div className="fixed bottom-12 right-12 z-[60]">
-        <MorphPanel onExecute={handleAction} isAgentLoading={isAgentLoading} />
+        <MorphPanel onExecute={handleAction} isAgentLoading={isAgentLoading} emails={emails} />
       </div>
     </AppShell>
   );

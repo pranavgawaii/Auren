@@ -196,9 +196,10 @@ const useFormContext = () => React.useContext(FormContext)
 interface MorphPanelProps {
   onExecute: (command: string, history?: any[]) => Promise<any>;
   isAgentLoading?: boolean;
+  emails?: any[];
 }
 
-export function MorphPanel({ onExecute, isAgentLoading = false }: MorphPanelProps) {
+export function MorphPanel({ onExecute, isAgentLoading = false, emails = [] }: MorphPanelProps) {
   const wrapperRef = React.useRef<HTMLDivElement>(null)
   const textareaRef = React.useRef<HTMLTextAreaElement | null>(null)
   const dragControls = useDragControls()
@@ -298,7 +299,7 @@ export function MorphPanel({ onExecute, isAgentLoading = false }: MorphPanelProp
       >
         <FormContext.Provider value={ctx}>
           <DockBar />
-          <InputForm inputRef={textareaRef} onSuccess={handleSuccess} onExecute={onExecute} />
+          <InputForm inputRef={textareaRef} onSuccess={handleSuccess} onExecute={onExecute} emails={emails} />
         </FormContext.Provider>
       </motion.div>
     </div>
@@ -367,21 +368,41 @@ import { Check } from "lucide-react"
 import { useUser } from "@clerk/nextjs"
 import Image from "next/image"
 
-// Mentions State
-const MOCK_MENTIONS = [
-  { id: '1', trigger: '@', type: 'contact', label: 'Pranav Gawai', value: '@Pranav Gawai', displayValue: 'demo@tryauren.dev', icon: '@' },
-  { id: '2', trigger: '@', type: 'contact', label: 'Product Team', value: '@Product Team', displayValue: 'product@example.com', icon: '@' },
-  { id: '3', trigger: '/', type: 'repo', label: 'Auren Frontend', value: 'github/Auren', displayValue: 'github.com/8TEEH/Auren', icon: '/' },
-  { id: '4', trigger: '/', type: 'repo', label: 'skills-introduction-to-github', value: 'github/skills-introduction-to-github', displayValue: 'github.com/8TEEH/skills-intro...', icon: '/' },
-]
-
-function InputForm({ inputRef, onSuccess, onExecute }: { inputRef: React.RefObject<HTMLTextAreaElement>; onSuccess: () => void; onExecute: (cmd: string, history?: any[]) => Promise<any> }) {
+function InputForm({ inputRef, onSuccess, onExecute, emails = [] }: { inputRef: React.RefObject<HTMLTextAreaElement>; onSuccess: () => void; onExecute: (cmd: string, history?: any[]) => Promise<any>; emails?: any[] }) {
   const { triggerClose, showForm, isFullscreen, setIsFullscreen, isAgentLoading, startResize, dragControls } = useFormContext()
   const btnRef = React.useRef<HTMLButtonElement>(null)
   const { user } = useUser()
 
+  const [inputValue, setInputValue] = React.useState("")
   const [isListening, setIsListening] = React.useState(false)
   const recognitionRef = React.useRef<any>(null)
+  
+  // Dynamic Mentions
+  const dynamicMentions = React.useMemo(() => {
+    const baseMentions = [
+      { id: '3', trigger: '/', type: 'repo', label: 'Auren Frontend', value: 'github/Auren', displayValue: 'github.com/8TEEH/Auren', icon: '/' },
+      { id: '4', trigger: '/', type: 'repo', label: 'skills-introduction-to-github', value: 'github/skills-introduction-to-github', displayValue: 'github.com/8TEEH/skills-intro...', icon: '/' },
+    ]
+    if (!emails || emails.length === 0) {
+      baseMentions.push({ id: '1', trigger: '@', type: 'contact', label: 'Pranav Gawai', value: '@Pranav Gawai', displayValue: 'demo@tryauren.dev', icon: '@' })
+      return baseMentions
+    }
+    const contacts = new Map()
+    emails.forEach(e => {
+       if (e.from && e.fromName && !contacts.has(e.from)) {
+          contacts.set(e.from, {
+             id: `contact-${e.from}`,
+             trigger: '@',
+             type: 'contact',
+             label: e.fromName,
+             value: `@${e.fromName}`,
+             displayValue: e.from,
+             icon: '@'
+          })
+       }
+    })
+    return [...Array.from(contacts.values()), ...baseMentions]
+  }, [emails])
   
   // Real Chat State
   const [chatHistory, setChatHistory] = React.useState<{role: "user" | "agent", content?: string, isTyping?: boolean, plan?: any}[]>([])
@@ -391,11 +412,11 @@ function InputForm({ inputRef, onSuccess, onExecute }: { inputRef: React.RefObje
   
   const filteredMentions = React.useMemo(() => {
     if (!mentionQuery) return []
-    return MOCK_MENTIONS.filter(m => 
+    return dynamicMentions.filter(m => 
        m.trigger === mentionQuery.trigger &&
        (m.label.toLowerCase().includes(mentionQuery.text) || m.displayValue.toLowerCase().includes(mentionQuery.text))
     )
-  }, [mentionQuery])
+  }, [mentionQuery, dynamicMentions])
 
   const handleInput = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const val = e.target.value;
@@ -428,21 +449,38 @@ function InputForm({ inputRef, onSuccess, onExecute }: { inputRef: React.RefObje
        const newCursor = start + inserted.length;
        input.setSelectionRange(newCursor, newCursor);
        
+       setInputValue(input.value);
        setMentionQuery(null);
        input.focus();
     }
   }
 
+  const renderInputHighlights = (text: string) => {
+    if (!text) return null;
+    const exactMatches = dynamicMentions.map(m => m.value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|');
+    if (!exactMatches) return <span className="text-[#241B14] dark:text-[#F4F4F5]">{text}</span>;
+    
+    const regex = new RegExp(`(${exactMatches})`, 'g');
+    const parts = text.split(regex);
+    
+    return parts.map((part, i) => {
+      if (dynamicMentions.some(m => m.value === part)) {
+        return <span key={i} className="text-[#E8593C] font-semibold">{part}</span>;
+      }
+      return <span key={i} className="text-[#241B14] dark:text-[#F4F4F5]">{part}</span>;
+    });
+  }
+
   const renderHighlightedText = (text: string, role: "user" | "agent") => {
     if (!text) return text;
-    const exactMatches = MOCK_MENTIONS.map(m => m.value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|');
+    const exactMatches = dynamicMentions.map(m => m.value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|');
     if (!exactMatches) return text;
     
     const regex = new RegExp(`(${exactMatches})`, 'g');
     const parts = text.split(regex);
     
     return parts.map((part, i) => {
-      if (MOCK_MENTIONS.some(m => m.value === part)) {
+      if (dynamicMentions.some(m => m.value === part)) {
          if (role === "user") {
             return <span key={i} className="text-[#E8593C] bg-white dark:bg-[#383838] px-1.5 py-[2px] rounded border border-white/20 mx-[2px] font-bold shadow-sm">{part}</span>
          } else {
@@ -462,7 +500,10 @@ function InputForm({ inputRef, onSuccess, onExecute }: { inputRef: React.RefObje
         rec.interimResults = true
         rec.onresult = (event: any) => {
           const transcript = Array.from(event.results).map((r: any) => r[0].transcript).join("")
-          if (inputRef.current) inputRef.current.value = transcript
+          if (inputRef.current) {
+            inputRef.current.value = transcript
+            setInputValue(transcript)
+          }
         }
         rec.onend = () => setIsListening(false)
         recognitionRef.current = rec
@@ -477,7 +518,10 @@ function InputForm({ inputRef, onSuccess, onExecute }: { inputRef: React.RefObje
       recognitionRef.current?.stop()
       setIsListening(false)
     } else {
-      if (inputRef.current) inputRef.current.value = ""
+      if (inputRef.current) {
+        inputRef.current.value = ""
+        setInputValue("")
+      }
       recognitionRef.current?.start()
       setIsListening(true)
     }
@@ -529,6 +573,7 @@ function InputForm({ inputRef, onSuccess, onExecute }: { inputRef: React.RefObje
       
       if (inputRef.current) {
         inputRef.current.value = ""
+        setInputValue("")
       }
     }
     onSuccess()
@@ -564,13 +609,14 @@ function InputForm({ inputRef, onSuccess, onExecute }: { inputRef: React.RefObje
       const cursor = e.currentTarget.selectionStart;
       if (cursor === e.currentTarget.selectionEnd) {
         const textBeforeCursor = e.currentTarget.value.slice(0, cursor);
-        for (const m of MOCK_MENTIONS) {
+        for (const m of dynamicMentions) {
           if (textBeforeCursor.endsWith(m.value + ' ')) {
             e.preventDefault();
             const start = cursor - (m.value.length + 1);
             const after = e.currentTarget.value.slice(cursor);
             e.currentTarget.value = e.currentTarget.value.slice(0, start) + after;
             e.currentTarget.setSelectionRange(start, start);
+            setInputValue(e.currentTarget.value);
             handleInput(e as any);
             return;
           } else if (textBeforeCursor.endsWith(m.value)) {
@@ -579,6 +625,7 @@ function InputForm({ inputRef, onSuccess, onExecute }: { inputRef: React.RefObje
             const after = e.currentTarget.value.slice(cursor);
             e.currentTarget.value = e.currentTarget.value.slice(0, start) + after;
             e.currentTarget.setSelectionRange(start, start);
+            setInputValue(e.currentTarget.value);
             handleInput(e as any);
             return;
           }
@@ -755,17 +802,29 @@ function InputForm({ inputRef, onSuccess, onExecute }: { inputRef: React.RefObje
                   )}
                 </AnimatePresence>
 
-                <textarea
-                  ref={inputRef}
-                  onChange={handleInput}
-                  placeholder="Ask Auren to summarize, schedule, or manage tasks..."
-                  name="message"
-                  className="w-full resize-none p-3 pr-[44px] outline-none text-[#241B14] dark:text-[#F4F4F5] bg-transparent placeholder:text-[rgba(36,27,20,0.3)] dark:placeholder:text-[rgba(255,255,255,0.3)] text-[13px] min-h-[44px] max-h-[120px] font-sans"
-                  required
-                  onKeyDown={handleKeys}
-                  spellCheck={false}
-                  disabled={isAgentLoading}
-                />
+                <div className="relative w-full min-h-[44px] max-h-[120px]">
+                  {/* Backdrop for highlights */}
+                  <div 
+                    aria-hidden="true" 
+                    className="absolute inset-0 p-3 pr-[44px] overflow-hidden whitespace-pre-wrap break-words text-[13px] font-sans pointer-events-none"
+                    style={{ color: "transparent" }}
+                  >
+                    {renderInputHighlights(inputValue)}
+                  </div>
+                  {/* Actual Textarea */}
+                  <textarea
+                    ref={inputRef}
+                    onChange={(e) => { handleInput(e); setInputValue(e.target.value); }}
+                    value={inputValue}
+                    placeholder="Ask Auren to summarize, schedule, or manage tasks..."
+                    name="message"
+                    className="w-full h-full resize-none p-3 pr-[44px] outline-none text-transparent caret-[#241B14] dark:caret-[#F4F4F5] bg-transparent text-[13px] font-sans placeholder:text-[rgba(36,27,20,0.3)] dark:placeholder:text-[rgba(255,255,255,0.3)]"
+                    required
+                    onKeyDown={handleKeys}
+                    spellCheck={false}
+                    disabled={isAgentLoading}
+                  />
+                </div>
                 
                 {/* Mic Button moved to side of chat inside the input box */}
                 <button
