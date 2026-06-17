@@ -269,8 +269,9 @@ export function MorphPanel({ onExecute, isAgentLoading = false, emails = [] }: M
       if (customEvent.detail?.text) {
         setTimeout(() => {
           if (textareaRef.current) {
-            textareaRef.current.value = customEvent.detail.text;
-            // The setter is handled directly on DOM to prevent state sync issues immediately
+            // Force React onChange to fire
+            const nativeInputValueSetter = Object.getOwnPropertyDescriptor(window.HTMLTextAreaElement.prototype, "value")?.set;
+            nativeInputValueSetter?.call(textareaRef.current, customEvent.detail.text);
             textareaRef.current.dispatchEvent(new Event('input', { bubbles: true }));
             textareaRef.current.focus();
           }
