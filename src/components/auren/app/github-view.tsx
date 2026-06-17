@@ -4,9 +4,11 @@ import React, { useState, useEffect } from "react";
 import { GitPullRequest, CircleDot, MessageSquare, ExternalLink, BookOpen, Lock } from "lucide-react";
 import { checkConnectionStatus } from "@/app/actions/connect";
 import { useRouter } from "next/navigation";
+import { useUser } from "@clerk/nextjs";
 
 export function GitHubIntegrationView() {
   const router = useRouter();
+  const { user } = useUser();
   const [isConnected, setIsConnected] = useState<boolean | null>(null);
   const [pullRequests, setPullRequests] = useState<any[]>([]);
   const [issues, setIssues] = useState<any[]>([]);
@@ -18,48 +20,6 @@ export function GitHubIntegrationView() {
       setIsLoading(true);
       setError(null);
       
-      const FALLBACK_PRS = [
-        {
-          id: 1,
-          title: "feat: implement dual-pane github inbox",
-          html_url: "https://github.com/pranavgawaii/Auren/pull/152",
-          created_at: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString(),
-          repository_url: "https://api.github.com/repos/pranavgawaii/Auren",
-          number: 152,
-          user: { login: "8teen" },
-          comments: 3
-        },
-        {
-          id: 2,
-          title: "fix: dark mode text contrast issues",
-          html_url: "https://github.com/pranavgawaii/portfolio/pull/42",
-          created_at: new Date(Date.now() - 1000 * 60 * 60 * 24 * 2).toISOString(),
-          repository_url: "https://api.github.com/repos/pranavgawaii/portfolio",
-          number: 42,
-          user: { login: "pranavgawaii" },
-          comments: 1
-        }
-      ];
-
-      const FALLBACK_ISSUES = [
-        {
-          id: 1,
-          title: "Error: Unterminated regexp literal in github-view",
-          html_url: "https://github.com/pranavgawaii/Auren/issues/153",
-          created_at: new Date(Date.now() - 1000 * 60 * 30).toISOString(),
-          repository_url: "https://api.github.com/repos/pranavgawaii/Auren",
-          number: 153
-        },
-        {
-          id: 2,
-          title: "Add Stripe webhook listener for subscription changes",
-          html_url: "https://github.com/8teen/saas-boilerplate/issues/12",
-          created_at: new Date(Date.now() - 1000 * 60 * 60 * 48).toISOString(),
-          repository_url: "https://api.github.com/repos/8teen/saas-boilerplate",
-          number: 12
-        }
-      ];
-
       try {
         const status = await checkConnectionStatus();
         setIsConnected(status.github);
@@ -69,34 +29,31 @@ export function GitHubIntegrationView() {
           return;
         }
 
+        const username = user?.username || "8teen";
+
         const [prRes, issueRes] = await Promise.all([
-          fetch("https://api.github.com/search/issues?q=is:pr+is:open+author:8teen"),
-          fetch("https://api.github.com/search/issues?q=is:issue+is:open+assignee:8teen")
+          fetch(`https://api.github.com/search/issues?q=is:pr+is:open+author:${username}`),
+          fetch(`https://api.github.com/search/issues?q=is:issue+is:open+assignee:${username}`)
         ]);
 
-        if (!prRes.ok || !issueRes.ok) {
-          // If rate limited, use fallback data
-          setPullRequests(FALLBACK_PRS);
-          setIssues(FALLBACK_ISSUES);
-          return;
-        }
+        if (!prRes.ok || !issueRes.ok) throw new Error("Failed to fetch live data from GitHub. Rate limit exceeded.");
 
         const prData = await prRes.json();
         const issueData = await issueRes.json();
 
-        // Use fallback data if empty (to always show the UI)
-        setPullRequests(prData.items?.length > 0 ? prData.items : FALLBACK_PRS);
-        setIssues(issueData.items?.length > 0 ? issueData.items : FALLBACK_ISSUES);
+        setPullRequests(prData.items || []);
+        setIssues(issueData.items || []);
       } catch (err: any) {
-        // Use fallback data on network error
-        setPullRequests(FALLBACK_PRS);
-        setIssues(FALLBACK_ISSUES);
+        setError(err.message);
       } finally {
         setIsLoading(false);
       }
     }
-    fetchGithubData();
-  }, []);
+    
+    if (user !== undefined) {
+      fetchGithubData();
+    }
+  }, [user]);
 
   const timeAgo = (dateStr: string) => {
     const diff = Date.now() - new Date(dateStr).getTime();
@@ -161,7 +118,7 @@ export function GitHubIntegrationView() {
             </div>
             <div>
               <h1 className="text-[24px] text-[#241B14] dark:text-[#F4F4F5] leading-none mb-1" style={{ fontFamily: "var(--font-civane, Georgia, serif)" }}>GitHub</h1>
-              <p className="font-sans text-[13px] text-[rgba(36,27,20,0.5)] dark:text-[rgba(255,255,255,0.5)]">8teen • Connected</p>
+              <p className="font-sans text-[13px] text-[rgba(36,27,20,0.5)] dark:text-[rgba(255,255,255,0.5)]">{user?.username || "Connected User"} • Connected</p>
             </div>
           </div>
           <div className="flex items-center gap-3">
