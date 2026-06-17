@@ -452,7 +452,7 @@ export async function googleCalendarCreate(
       const newEvent = {
         user_id: userId,
         gcal_id: `evt_${Math.random().toString(36).substr(2, 7)}`,
-        title: payload.title,
+        title: payload.title || "Untitled Event",
         description: description || null,
         start_at: startIso,
         end_at: endIso,
@@ -465,7 +465,8 @@ export async function googleCalendarCreate(
       const { data, error } = await supabase.from("calendar_events").insert(newEvent).select().single();
       
       if (error) {
-        throw new Error("Failed to fallback save to DB: " + error.message);
+        console.error("Calendar fallback DB insert failed:", error.message);
+        throw new Error("We encountered an issue saving your calendar event. Please check the event details and try again.");
       }
       
       return {
