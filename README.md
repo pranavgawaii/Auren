@@ -1,53 +1,59 @@
-# Auren — AI Execution Layer
+# Auren
 
-> The execution layer between thinking and doing.
+**The execution layer between thinking and doing.**
 
-**Live:** https://tryauren.dev  
-**Demo video:** [link]  
-**X post:** [link]  
-**LinkedIn post:** [link]
+Auren is an AI-powered command center for Gmail, Google Calendar, and GitHub.
+Type one natural language command — Auren plans the steps, shows you the
+full execution plan, and executes everything simultaneously with a single approval.
 
----
-
-## What makes Auren different from a Gmail clone
-
-1. **Human-in-the-Loop AI** — Agent shows full plan before any action executes
-2. **Parallel multi-tool execution** — Gmail reply + Calendar event fire simultaneously  
-3. **Real-time Corsair webhooks** — Emails and events arrive live, no polling
-4. **Multi-model AI stack** — OpenRouter for reasoning, Claude Haiku for per-email classification
-5. **Keyboard-first design** — ⌘K command palette, R/E shortcuts, voice input
+[![Live](https://img.shields.io/badge/Live-tryauren.in-E8593C?style=flat-square)](https://tryauren.in)
+[![Next.js](https://img.shields.io/badge/Next.js-16-black?style=flat-square&logo=next.js)](https://nextjs.org)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5-blue?style=flat-square&logo=typescript)](https://typescriptlang.org)
+[![License](https://img.shields.io/badge/License-MIT-green?style=flat-square)](LICENSE)
 
 ---
 
-## Corsair Features Used
+## What is Auren?
 
-- `gmail.api.messages.list` + `.get` — Read and display emails
-- `gmail.api.messages.send` — Send emails via agent
-- `gmail.api.drafts.create` — Save email drafts
-- `gmail.db.messages.search` — Corsair search API for fast email search
-- `googlecalendar.db.events.search` — List calendar events
-- `googlecalendar.api.events.create` — Create events with Google Meet links
-- `github.api.issues.create` — Create GitHub issues via agent
-- `github.api.issues.listForRepo` — List repository issues
-- `github.api.pulls.createReview` — Submit PR reviews
-- Corsair MCP (JSON-RPC) — Full agent reasoning and execution
-- Real-time Gmail webhooks — Live email classification
-- Real-time Calendar webhooks — Live event sync
+Most productivity tools make you manage them.
+Auren executes on your behalf.
+
+Type: `reply to rahul confirming thursday 3pm and send a calendar invite`
+
+Auren plans → shows you the full execution plan → Gmail replies + Calendar
+event creates simultaneously → one approval, everything done in 4 seconds.
 
 ---
 
-## Bonus Tasks Completed
+## Core Features
 
-- [x] Corsair MCP agent chat with human-in-the-loop confirmation
-- [x] Real-time webhooks for Gmail AND Calendar
-- [x] AI priority filtering via Claude Haiku (urgent/normal/fyi)
-- [x] Keyboard shortcuts (R reply, E archive, ⌘K palette, C compose, ? help)
-- [x] Corsair search API with fast local DB search
-- [x] GitHub integration (issues, PRs, reviews) — beyond requirements
-- [x] Voice input via Web Speech API
-- [x] Dark/light theme with persistence
-- [x] Agent action history with full audit trail
-- [x] Google Meet auto-generation on event creation
+**Human-in-the-Loop Execution**
+The agent always shows you the full plan before any API call is made.
+Review, edit, or cancel — you are always in control.
+
+**Parallel Multi-Tool Execution**
+One command fires Gmail, Google Calendar, and GitHub simultaneously.
+Not sequentially. At the same time.
+
+**Real-Time Inbox Classification**
+Every incoming email is classified as Urgent, Normal, or FYI
+by Claude Haiku via Corsair webhooks. No polling. Instant.
+
+**Semantic Email Search**
+Search your inbox by meaning, not just keywords.
+Powered by vector embeddings and Corsair's DB search API.
+
+**Agent History & Audit Trail**
+Every action the AI takes is logged. Full transparency —
+command, actions taken, timestamp, result.
+
+**Keyboard-First Design**
+⌘K command palette, R to reply, E to archive, J/K to navigate,
+voice input via Web Speech API. Designed for power users.
+
+**Google Meet Auto-Generation**
+Every calendar event created through Auren automatically
+includes a Google Meet link. No extra steps.
 
 ---
 
@@ -55,48 +61,226 @@
 
 | Layer | Technology |
 |---|---|
-| Frontend | Next.js 14, TypeScript, Tailwind CSS, Framer Motion |
-| Database | Supabase (Postgres + RLS) |
+| Frontend | Next.js 16, TypeScript, Tailwind CSS, Framer Motion |
+| Database | Supabase (PostgreSQL + RLS + Realtime) |
 | Auth | Clerk |
-| AI | OpenRouter (agent reasoning), Claude 3.5 Haiku (classification) |
-| Integrations | Corsair MCP — Gmail, Calendar, GitHub |
+| AI — Agent | OpenRouter (auto-routing to best model) |
+| AI — Classification | Claude Haiku (per-email priority classification) |
+| Integrations | Corsair MCP (Gmail, Google Calendar, GitHub) |
 | Deploy | Vercel |
 
 ---
 
-## Setup
+## Integrations via Corsair MCP
 
-```bash
-git clone https://github.com/pranavgawaii/Auren
-cd Auren
-npm install
-cp .env.example .env.local
-# Fill in env vars (see below)
-npm run dev
+| Integration | Capabilities |
+|---|---|
+| **Gmail** | Read, send, draft, search, real-time webhooks |
+| **Google Calendar** | List events, create events, Google Meet links, real-time webhooks |
+| **GitHub** | Create issues, list issues, submit PR reviews |
+
+All integrations are handled through Corsair's Model Context Protocol (MCP) —
+a unified interface that lets the AI agent reason across all tools
+without complex prompt engineering per integration.
+
+---
+
+## Architecture
+
+```
+User Command
+     ↓
+Corsair MCP ←→ Claude Sonnet (OpenRouter)
+     ↓
+┌────────────────────────────┐
+│  Gmail API                 │
+│  Google Calendar API       │  ← executes in parallel
+│  GitHub API                │
+└────────────────────────────┘
+     ↓
+Human-in-the-Loop Confirmation
+     ↓
+Execution + Agent History Log
+
+Real-time webhook pipeline:
+Gmail Inbox → Corsair Webhook → Claude Haiku → Priority Classification
+           → Vector Embeddings → Supabase → Auren UI (live update)
 ```
 
 ---
 
-## Required Environment Variables
+## Getting Started
 
+### Prerequisites
+- Node.js 18+
+- Supabase account
+- Clerk account
+- Corsair account (for integrations)
+- OpenRouter API key
+- Anthropic API key
+
+### Installation
+
+```bash
+git clone https://github.com/pranavgawaii/auren
+cd auren
+npm install
+cp .env.example .env.local
 ```
+
+### Environment Variables
+
+```env
+# Supabase
 NEXT_PUBLIC_SUPABASE_URL=
 NEXT_PUBLIC_SUPABASE_ANON_KEY=
 SUPABASE_SERVICE_ROLE_KEY=
+
+# Clerk
 NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=
 CLERK_SECRET_KEY=
+NEXT_PUBLIC_CLERK_SIGN_IN_URL=/sign-in
+NEXT_PUBLIC_CLERK_SIGN_UP_URL=/sign-up
+
+# Corsair
 CORSAIR_INSTANCE_ID=
 CORSAIR_TENANT_ID=
 CORSAIR_DEV_KEY=
 CORSAIR_MCP_TOKEN=
+
+# AI
 OPENROUTER_API_KEY=
 ANTHROPIC_API_KEY=
+
+# App
+NEXT_PUBLIC_APP_URL=https://tryauren.in
 WEBHOOK_SECRET=
 DEMO_REPLY_EMAIL=
 ```
+
+### Run Development Server
+
+```bash
+npm run dev
+```
+
+Open [http://localhost:3000](http://localhost:3000)
+
+---
+
+## Project Structure
+
+```
+src/
+├── app/
+│   ├── actions/          # Server actions (send email, create event, etc.)
+│   ├── api/webhooks/     # Real-time Gmail + Calendar webhook handlers
+│   ├── app/              # Main /app dashboard
+│   ├── calendar/         # Full calendar view
+│   ├── history/          # Agent action history
+│   ├── github/           # GitHub activity view
+│   ├── settings/         # User settings + integrations
+│   └── docs/             # Documentation page
+├── agents/
+│   └── executor.ts       # Core AI agent + HITL execution engine
+├── components/auren/     # All UI components
+├── lib/
+│   ├── corsair.ts        # Corsair MCP integration layer
+│   ├── anthropic.ts      # Claude Haiku classification
+│   └── rate-limit.ts     # Pro tier rate limiting
+└── types/
+    └── index.ts          # TypeScript types + Corsair types
+```
+
+---
+
+## Agent Architecture
+
+Auren uses a Human-in-the-Loop (HITL) pattern for all agent actions:
+
+```
+1. User types a natural language command
+2. analyzeCommand() sends to OpenRouter (Claude Sonnet via auto-routing)
+3. AI returns a structured JSON plan: { actions: [...] }
+4. ActionConfirmation UI shows the full plan to the user
+5. User reviews, optionally edits details, then confirms
+6. executePlan() dispatches to Corsair APIs in parallel
+7. Results logged to agent_actions table in Supabase
+8. History panel updates in real time via Supabase Realtime
+```
+
+Available agent tools:
+- `gmail_send` — Send an email via Gmail
+- `calendar_create` — Create a Calendar event with Meet link
+- `github_create_issue` — Create a GitHub issue
+- `github_list_issues` — List repository issues
+- `github_review_pr` — Submit a PR review
+
+---
+
+## Keyboard Shortcuts
+
+| Shortcut | Action |
+|---|---|
+| `⌘K` | Open command palette |
+| `R` | Reply to selected email |
+| `E` | Archive selected email |
+| `J` / `K` | Navigate emails up/down |
+| `C` | Compose new email |
+| `?` | Show all keyboard shortcuts |
+| `G` then `I` | Go to inbox |
+| `G` then `C` | Go to calendar |
+| `G` then `H` | Go to history |
+| `/` | Focus search |
+| `Escape` | Close/dismiss |
+
+---
+
+## Security
+
+- **No phantom executions** — agent presents full plan before any API call
+- **Strict OAuth scopes** — only requests Gmail read/write and Calendar write
+- **Webhook verification** — HMAC signature check on all incoming webhooks
+- **Rate limiting** — 1000 commands/hour standard, unlimited for Pro users
+- **Row-level security** — all Supabase tables protected by RLS policies
+- **Zero hardcoded secrets** — all credentials via environment variables
+
+---
+
+## Roadmap
+
+- [ ] Google Sheets integration — log emails and events to spreadsheets
+- [ ] Google Drive integration — attach and share documents via agent
+- [ ] Slack integration — notify team on agent actions
+- [ ] Notion integration — save email summaries to workspace
+- [ ] Linear integration — create tickets from GitHub/email context
+- [ ] Razorpay billing — Pro subscription tier
+- [ ] pgvector semantic search — search inbox by meaning locally
+- [ ] Multi-account Gmail support
+
+---
+
+## Contributing
+
+Pull requests are welcome. For major changes please open an issue first.
 
 ---
 
 ## License
 
-Distributed under the MIT License. See [LICENSE](LICENSE) for more information.
+MIT — see [LICENSE](LICENSE) for details.
+
+---
+
+## Author
+
+**Pranav Gawai**
+Final year B.Tech CSE — MIT-ADT University, Pune
+
+[![X](https://img.shields.io/badge/X-@pranavgawaii__-black?style=flat-square&logo=x)](https://x.com/pranavgawaii_)
+[![Portfolio](https://img.shields.io/badge/Portfolio-pranavx.in-E8593C?style=flat-square)](https://pranavx.in)
+[![Product](https://img.shields.io/badge/Product-tryauren.in-241B14?style=flat-square)](https://tryauren.in)
+
+---
+
+*The execution layer between thinking and doing.*
