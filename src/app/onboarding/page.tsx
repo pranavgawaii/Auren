@@ -5,7 +5,7 @@ import Image from "next/image";
 import { ArrowRight, CheckCircle2, ChevronRight, Mail, CalendarDays, GitBranch, Zap, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useRouter } from "next/navigation";
-import { useUser } from "@clerk/nextjs";
+import { useUser, UserButton } from "@clerk/nextjs";
 import { getConnectUrl, checkConnectionStatus } from "@/app/actions/connect";
 import { showToast } from "@/components/ui/premium-toast";
 
@@ -164,8 +164,20 @@ export default function OnboardingPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[var(--auren-bg)] text-[var(--auren-fg)] font-ui selection:bg-[var(--auren-brand)] selection:text-white flex items-center justify-center p-6 transition-colors duration-300">
+    <div className="min-h-screen bg-[var(--auren-bg)] text-[var(--auren-fg)] font-ui selection:bg-[var(--auren-brand)] selection:text-white flex items-center justify-center p-6 transition-colors duration-300 relative">
       
+      {/* Top Header with Profile Icon / Sign Out */}
+      <div className="absolute top-6 right-6 z-20 flex items-center gap-3">
+        {isLoaded && user && (
+          <div className="flex items-center gap-2.5 px-3 py-1.5 rounded-full bg-[var(--auren-surface)] border border-[var(--auren-border)] shadow-[0_1px_2px_rgba(0,0,0,0.02)] transition-all hover:bg-[var(--auren-surface-hover)]">
+            <span className="text-[11.5px] font-semibold text-[var(--auren-muted)] max-w-[120px] truncate">
+              {user.primaryEmailAddress?.emailAddress}
+            </span>
+            <UserButton />
+          </div>
+        )}
+      </div>
+
       <div className="w-full max-w-[460px] z-10 animate-in fade-in slide-in-from-bottom-6 duration-500 flex flex-col gap-6">
         
         {/* ─── LOGO & BRANDING ─── */}
