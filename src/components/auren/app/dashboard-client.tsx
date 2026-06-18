@@ -34,21 +34,46 @@ export function DashboardClient() {
   const [isCheckingConnection, setIsCheckingConnection] = useState(true);
 
   useEffect(() => {
+    let active = true;
     async function verifyConnection() {
-      if (isLoaded) {
-        if (!user) {
-          router.push("/sign-in");
-          return;
+      if (!isLoaded) return;
+      if (!user) {
+        router.push("/sign-in");
+        return;
+      }
+
+      let retries = 3;
+      let status = { google: false, github: false };
+      
+      while (retries > 0 && active) {
+        try {
+          status = await checkConnectionStatus();
+          if (status.google) {
+            break;
+          }
+        } catch (err) {
+          console.error(`[verifyConnection] Attempt failed. Retries left: ${retries - 1}`, err);
         }
-        const status = await checkConnectionStatus();
-        if (!status.google) {
-          router.push("/onboarding");
-        } else {
-          setIsCheckingConnection(false);
+        
+        retries--;
+        if (retries > 0 && active) {
+          await new Promise((resolve) => setTimeout(resolve, 1000));
         }
+      }
+
+      if (!active) return;
+
+      if (!status.google) {
+        console.warn("[verifyConnection] Google not connected after retries. Redirecting to onboarding.");
+        router.push("/onboarding");
+      } else {
+        setIsCheckingConnection(false);
       }
     }
     verifyConnection();
+    return () => {
+      active = false;
+    };
   }, [user, isLoaded, router]);
 
   const pathname = usePathname();

@@ -264,19 +264,7 @@ export function MorphPanel({ onExecute, isAgentLoading = false, emails = [] }: M
     }
 
     function handleOpenEvent(e: Event) {
-      const customEvent = e as CustomEvent;
       triggerOpen()
-      if (customEvent.detail?.text) {
-        setTimeout(() => {
-          if (textareaRef.current) {
-            // Force React onChange to fire
-            const nativeInputValueSetter = Object.getOwnPropertyDescriptor(window.HTMLTextAreaElement.prototype, "value")?.set;
-            nativeInputValueSetter?.call(textareaRef.current, customEvent.detail.text);
-            textareaRef.current.dispatchEvent(new Event('input', { bubbles: true }));
-            textareaRef.current.focus();
-          }
-        }, 50);
-      }
     }
 
     document.addEventListener("mousedown", clickOutsideHandler)
@@ -396,6 +384,26 @@ function InputForm({ inputRef, onSuccess, onExecute, emails = [] }: { inputRef: 
 
   const [inputValue, setInputValue] = React.useState("")
   const [isListening, setIsListening] = React.useState(false)
+
+  React.useEffect(() => {
+    function handleOpenChat(e: Event) {
+      const customEvent = e as CustomEvent;
+      if (customEvent.detail?.text) {
+        setInputValue(customEvent.detail.text);
+        setTimeout(() => {
+          if (inputRef.current) {
+            inputRef.current.style.height = "auto";
+            inputRef.current.style.height = `${inputRef.current.scrollHeight}px`;
+            inputRef.current.focus();
+          }
+        }, 100);
+      }
+    }
+    document.addEventListener("open-ai-chat", handleOpenChat);
+    return () => {
+      document.removeEventListener("open-ai-chat", handleOpenChat);
+    };
+  }, [inputRef]);
   const recognitionRef = React.useRef<any>(null)
   
   // Dynamic Mentions

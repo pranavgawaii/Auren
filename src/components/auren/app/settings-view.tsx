@@ -14,7 +14,8 @@ import {
   ChevronRight
 } from "lucide-react";
 import { showToast } from "@/components/ui/premium-toast";
-import { checkConnectionStatus, getConnectUrl, disconnectService } from "@/app/actions/connect";
+import { checkConnectionStatus, getConnectUrl, disconnectService, getConnectedGithubUsername, getDefaultGithubUsername } from "@/app/actions/connect";
+import { useRouter } from "next/navigation";
 import { useUser } from "@clerk/nextjs";
 import Image from "next/image";
 import { Pricing } from "@/components/blocks/pricing";
@@ -84,6 +85,7 @@ function Switch({ checked, onChange, disabled }: SwitchProps) {
 }
 
 export function SettingsView() {
+  const router = useRouter();
   const { user } = useUser();
   const fileInputRef = useRef<HTMLInputElement>(null);
   
@@ -92,6 +94,7 @@ export function SettingsView() {
   // Connection states
   const [connected, setConnected] = useState({ google: false, github: false });
   const [loading, setLoading] = useState({ google: false, github: false });
+  const [githubUsername, setGithubUsername] = useState("");
 
   // Preferences
   const [theme, setTheme] = useState("light");
@@ -117,6 +120,28 @@ export function SettingsView() {
   const loadStatus = async () => {
     const status = await checkConnectionStatus();
     setConnected(status);
+    if (status.github) {
+      try {
+        const username = await getConnectedGithubUsername();
+        if (username) {
+          setGithubUsername(username);
+          localStorage.setItem("auren_github_username", username);
+          window.dispatchEvent(new Event("auren_preferences_updated"));
+        } else {
+          const defaultUsername = await getDefaultGithubUsername();
+          const fallback = localStorage.getItem("auren_github_username") || user?.username || defaultUsername || "";
+          if (fallback) {
+            setGithubUsername(fallback);
+            if (fallback !== defaultUsername || localStorage.getItem("auren_github_username")) {
+              localStorage.setItem("auren_github_username", fallback);
+            }
+            window.dispatchEvent(new Event("auren_preferences_updated"));
+          }
+        }
+      } catch (e) {
+        console.warn("Failed to load github username in settings:", e);
+      }
+    }
   };
 
   useEffect(() => {
@@ -128,10 +153,12 @@ export function SettingsView() {
       const savedTimezone = localStorage.getItem("auren_timezone") || "Asia/Kolkata";
       const savedTier = localStorage.getItem("auren_subscription_tier") || "Auren Pro";
       const savedTopbarToggle = localStorage.getItem("auren_show_topbar_toggle");
+      const savedGithubUsername = localStorage.getItem("auren_github_username") || "";
       setTheme(savedTheme);
       setReplyTone(savedTone);
       setTimezone(savedTimezone);
       setSubscriptionTier(savedTier);
+      setGithubUsername(savedGithubUsername);
       if (savedTopbarToggle) {
         setShowTopbarToggle(savedTopbarToggle === "true");
       }
@@ -180,6 +207,9 @@ export function SettingsView() {
     setLoading((prev) => ({ ...prev, [service]: true }));
     const res = await getConnectUrl(service);
     if (res.success && res.url) {
+      if (service === "github") {
+        localStorage.removeItem("auren_github_username");
+      }
       window.open(res.url, "_blank");
     } else {
       showToast.error(res.error || `Failed to connect ${service}`);
@@ -194,7 +224,14 @@ export function SettingsView() {
     setLoading((prev) => ({ ...prev, [service]: true }));
     const res = await disconnectService(service);
     if (res.success) {
+      if (service === "github") {
+        localStorage.removeItem("auren_github_username");
+        setGithubUsername("");
+      }
       await loadStatus();
+      if (service === "google") {
+        router.push("/onboarding");
+      }
     } else {
       showToast.error(res.error || `Failed to disconnect ${service}`);
     }
@@ -535,24 +572,46 @@ export function SettingsView() {
                 </div>
 
                 {/* GitHub */}
-                <div className="bg-white dark:bg-[#383838] rounded-[16px] border border-[rgba(36,27,20,0.08)] dark:border-[rgba(255,255,255,0.08)] shadow-sm p-5 flex items-center justify-between transition-all hover:shadow-md">
-                  <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 rounded-[12px] border border-[rgba(36,27,20,0.08)] dark:border-[rgba(255,255,255,0.08)] bg-[#FAF8F5] dark:bg-[#2C2C2C] flex items-center justify-center shadow-inner">
-                      <GitBranch size={24} className="text-[#241B14] dark:text-[#F4F4F5]" />
-                    </div>
-                    <div className="space-y-1">
-                      <div className="flex items-center gap-2">
-                        <span className="font-bold text-[16px] text-[#241B14] dark:text-[#F4F4F5]" style={{ fontFamily: "var(--font-civane, Georgia, serif)" }}>GitHub Issues</span>
-                        {connected.github && <span className="text-[9px] font-bold bg-[#10B981]/10 text-[#10B981] px-2 py-0.5 rounded-full border border-[#10B981]/20">ACTIVE</span>}
+                <div className="bg-white dark:bg-[#383838] rounded-[16px] border border-[rgba(36,27,20,0.08)] dark:border-[rgba(255,255,255,0.08)] shadow-sm p-5 transition-all hover:shadow-md">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-4">
+                      <div className="w-12 h-12 rounded-[12px] border border-[rgba(36,27,20,0.08)] dark:border-[rgba(255,255,255,0.08)] bg-[#FAF8F5] dark:bg-[#2C2C2C] flex items-center justify-center shadow-inner">
+                        <GitBranch size={24} className="text-[#241B14] dark:text-[#F4F4F5]" />
                       </div>
-                      <p className="text-[12px] text-[rgba(36,27,20,0.5)] dark:text-[rgba(255,255,255,0.5)] max-w-sm">Log action items straight to code repositories.</p>
+                      <div className="space-y-1">
+                        <div className="flex items-center gap-2">
+                          <span className="font-bold text-[16px] text-[#241B14] dark:text-[#F4F4F5]" style={{ fontFamily: "var(--font-civane, Georgia, serif)" }}>GitHub Issues</span>
+                          {connected.github && <span className="text-[9px] font-bold bg-[#10B981]/10 text-[#10B981] px-2 py-0.5 rounded-full border border-[#10B981]/20">ACTIVE</span>}
+                        </div>
+                        <p className="text-[12px] text-[rgba(36,27,20,0.5)] dark:text-[rgba(255,255,255,0.5)] max-w-sm">Log action items straight to code repositories.</p>
+                      </div>
                     </div>
+                    <Switch 
+                      checked={connected.github} 
+                      disabled={loading.github}
+                      onChange={() => connected.github ? handleDisconnect("github") : handleConnect("github")}
+                    />
                   </div>
-                  <Switch 
-                    checked={connected.github} 
-                    disabled={loading.github}
-                    onChange={() => connected.github ? handleDisconnect("github") : handleConnect("github")}
-                  />
+                  
+                  {connected.github && (
+                    <div className="mt-4 pt-4 border-t border-[rgba(36,27,20,0.08)] dark:border-[rgba(255,255,255,0.08)] flex items-center justify-between">
+                      <div className="space-y-0.5">
+                        <span className="text-[13px] font-semibold text-[#241B14] dark:text-[#F4F4F5]">Linked GitHub Username</span>
+                        <p className="text-[11px] text-[rgba(36,27,20,0.5)] dark:text-[rgba(255,255,255,0.5)]">Specify the account username to fetch repositories.</p>
+                      </div>
+                      <input 
+                        type="text" 
+                        placeholder="e.g. pranavgawaii" 
+                        value={githubUsername}
+                        onChange={(e) => {
+                           setGithubUsername(e.target.value);
+                           localStorage.setItem("auren_github_username", e.target.value);
+                           window.dispatchEvent(new Event("auren_preferences_updated"));
+                        }}
+                        className="bg-[#FAF8F5] dark:bg-[#2C2C2C] border border-[rgba(36,27,20,0.08)] dark:border-[rgba(255,255,255,0.08)] rounded-[8px] px-3 py-1.5 text-[13px] text-[#241B14] dark:text-[#F4F4F5] outline-none focus:border-[#E8593C] focus:ring-1 focus:ring-[#E8593C] transition-all w-[180px] font-medium"
+                      />
+                    </div>
+                  )}
                 </div>
               </div>
             </div>

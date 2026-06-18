@@ -61,6 +61,7 @@ export default function RootLayout({
         className="scrollbar-hide"
       >
         <body
+          suppressHydrationWarning
           className={cn(
             civane.variable,
             inter.variable,

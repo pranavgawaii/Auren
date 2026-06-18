@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { GitPullRequest, CircleDot, MessageSquare, ExternalLink, BookOpen, Lock } from "lucide-react";
-import { checkConnectionStatus, getDefaultGithubUsername } from "@/app/actions/connect";
+import { checkConnectionStatus, getConnectedGithubUsername, getConnectedGithubRepos, getDefaultGithubUsername } from "@/app/actions/connect";
 import { useRouter } from "next/navigation";
 import { useUser } from "@clerk/nextjs";
 
@@ -11,6 +11,8 @@ export function GitHubIntegrationView() {
   const { user } = useUser();
   const [isConnected, setIsConnected] = useState<boolean | null>(null);
   const [connectedUsername, setConnectedUsername] = useState<string | null>(null);
+  const [tempUsername, setTempUsername] = useState("");
+  const [needsUsername, setNeedsUsername] = useState(false);
   const [repositories, setRepositories] = useState<any[]>([]);
   const [pullRequests, setPullRequests] = useState<any[]>([]);
   const [issues, setIssues] = useState<any[]>([]);
@@ -30,26 +32,73 @@ export function GitHubIntegrationView() {
         return;
       }
 
-      // Retrieve GitHub username directly from Clerk's linked OAuth accounts
+      // Retrieve connected GitHub username from platform with robust fallbacks
+      let connectedName: string | null = null;
+      try {
+        connectedName = await getConnectedGithubUsername();
+      } catch (e) {
+        console.warn("Failed to get connected github username from Corsair:", e);
+      }
+      
       const githubAccount = user?.externalAccounts?.find(a => (a.provider as string) === "oauth_github" || (a.provider as string) === "github");
-      const defaultUsername = await getDefaultGithubUsername();
-      const usernameToFetch = githubAccount?.username || defaultUsername;
-      setConnectedUsername(usernameToFetch);
+      const localManualUsername = typeof window !== "undefined" ? localStorage.getItem("auren_github_username") : "";
+      
+      const resolvedName = connectedName || localManualUsername || githubAccount?.username || user?.username || "";
+      
+      if (!resolvedName) {
+        const defaultUsername = await getDefaultGithubUsername();
+        setTempUsername(defaultUsername);
+        setNeedsUsername(true);
+        setIsLoading(false);
+        return;
+      }
 
-      const [repoRes, prRes, issueRes] = await Promise.all([
-        fetch(`https://api.github.com/users/${usernameToFetch}/repos?sort=updated&per_page=6`),
+      setNeedsUsername(false);
+      const usernameToFetch = resolvedName;
+      setConnectedUsername(usernameToFetch);
+      if (typeof window !== "undefined" && usernameToFetch) {
+        localStorage.setItem("auren_github_username", usernameToFetch);
+      }
+
+      // Fetch repositories with server-side API or client-side fallback
+      let repoData: any[] = [];
+      try {
+        repoData = await getConnectedGithubRepos();
+      } catch (e) {
+        console.warn("Failed to fetch connected github repos from Corsair, falling back to public API:", e);
+      }
+
+      const hasRepos = Array.isArray(repoData) && repoData.length > 0;
+      let finalRepoData = repoData;
+
+      // Fetch PRs, issues and repos (if backend call failed/empty)
+      const fetchPromises: Promise<any>[] = [
         fetch(`https://api.github.com/search/issues?q=is:pr+is:open+author:${usernameToFetch}`),
         fetch(`https://api.github.com/search/issues?q=is:issue+is:open+assignee:${usernameToFetch}`)
-      ]);
+      ];
 
-      if (!repoRes.ok || !prRes.ok || !issueRes.ok) throw new Error("Failed to fetch live data from GitHub. Rate limit exceeded.");
+      if (!hasRepos) {
+        fetchPromises.push(fetch(`https://api.github.com/users/${usernameToFetch}/repos?sort=updated&per_page=6`));
+      }
 
-      const repoData = await repoRes.json();
+      const results = await Promise.all(fetchPromises);
+
+      const prRes = results[0];
+      const issueRes = results[1];
+      
+      if (!prRes.ok || !issueRes.ok) throw new Error("Failed to fetch live data from GitHub. Rate limit exceeded.");
 
       const prData = await prRes.json();
       const issueData = await issueRes.json();
 
-      setRepositories(Array.isArray(repoData) ? repoData : []);
+      if (!hasRepos) {
+        const repoRes = results[2];
+        if (repoRes && repoRes.ok) {
+          finalRepoData = await repoRes.json();
+        }
+      }
+
+      setRepositories(Array.isArray(finalRepoData) ? finalRepoData : []);
       setPullRequests(prData.items || []);
       setIssues(issueData.items || []);
     } catch (err: any) {
@@ -62,6 +111,15 @@ export function GitHubIntegrationView() {
   useEffect(() => {
     if (user !== undefined) {
       fetchGithubData();
+    }
+    
+    const handlePrefUpdate = () => {
+      if (user !== undefined) fetchGithubData();
+    };
+    
+    if (typeof window !== "undefined") {
+      window.addEventListener("auren_preferences_updated", handlePrefUpdate);
+      return () => window.removeEventListener("auren_preferences_updated", handlePrefUpdate);
     }
   }, [user, fetchGithubData]);
 
@@ -87,7 +145,7 @@ export function GitHubIntegrationView() {
     );
   }
 
-  if (isConnected === false && !isLoading) {
+  if (isConnected === false) {
     return (
       <div className="flex-1 flex flex-col items-center justify-center bg-[#FAF8F5] dark:bg-[#2C2C2C] p-8 text-center">
         <div className="w-16 h-16 rounded-2xl bg-white dark:bg-[#383838] border border-[rgba(36,27,20,0.08)] dark:border-[rgba(255,255,255,0.08)] flex items-center justify-center mb-6 shadow-sm">
@@ -110,6 +168,42 @@ export function GitHubIntegrationView() {
     );
   }
 
+  if (isConnected && needsUsername) {
+    return (
+      <div className="flex-1 flex flex-col items-center justify-center bg-[#FAF8F5] dark:bg-[#2C2C2C] p-8 text-center animate-in fade-in duration-500">
+        <div className="w-16 h-16 rounded-2xl bg-white dark:bg-[#383838] border border-[rgba(36,27,20,0.08)] dark:border-[rgba(255,255,255,0.08)] flex items-center justify-center mb-6 shadow-sm">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-[#241B14] dark:text-[#F4F4F5]"><path d="M15 22v-4a4.8 4.8 0 0 0-1-3.5c3 0 6-2 6-5.5.08-1.25-.27-2.48-1-3.5.28-1.15.28-2.35 0-3.5 0 0-1 0-3 1.5-2.64-.5-5.36-.5-8 0C6 2 5 2 5 2c-.3 1.15-.3 2.35 0 3.5A5.403 5.403 0 0 0 4 9c0 3.5 3 5.5 6 5.5-.39.49-.68 1.05-.85 1.65-.17.6-.22 1.23-.15 1.85v4"/><path d="M9 18c-4.51 2-5-2-7-2"/></svg>
+        </div>
+        <h2 className="text-[20px] font-bold text-[#241B14] dark:text-[#F4F4F5] mb-2 font-sans tracking-tight">GitHub Linked</h2>
+        <p className="text-[14px] text-[rgba(36,27,20,0.6)] dark:text-[rgba(255,255,255,0.6)] max-w-[340px] mb-6 leading-relaxed">
+          Your GitHub integration is active! Please verify or enter your GitHub username to load repositories, issues, and pull requests.
+        </p>
+        <div className="flex gap-2 max-w-[340px] w-full">
+          <input
+            type="text"
+            placeholder="e.g. 8TEEN"
+            value={tempUsername}
+            onChange={(e) => setTempUsername(e.target.value)}
+            className="flex-1 h-[40px] px-3 bg-white dark:bg-[#383838] border border-[rgba(36,27,20,0.12)] dark:border-[rgba(255,255,255,0.12)] text-[#241B14] dark:text-[#F4F4F5] rounded-[10px] font-sans font-medium text-[13px] focus:outline-none focus:border-[#E8593C] transition-colors shadow-sm"
+          />
+          <button 
+            onClick={() => {
+              if (tempUsername.trim()) {
+                localStorage.setItem("auren_github_username", tempUsername.trim());
+                window.dispatchEvent(new Event("auren_preferences_updated"));
+                setNeedsUsername(false);
+                fetchGithubData();
+              }
+            }}
+            className="h-[40px] px-5 bg-[#E8593C] text-white rounded-[10px] font-sans font-bold text-[13px] hover:bg-[#D14F31] transition-colors shadow-sm cursor-pointer animate-pulse-once"
+          >
+            Save
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="flex-1 flex flex-col bg-[#FAF8F5] dark:bg-[#2C2C2C] overflow-y-auto">
       {/* Header */}
@@ -122,6 +216,16 @@ export function GitHubIntegrationView() {
               <h1 className="text-[24px] text-[#241B14] dark:text-[#F4F4F5] leading-none mb-2" style={{ fontFamily: "var(--font-civane, Georgia, serif)" }}>GitHub</h1>
               <div className="font-sans text-[13px] text-[rgba(36,27,20,0.5)] dark:text-[rgba(255,255,255,0.5)] flex items-center gap-1.5">
                 <span className="font-medium text-[#241B14] dark:text-[#F4F4F5]">@{connectedUsername || "Connected User"}</span>
+                <button 
+                  onClick={() => {
+                    localStorage.setItem("auren_default_settings_tab", "integrations");
+                    router.push("/settings");
+                  }}
+                  className="text-[11px] text-[#E8593C] hover:underline font-semibold cursor-pointer border-none bg-transparent p-0 outline-none"
+                  title="Change linked GitHub username in Settings"
+                >
+                  (change)
+                </button>
                 <span className="w-1 h-1 rounded-full bg-[rgba(36,27,20,0.15)] dark:bg-[rgba(255,255,255,0.15)]" />
                 <span className="text-[#0F6E56] font-medium flex items-center gap-1.5"><span className="w-1.5 h-1.5 rounded-full bg-[#0F6E56] shadow-[0_0_8px_rgba(15,110,86,0.6)]" /> Connected</span>
               </div>

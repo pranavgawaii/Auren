@@ -2,10 +2,34 @@
 
 import { getTenant, getCorsairInstance } from "@/lib/corsair";
 import { getUserId } from "@/lib/user";
+import { currentUser } from "@clerk/nextjs/server";
+import { unstable_noStore as noStore } from "next/cache";
 
 export async function getConnectUrl(service: "google" | "github"): Promise<{ success: boolean; url?: string; error?: string }> {
   try {
     const tenant = await getTenant();
+    
+    // Clean up any stale fields on Corsair in parallel before generating the connect link
+    const fields: ("access_token" | "refresh_token" | "expires_at" | "scope")[] = [
+      "access_token",
+      "refresh_token",
+      "expires_at",
+      "scope"
+    ];
+    
+    if (service === "google") {
+      const clearPromises = fields.flatMap((field) => [
+        tenant.plugins.credentials.clear("gmail", field).catch(() => {}),
+        tenant.plugins.credentials.clear("googlecalendar", field).catch(() => {})
+      ]);
+      await Promise.all(clearPromises);
+    } else {
+      const clearPromises = fields.map((field) => 
+        tenant.plugins.credentials.clear("github", field).catch(() => {})
+      );
+      await Promise.all(clearPromises);
+    }
+
     const plugins = service === "google" ? ["gmail", "googlecalendar"] : ["github"];
     
     // Create a connect link for this specific tenant and service
@@ -21,6 +45,7 @@ export async function getConnectUrl(service: "google" | "github"): Promise<{ suc
 }
 
 export async function checkConnectionStatus(): Promise<{ google: boolean; github: boolean }> {
+  noStore();
   try {
     const userId = await getUserId();
     const inst = getCorsairInstance();
@@ -28,8 +53,14 @@ export async function checkConnectionStatus(): Promise<{ google: boolean; github
     // Query Corsair to see if credentials exist for this tenant
     const gmailCredentials = await inst.plugins.credentials.list("gmail", userId);
     const githubCredentials = await inst.plugins.credentials.list("github", userId);
+    const calendarCredentials = await inst.plugins.credentials.list("googlecalendar", userId);
     
-    const googleConnected = gmailCredentials.fields.find((f: any) => f.field === "access_token")?.set || false;
+    console.log("[DEBUG] checkConnectionStatus gmailCredentials:", JSON.stringify(gmailCredentials));
+    console.log("[DEBUG] checkConnectionStatus githubCredentials:", JSON.stringify(githubCredentials));
+    console.log("[DEBUG] checkConnectionStatus calendarCredentials:", JSON.stringify(calendarCredentials));
+    
+    const googleConnected = (gmailCredentials.fields.find((f: any) => f.field === "access_token")?.set || false) || 
+                            (calendarCredentials.fields.find((f: any) => f.field === "access_token")?.set || false);
     const githubConnected = githubCredentials.fields.find((f: any) => f.field === "access_token")?.set || false;
     
     return { google: googleConnected, github: githubConnected };
@@ -43,7 +74,7 @@ export async function getConnectedGithubUsername(): Promise<string | null> {
   try {
     const tenant = await getTenant();
     // Use Corsair's proxy to Octokit to get the authenticated user's profile
-    const result: any = await tenant.run("github.api.users.getAuthenticated", {});
+    const result: any = await tenant.run("github.api.rest.users.getAuthenticated", {});
     console.log("[DEBUG] getConnectedGithubUsername result:", JSON.stringify(result));
     
     if (result && result.data && result.data.login) {
@@ -59,6 +90,19 @@ export async function getConnectedGithubUsername(): Promise<string | null> {
 }
 
 export async function getDefaultGithubUsername(): Promise<string> {
+  try {
+    const user = await currentUser();
+    if (user) {
+      const email = user.emailAddresses[0]?.emailAddress || "";
+      const isPranav = email.includes("pranav") || email.includes("pranvg");
+      if (!isPranav) {
+        const prefix = email.split("@")[0];
+        if (prefix) return prefix;
+      }
+    }
+  } catch (e) {
+    console.warn("Failed to get clerk user in getDefaultGithubUsername:", e);
+  }
   const defaultRepo = process.env.GITHUB_DEFAULT_REPO || "pranavgawaii/Auren";
   return defaultRepo.split("/")[0];
 }
@@ -67,7 +111,7 @@ export async function getConnectedGithubRepos(): Promise<any[]> {
   try {
     const tenant = await getTenant();
     // Securely fetch repositories for the connected user using Corsair backend
-    const result: any = await tenant.run("github.api.repos.listForAuthenticatedUser", {
+    const result: any = await tenant.run("github.api.rest.repos.listForAuthenticatedUser", {
       sort: "updated",
       per_page: 6
     });
@@ -92,21 +136,35 @@ export async function getConnectedGithubRepos(): Promise<any[]> {
 export async function disconnectService(service: "google" | "github"): Promise<{ success: boolean; error?: string }> {
   try {
     const tenant = await getTenant();
+    const fields: ("access_token" | "refresh_token" | "expires_at" | "scope")[] = [
+      "access_token",
+      "refresh_token",
+      "expires_at",
+      "scope"
+    ];
+    
     if (service === "google") {
-      await tenant.plugins.credentials.clear("gmail", "access_token");
-      try {
-        await tenant.plugins.credentials.clear("gmail", "refresh_token");
-      } catch (e) {
-        console.warn("Failed to clear gmail refresh_token:", e);
+      for (const field of fields) {
+        try {
+          await tenant.plugins.credentials.clear("gmail", field);
+        } catch {}
+        try {
+          await tenant.plugins.credentials.clear("googlecalendar", field);
+        } catch {}
       }
-      await tenant.plugins.credentials.clear("googlecalendar", "access_token");
+      
+      // Permanently delete tenant record to clear all sticky Corsair state/cache
       try {
-        await tenant.plugins.credentials.clear("googlecalendar", "refresh_token");
+        await tenant.delete();
       } catch (e) {
-        console.warn("Failed to clear googlecalendar refresh_token:", e);
+        console.warn("Failed to delete tenant on Corsair:", e);
       }
     } else {
-      await tenant.plugins.credentials.clear("github", "access_token");
+      for (const field of fields) {
+        try {
+          await tenant.plugins.credentials.clear("github", field);
+        } catch {}
+      }
     }
     return { success: true };
   } catch (error: any) {
