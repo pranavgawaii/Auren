@@ -1,10 +1,18 @@
 import { SignIn } from "@clerk/nextjs";
 import Image from "next/image";
 import Link from "next/link";
+import { ArrowLeft } from "lucide-react";
 
 export default function SignInPage() {
   return (
-    <div style={{ minHeight: "100vh", display: "flex" }}>
+    <div style={{ minHeight: "100vh", display: "flex", position: "relative" }}>
+      <Link 
+        href="/" 
+        className="absolute top-6 left-6 flex items-center gap-2 px-4 py-2 rounded-full border border-[rgba(36,27,20,0.12)] bg-[rgba(251,243,236,0.6)] backdrop-blur-md text-[13px] text-[#241B14] hover:text-[#E8593C] hover:border-[#E8593C]/30 hover:bg-white transition-all duration-200 group z-50 font-sans font-medium shadow-sm hover:shadow"
+      >
+        <ArrowLeft size={16} className="transition-transform duration-200 group-hover:-translate-x-0.5" />
+        <span>Back to home</span>
+      </Link>
       {/* LEFT COLUMN: Mascot & Branding */}
       <div 
         className="hidden md:flex w-1/2 items-center justify-center relative overflow-hidden"
@@ -104,7 +112,7 @@ export default function SignInPage() {
               New to Auren? <Link href="/sign-up" className="text-[#E8593C] hover:text-[#D14F31] font-medium transition-colors">Create an Account</Link>
             </p>
             <p className="mt-2">
-              By continuing you agree to our Terms of Service.
+              By continuing you agree to our <Link href="/terms" className="text-[#E8593C] hover:text-[#D14F31] font-medium transition-colors">Terms of Service</Link>.
             </p>
             <p className="mt-1">
               Built by <a href="https://pranavx.in" target="_blank" rel="noopener noreferrer" className="text-[rgba(36,27,20,0.8)] hover:text-[#241B14] font-medium transition-colors">Pranav Gawai</a>

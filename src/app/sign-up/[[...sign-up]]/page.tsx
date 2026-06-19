@@ -1,10 +1,19 @@
 import { SignUp } from "@clerk/nextjs";
 import Image from "next/image";
 import { redirect } from "next/navigation";
+import Link from "next/link";
+import { ArrowLeft } from "lucide-react";
 
 export default function SignUpPage() {
   return (
-    <div style={{ minHeight: "100vh", display: "flex" }}>
+    <div style={{ minHeight: "100vh", display: "flex", position: "relative" }}>
+      <Link 
+        href="/" 
+        className="absolute top-6 left-6 flex items-center gap-2 px-4 py-2 rounded-full border border-[rgba(36,27,20,0.12)] bg-[rgba(251,243,236,0.6)] backdrop-blur-md text-[13px] text-[#241B14] hover:text-[#E8593C] hover:border-[#E8593C]/30 hover:bg-white transition-all duration-200 group z-50 font-sans font-medium shadow-sm hover:shadow"
+      >
+        <ArrowLeft size={16} className="transition-transform duration-200 group-hover:-translate-x-0.5" />
+        <span>Back to home</span>
+      </Link>
       {/* LEFT COLUMN: Mascot & Branding */}
       <div 
         className="hidden md:flex w-1/2 items-center justify-center relative overflow-hidden"
@@ -66,31 +75,44 @@ export default function SignUpPage() {
           padding: "24px"
         }}
       >
+        <div className="w-full max-w-[420px]">
+          <SignUp
+            fallbackRedirectUrl="/app"
+            signInUrl="/sign-in"
+            appearance={{
+              elements: {
+                card: "bg-white shadow-[0_20px_50px_-16px_rgba(36,27,20,0.12)] rounded-[20px] border border-[rgba(36,27,20,0.08)] p-8 font-sans z-10 w-full max-w-[420px]",
+                headerTitle: "font-civane text-[#241B14] text-[28px] font-medium tracking-tight",
+                headerSubtitle: "font-sans text-[rgba(36,27,20,0.5)] text-[14px] mt-1",
+                formFieldLabel: "font-sans text-[13px] text-[#241B14] font-medium mb-1.5",
+                formFieldInput: "font-sans h-[44px] rounded-[10px] border-[rgba(36,27,20,0.12)] focus:border-[#E8593C] focus:ring-1 focus:ring-[#E8593C] text-[14px] px-3 shadow-sm focus:shadow-[0_0_0_3px_rgba(232,89,60,0.1)] transition-shadow duration-150",
+                formButtonPrimary: "font-sans h-[44px] bg-[#E8593C] hover:bg-[#D14F31] text-white font-medium rounded-[10px] text-[14px] normal-case mt-2 shadow-sm transition-colors duration-150",
+                footerActionText: "font-sans text-[13px] text-[rgba(36,27,20,0.5)]",
+                footerActionLink: "font-sans text-[13px] text-[#E8593C] hover:text-[#D44A2D] font-medium",
+                dividerLine: "bg-[rgba(36,27,20,0.08)]",
+                dividerText: "font-sans text-[12px] text-[rgba(36,27,20,0.4)]",
+                socialButtonsBlockButton: "font-sans h-[44px] border border-[rgba(36,27,20,0.12)] rounded-[10px] text-[#241B14] hover:bg-[rgba(36,27,20,0.02)] transition-colors shadow-sm",
+                socialButtonsBlockButtonText: "font-sans font-medium text-[14px]",
+                identityPreviewText: "font-sans text-[#241B14] text-[14px]",
+                identityPreviewEditButton: "text-[#E8593C] hover:text-[#D44A2D]",
+                formFieldErrorText: "font-sans text-[#DC2626] text-[12px] mt-1.5",
+                footer: "hidden"
+              }
+            }}
+          />
 
-        <SignUp
-          fallbackRedirectUrl="/app"
-          signInUrl="/sign-in"
-          appearance={{
-            elements: {
-              card: "bg-white shadow-[0_20px_50px_-16px_rgba(36,27,20,0.12)] rounded-[20px] border border-[rgba(36,27,20,0.08)] p-8 font-sans z-10 w-full max-w-[420px]",
-              headerTitle: "font-civane text-[#241B14] text-[28px] font-medium tracking-tight",
-              headerSubtitle: "font-sans text-[rgba(36,27,20,0.5)] text-[14px] mt-1",
-              formFieldLabel: "font-sans text-[13px] text-[#241B14] font-medium mb-1.5",
-              formFieldInput: "font-sans h-[44px] rounded-[10px] border-[rgba(36,27,20,0.12)] focus:border-[#E8593C] focus:ring-1 focus:ring-[#E8593C] text-[14px] px-3 shadow-sm focus:shadow-[0_0_0_3px_rgba(232,89,60,0.1)] transition-shadow duration-150",
-              formButtonPrimary: "font-sans h-[44px] bg-[#E8593C] hover:bg-[#D14F31] text-white font-medium rounded-[10px] text-[14px] normal-case mt-2 shadow-sm transition-colors duration-150",
-              footerActionText: "font-sans text-[13px] text-[rgba(36,27,20,0.5)]",
-              footerActionLink: "font-sans text-[13px] text-[#E8593C] hover:text-[#D44A2D] font-medium",
-              dividerLine: "bg-[rgba(36,27,20,0.08)]",
-              dividerText: "font-sans text-[12px] text-[rgba(36,27,20,0.4)]",
-              socialButtonsBlockButton: "font-sans h-[44px] border border-[rgba(36,27,20,0.12)] rounded-[10px] text-[#241B14] hover:bg-[rgba(36,27,20,0.02)] transition-colors shadow-sm",
-              socialButtonsBlockButtonText: "font-sans font-medium text-[14px]",
-              identityPreviewText: "font-sans text-[#241B14] text-[14px]",
-              identityPreviewEditButton: "text-[#E8593C] hover:text-[#D44A2D]",
-              formFieldErrorText: "font-sans text-[#DC2626] text-[12px] mt-1.5",
-              footer: "hidden"
-            }
-          }}
-        />
+          <div className="mt-8 text-center text-[13px] text-[rgba(36,27,20,0.6)] font-sans leading-relaxed">
+            <p>
+              Already have an account? <Link href="/sign-in" className="text-[#E8593C] hover:text-[#D14F31] font-medium transition-colors">Sign in</Link>
+            </p>
+            <p className="mt-2">
+              By continuing you agree to our <Link href="/terms" className="text-[#E8593C] hover:text-[#D14F31] font-medium transition-colors">Terms of Service</Link>.
+            </p>
+            <p className="mt-1">
+              Built by <a href="https://pranavx.in" target="_blank" rel="noopener noreferrer" className="text-[rgba(36,27,20,0.8)] hover:text-[#241B14] font-medium transition-colors">Pranav Gawai</a>
+            </p>
+          </div>
+        </div>
       </div>
     </div>
   );

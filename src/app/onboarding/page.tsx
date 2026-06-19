@@ -25,17 +25,11 @@ export default function OnboardingPage() {
     try {
       const status = await checkConnectionStatus();
       setConnected(status);
-      if (status.google) {
-        showToast.success("Google Workspace connected! Entering workspace...");
-        setTimeout(() => {
-          router.push("/app");
-        }, 800);
-      }
       return status;
     } catch (err) {
       console.error("Failed to load connection status:", err);
     }
-  }, [router]);
+  }, []);
 
   // Polling connection status in background when connecting
   React.useEffect(() => {
@@ -47,16 +41,19 @@ export default function OnboardingPage() {
           const status = await checkConnectionStatus();
           
           setConnected((prev) => {
-            // If Google Workspace transitions from disconnected to connected, trigger success toast and auto-redirect
             if (!prev.google && status.google) {
-              showToast.success("Google Workspace connected! Entering workspace...");
-              setConnecting({ google: false, github: false });
-              setTimeout(() => {
-                router.push("/app");
-              }, 1200);
-            } else if (status.google) {
-              setConnecting({ google: false, github: false });
+              showToast.success("Google Workspace connected!");
             }
+            if (!prev.github && status.github) {
+              showToast.success("GitHub connected!");
+            }
+            
+            // Clear connecting states once connected
+            setConnecting((prevConnecting) => ({
+              google: status.google ? false : prevConnecting.google,
+              github: status.github ? false : prevConnecting.github,
+            }));
+            
             return status;
           });
         } catch (err) {
@@ -66,7 +63,7 @@ export default function OnboardingPage() {
 
       return () => clearInterval(interval);
     }
-  }, [user, isLoaded, loadStatus, router]);
+  }, [user, isLoaded, loadStatus]);
 
   const handleConnect = async (service: "google" | "github") => {
     if (!user) return;
@@ -151,7 +148,7 @@ export default function OnboardingPage() {
     }
   };
 
-  const [syncLimit, setSyncLimit] = useState(20);
+  const [syncLimit, setSyncLimit] = useState(50);
 
   // Google is required; GitHub is optional
   const canEnter = connected.google;
@@ -311,24 +308,46 @@ export default function OnboardingPage() {
                 <Sparkles size={12} className="text-[var(--auren-brand)]" />
                 Initial email sync depth
               </div>
-              <div className="flex p-1 bg-[var(--auren-surface-hover)] border border-[var(--auren-border)] rounded-xl w-full">
-                {[20, 50, 100].map((limit) => (
-                  <button
-                    key={limit}
-                    onClick={() => setSyncLimit(limit)}
-                    className={cn(
-                      "flex-1 py-1.5 rounded-[9px] font-ui font-semibold text-[11px] border transition-all cursor-pointer",
-                      syncLimit === limit
-                        ? "bg-[var(--auren-surface)] text-[var(--auren-brand)] border-[var(--auren-border)] shadow-sm"
-                        : "border-transparent bg-transparent text-[var(--auren-muted)] hover:text-[var(--auren-fg)]"
-                    )}
-                  >
-                    {limit} Items
-                  </button>
-                ))}
+              <div className="flex gap-3 w-full pt-2">
+                {[
+                  { value: 20, label: "Quick start" },
+                  { value: 50, label: "Recommended" },
+                  { value: 100, label: "Full import" }
+                ].map((item) => {
+                  const isActive = syncLimit === item.value;
+                  return (
+                    <button
+                      key={item.value}
+                      type="button"
+                      onClick={() => setSyncLimit(item.value)}
+                      className={cn(
+                        "flex-1 flex flex-col items-center justify-center py-3 px-1 rounded-xl border transition-all cursor-pointer",
+                        isActive
+                          ? "bg-[var(--auren-surface)] text-[var(--auren-brand)] border-[var(--auren-brand)]/35 shadow-sm ring-1 ring-[var(--auren-brand)]/20"
+                          : "border-[var(--auren-border)] bg-[var(--auren-surface-hover)] text-[var(--auren-muted)] hover:text-[var(--auren-fg)] hover:border-[var(--auren-border-strong)]"
+                      )}
+                    >
+                      <span className="font-ui font-extrabold text-[15px]">
+                        {item.value}
+                      </span>
+                      {item.value === 50 ? (
+                        <span className="px-1.5 py-0.5 text-[7.5px] font-extrabold uppercase tracking-widest bg-[#E8593C] text-white rounded-full mt-1 shadow-[0_2px_4px_rgba(232,89,60,0.15)] scale-[0.95]">
+                          Recommended
+                        </span>
+                      ) : (
+                        <span className="text-[9px] font-bold mt-1 tracking-tight uppercase opacity-85">
+                          {item.label}
+                        </span>
+                      )}
+                    </button>
+                  );
+                })}
               </div>
-              <div className="text-[10.5px] text-[var(--auren-muted)] leading-normal">
-                Higher values provide richer historical context but require longer setup.
+              <div 
+                className="text-[12px] text-center mt-1 font-sans" 
+                style={{ color: "rgba(36,27,20,0.4)" }}
+              >
+                You can sync more emails anytime from Settings.
               </div>
             </div>
           )}

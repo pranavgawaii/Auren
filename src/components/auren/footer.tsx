@@ -60,7 +60,7 @@ export function Footer() {
         borderTop: "1px solid rgba(36,27,20,0.07)", paddingTop: "32px"
       }}>
         <p style={{ fontFamily: FONT_BODY, fontSize: "13px", color: "rgba(36,27,20,0.4)", margin: 0 }}>
-          © {new Date().getFullYear()} Auren. &middot; <a href="/privacy" style={{ textDecoration: "none", color: "inherit" }}>Privacy Policy</a>
+          © {new Date().getFullYear()} Auren. &middot; <Link href="/privacy" style={{ textDecoration: "none", color: "inherit" }}>Privacy Policy</Link> &middot; <Link href="/terms" style={{ textDecoration: "none", color: "inherit" }}>Terms of Service</Link>
         </p>
         <p style={{ fontFamily: FONT_BODY, fontSize: "13px", color: "rgba(36,27,20,0.4)", margin: 0, textAlign: "right" }}>
           Built by <a href="https://pranavx.in" target="_blank" rel="noopener noreferrer" className="text-[rgba(36,27,20,0.6)] dark:text-[rgba(255,255,255,0.6)] hover:text-[#241B14] dark:text-[#F4F4F5] transition-colors duration-200" style={{ textDecoration: "none" }}>Pranav Gawai.</a>
