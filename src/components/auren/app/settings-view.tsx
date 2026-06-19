@@ -125,10 +125,14 @@ export function SettingsView() {
     if (status.github) {
       try {
         const username = await getConnectedGithubUsername();
-        if (username) {
-          setGithubUsername(username);
-          localStorage.setItem("auren_github_username", username);
-          window.dispatchEvent(new Event("auren_preferences_updated"));
+        const localUsername = localStorage.getItem("auren_github_username") || "";
+        const resolvedUsername = username || localUsername;
+        if (resolvedUsername) {
+          setGithubUsername(resolvedUsername);
+          if (resolvedUsername !== localUsername) {
+            localStorage.setItem("auren_github_username", resolvedUsername);
+            window.dispatchEvent(new Event("auren_preferences_updated"));
+          }
         }
       } catch (e) {
         console.warn("Failed to load github username in settings:", e);

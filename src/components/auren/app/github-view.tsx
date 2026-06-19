@@ -40,14 +40,17 @@ export function GitHubIntegrationView() {
         console.warn("Failed to get connected github username from Corsair:", e);
       }
       
-      if (!connectedName) {
+      const localManualUsername = typeof window !== "undefined" ? localStorage.getItem("auren_github_username") : "";
+      const resolvedName = connectedName || localManualUsername;
+
+      if (!resolvedName) {
         setNeedsUsername(true);
         setIsLoading(false);
         return;
       }
 
       setNeedsUsername(false);
-      const usernameToFetch = connectedName;
+      const usernameToFetch = resolvedName;
       setConnectedUsername(usernameToFetch);
       if (typeof window !== "undefined" && usernameToFetch) {
         localStorage.setItem("auren_github_username", usernameToFetch);
