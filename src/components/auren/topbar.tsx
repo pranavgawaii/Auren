@@ -92,7 +92,7 @@ export function Topbar() {
               fontFamily: FONT_BODY, fontWeight: 400, fontSize: "14px",
               textDecoration: "none", padding: "10px 16px",
             }}>Sign in</Link>
-            <Link href="/#waitlist" style={{
+            <Link href="/sign-in" style={{
               fontFamily: FONT_BODY, fontWeight: 500, fontSize: "14px",
               color: "white", background: "#E8593C",
               borderRadius: "6px", padding: "10px 20px", textDecoration: "none",

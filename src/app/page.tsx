@@ -5,10 +5,9 @@ import { redirect } from "next/navigation";
 import { HeroWidget } from "@/components/auren/hero-widget";
 import { Topbar } from "@/components/auren/topbar";
 import { Footer } from "@/components/auren/footer";
-import { IntegrationsStrip, TheGapSection, HowItWorksSection, BuiltForBuildersSection, HeroIllustration, WaitlistCTASection } from "@/components/auren/landing-animations";
+import { IntegrationsStrip, TheGapSection, HowItWorksSection, BuiltForBuildersSection, HeroIllustration, GetStartedCTASection } from "@/components/auren/landing-animations";
 import { Features } from "@/components/blocks/features-10";
-import { WaitlistModal } from "@/components/auren/waitlist-modal";
-import { getWaitlistCount } from "@/app/actions/join-waitlist";
+import { WatchDemoModal } from "@/components/auren/watch-demo-modal";
 
 export const metadata = {
   title: "Auren — AI Execution Layer",
@@ -32,7 +31,7 @@ export default async function LandingPage() {
     redirect("/app");
   }
 
-  const waitlistCount = await getWaitlistCount();
+
 
   return (
     <div style={{ background: "#FBF3EC", color: "#241B14", fontFamily: FONT_BODY, overflowX: "clip", minHeight: "100vh" }}>
@@ -83,19 +82,19 @@ export default async function LandingPage() {
               Calibrated to expert workflows, not manual clicks.
             </p>
             <div className="flex flex-wrap gap-3">
-              <Link href="#waitlist" className="transition-all duration-200 hover:scale-[1.03] hover:shadow-md hover:bg-neutral-50/80 active:scale-[0.98] inline-block" style={{
+              <Link href="#watch-demo" className="transition-all duration-200 hover:scale-[1.03] hover:shadow-md hover:bg-neutral-50/80 active:scale-[0.98] inline-block" style={{
                 fontFamily: FONT_BODY, fontWeight: 500, fontSize: "14px",
                 color: "#241B14", background: "white",
                 border: "1px solid rgba(36,27,20,0.15)", borderRadius: "6px",
                 padding: "11px 22px", textDecoration: "none",
                 boxShadow: "0 1px 3px rgba(36,27,20,0.06)",
-              }}>Book a Demo</Link>
-              <Link href="#waitlist" className="transition-all duration-200 hover:scale-[1.03] hover:shadow-lg hover:bg-[#d44a2d] active:scale-[0.98] inline-block" style={{
+              }}>Watch Demo</Link>
+              <Link href="/sign-in" className="transition-all duration-200 hover:scale-[1.03] hover:shadow-lg hover:bg-[#d44a2d] active:scale-[0.98] inline-block" style={{
                 fontFamily: FONT_BODY, fontWeight: 500, fontSize: "14px",
                 color: "white", background: "#E8593C",
                 borderRadius: "6px", padding: "11px 22px", textDecoration: "none",
                 boxShadow: "0 2px 8px rgba(232,89,60,0.30)",
-              }}>Join Waitlist for Free</Link>
+              }}>Try Auren for Free</Link>
             </div>
           </div>
         </div>
@@ -156,16 +155,16 @@ export default async function LandingPage() {
       <Features />
 
       {/* ═══════════════════════════════════════════════
-          WAITLIST CTA SECTION
+          GET STARTED CTA SECTION
       ═══════════════════════════════════════════════ */}
-      <WaitlistCTASection count={waitlistCount} />
+      <GetStartedCTASection />
 
       {/* ═══════════════════════════════════════════════
           FOOTER
       ═══════════════════════════════════════════════ */}
       <Footer />
 
-      <WaitlistModal />
+      <WatchDemoModal />
     </div>
   );
 }

@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
 import { Mail, Calendar, GitBranch, Terminal, CheckCircle2, Lock, Code, Send, RefreshCw, ArrowRight } from "lucide-react";
-import { WaitlistForm } from "./waitlist-form";
+import Link from "next/link";
 
 // Custom GithubIcon component using local topbar SVG path
 const GithubIcon = ({ size = 20, className = "" }: { size?: number; className?: string }) => (
@@ -888,11 +888,11 @@ export function BuiltForBuildersSection() {
   );
 }
 
-// Task 6 — Big CTA + waitlist
-export function WaitlistCTASection({ count }: { count: number }) {
+// Task 6 — Big CTA
+export function GetStartedCTASection() {
   return (
     <motion.section 
-      id="waitlist"
+      id="get-started"
       initial={{ opacity: 0 }}
       whileInView={{ opacity: 1 }}
       viewport={{ once: true }}
@@ -931,7 +931,7 @@ export function WaitlistCTASection({ count }: { count: number }) {
         
         <div style={{ position: "relative", zIndex: 1, display: "flex", flexDirection: "column", alignItems: "center" }}>
           <h2 
-            className="text-[28px] sm:text-[36px] leading-[1.3] text-white mb-10 max-w-[600px]"
+            className="text-[28px] sm:text-[36px] leading-[1.3] text-white mb-6 max-w-[600px]"
             style={{ fontFamily: FONT_CIVANE, fontWeight: 300 }}
           >
             {"The execution layer between thinking and doing.".split(" ").map((word, i) => (
@@ -948,21 +948,18 @@ export function WaitlistCTASection({ count }: { count: number }) {
             ))}
           </h2>
           
-          <WaitlistForm />
+          <p className="text-[15px] text-white/50 max-w-[400px] mb-8 font-sans leading-relaxed">
+            Connect your workspace and run your daily workflows with a single natural language command.
+          </p>
 
-          <motion.div 
-            initial={{ opacity: 0 }}
-            whileInView={{ opacity: 1 }}
-            viewport={{ once: true }}
-            transition={{ delay: 0.4, duration: 0.6 }}
-            style={{ marginTop: "24px", fontFamily: FONT_BODY, fontSize: "14px", color: "rgba(255,255,255,0.4)" }}
-          >
-            {count > 0 ? (
-              <>Join <span style={{ color: "rgba(255,255,255,0.8)" }}>{count.toLocaleString()}</span> others on the waitlist.</>
-            ) : (
-              <>Be the first to join the waitlist.</>
-            )}
-          </motion.div>
+          <div className="flex flex-wrap gap-4 justify-center">
+            <Link href="#watch-demo" className="transition-all duration-200 hover:scale-[1.03] hover:bg-white/10 active:scale-[0.98] inline-block px-6 py-3 rounded-lg border border-white/20 text-white font-medium text-[14px] no-underline">
+              Watch Demo
+            </Link>
+            <Link href="/sign-in" className="transition-all duration-200 hover:scale-[1.03] hover:shadow-lg hover:bg-[#d44a2d] active:scale-[0.98] inline-block px-6 py-3 rounded-lg bg-[#E8593C] text-white font-medium text-[14px] no-underline">
+              Try Auren for Free
+            </Link>
+          </div>
         </div>
       </div>
     </motion.section>

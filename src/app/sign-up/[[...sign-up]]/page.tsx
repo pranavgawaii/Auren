@@ -3,8 +3,6 @@ import Image from "next/image";
 import { redirect } from "next/navigation";
 
 export default function SignUpPage() {
-  redirect("/#waitlist");
-  
   return (
     <div style={{ minHeight: "100vh", display: "flex" }}>
       {/* LEFT COLUMN: Mascot & Branding */}
@@ -70,6 +68,8 @@ export default function SignUpPage() {
       >
 
         <SignUp
+          fallbackRedirectUrl="/app"
+          signInUrl="/sign-in"
           appearance={{
             elements: {
               card: "bg-white shadow-[0_20px_50px_-16px_rgba(36,27,20,0.12)] rounded-[20px] border border-[rgba(36,27,20,0.08)] p-8 font-sans z-10 w-full max-w-[420px]",

@@ -45,7 +45,7 @@ export function Footer() {
             <Link href="/how-it-works" onClick={(e) => handleNavClick(e, "/how-it-works", "how-it-works")} style={{ fontFamily: FONT_BODY, fontSize: "14px", color: "rgba(36,27,20,0.6)", textDecoration: "none" }}>How it works</Link>
             <Link href="/features" onClick={(e) => handleNavClick(e, "/features", "features")} style={{ fontFamily: FONT_BODY, fontSize: "14px", color: "rgba(36,27,20,0.6)", textDecoration: "none" }}>Features</Link>
             <Link href="/integrations" onClick={(e) => handleNavClick(e, "/integrations", "integrations")} style={{ fontFamily: FONT_BODY, fontSize: "14px", color: "rgba(36,27,20,0.6)", textDecoration: "none" }}>Integrations</Link>
-            <Link href="/#waitlist" style={{ fontFamily: FONT_BODY, fontSize: "14px", color: "rgba(36,27,20,0.6)", textDecoration: "none" }}>Premium</Link>
+            <Link href="/sign-in" style={{ fontFamily: FONT_BODY, fontSize: "14px", color: "rgba(36,27,20,0.6)", textDecoration: "none" }}>Try Auren</Link>
           </div>
           <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
             <h4 style={{ fontFamily: FONT_BODY, fontWeight: 600, fontSize: "14px", color: "#241B14", margin: 0 }}>Developers</h4>

@@ -96,12 +96,12 @@ export default function SignInPage() {
                 footer: "hidden"
               }
             }}
-            signUpUrl="/#waitlist"
+            signUpUrl="/sign-up"
           />
 
           <div className="mt-8 text-center text-[13px] text-[rgba(36,27,20,0.6)] font-sans leading-relaxed">
             <p>
-              New to Auren? <Link href="/#waitlist" className="text-[#E8593C] hover:text-[#D14F31] font-medium transition-colors">Join the Waitlist</Link>
+              New to Auren? <Link href="/sign-up" className="text-[#E8593C] hover:text-[#D14F31] font-medium transition-colors">Create an Account</Link>
             </p>
             <p className="mt-2">
               By continuing you agree to our Terms of Service.
