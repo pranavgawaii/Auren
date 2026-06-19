@@ -7,7 +7,8 @@ Type one natural language command — Auren plans the steps, shows you the
 full execution plan, and executes everything simultaneously with a single approval.
 
 <br />
-<a href="https://www.youtube.com/watch?v=C-uXkFPFwmc"><code>➜ demo video: Watch 60-Second Demo</code></a><br>
+<a href="https://www.youtube.com/watch?v=C-uXkFPFwmc"><code>➜ onboarding guide: Watch Setup Walkthrough</code></a><br>
+<a href="https://youtu.be/uBdourG9P2w"><code>➜ demo video: Watch 60-Second Demo</code></a><br>
 <a href="https://tryauren.in"><code>➜ try live: tryauren.in</code></a><br>
 <br />
 
