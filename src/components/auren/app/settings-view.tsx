@@ -19,6 +19,7 @@ import { useRouter } from "next/navigation";
 import { useUser } from "@clerk/nextjs";
 import Image from "next/image";
 import { Pricing } from "@/components/blocks/pricing";
+import { WatchDemoModal } from "@/components/auren/watch-demo-modal";
 
 const aurenPlans = [
   {
@@ -90,6 +91,7 @@ export function SettingsView() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   
   const [activeTab, setActiveTab] = useState<"account" | "preferences" | "integrations" | "notifications" | "billing">("account");
+  const [showVideo, setShowVideo] = useState(false);
   
   // Connection states
   const [connected, setConnected] = useState({ google: false, github: false });
@@ -562,6 +564,12 @@ export function SettingsView() {
                         {connected.google && <span className="text-[9px] font-bold bg-[#10B981]/10 text-[#10B981] px-2 py-0.5 rounded-full border border-[#10B981]/20">ACTIVE</span>}
                       </div>
                       <p className="text-[12px] text-[rgba(36,27,20,0.5)] dark:text-[rgba(255,255,255,0.5)] max-w-sm">Sync your inbox messages and calendar appointments dynamically.</p>
+                      <button
+                        onClick={() => setShowVideo(true)}
+                        className="text-[12px] text-[rgba(36,27,20,0.4)] hover:text-[#E8593C] transition-colors flex items-center gap-1 mt-1 cursor-pointer font-sans"
+                      >
+                        Need help connecting? Watch setup guide →
+                      </button>
                     </div>
                   </div>
                   <Switch 
@@ -666,6 +674,7 @@ export function SettingsView() {
 
         </div>
       </main>
+      <WatchDemoModal isOpen={showVideo} onClose={() => setShowVideo(false)} />
     </div>
   );
 }

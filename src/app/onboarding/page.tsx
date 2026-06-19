@@ -8,10 +8,12 @@ import { useRouter } from "next/navigation";
 import { useUser, UserButton } from "@clerk/nextjs";
 import { getConnectUrl, checkConnectionStatus } from "@/app/actions/connect";
 import { showToast } from "@/components/ui/premium-toast";
+import { WatchDemoModal } from "@/components/auren/watch-demo-modal";
 
 export default function OnboardingPage() {
   const router = useRouter();
   const { user, isLoaded } = useUser();
+  const [showVideo, setShowVideo] = useState(false);
   const [connected, setConnected] = useState({
     google: false, // Covers both Gmail + Calendar
     github: false,
@@ -201,6 +203,19 @@ export default function OnboardingPage() {
 
         {/* ─── MAIN ONBOARDING CARD ─── */}
         <div className="bg-[var(--auren-surface)] border border-[var(--auren-border)] rounded-[24px] shadow-[0_24px_60px_-15px_rgba(36,27,20,0.06)] dark:shadow-[0_24px_60px_-15px_rgba(0,0,0,0.45)] p-6 md:p-8 flex flex-col gap-6 transition-all duration-300">
+          
+          <button
+            onClick={() => setShowVideo(true)}
+            className="flex items-center gap-2 text-[#E8593C] text-[13px] font-semibold mb-5 hover:opacity-80 transition-opacity mx-auto"
+          >
+            <span style={{
+              width: 24, height: 24, borderRadius: '50%',
+              background: '#E8593C', color: 'white',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              fontSize: 10
+            }}>▶</span>
+            Watch how to connect your accounts (60 sec)
+          </button>
           
           <div className="flex flex-col gap-4">
             
@@ -398,6 +413,7 @@ export default function OnboardingPage() {
         </div>
         
       </div>
+      <WatchDemoModal isOpen={showVideo} onClose={() => setShowVideo(false)} />
     </div>
   );
 }

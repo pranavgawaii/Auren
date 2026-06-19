@@ -6,6 +6,7 @@ import { motion } from "framer-motion";
 import { Mail, Calendar, GitBranch } from "lucide-react";
 import { Topbar } from "@/components/auren/topbar";
 import { Footer } from "@/components/auren/footer";
+import { WatchDemoModal } from "@/components/auren/watch-demo-modal";
 
 const FONT_BODY = "var(--font-sans), sans-serif";
 const FONT_MONO = "var(--font-mono), 'JetBrains Mono', monospace";
@@ -38,6 +39,7 @@ const SHORTCUTS = [
 
 export default function DocsPage() {
   const [activeId, setActiveId] = useState("");
+  const [showVideo, setShowVideo] = useState(false);
 
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -111,6 +113,19 @@ export default function DocsPage() {
             <h1 style={{ fontFamily: FONT_CIVANE, fontWeight: 400, fontSize: "32px", color: "#241B14", margin: "0 0 16px 0", letterSpacing: "-0.01em" }}>
               Getting started
             </h1>
+            <button
+              onClick={() => setShowVideo(true)}
+              className="flex items-center gap-2 text-[#E8593C] text-[13px] font-semibold mb-5 hover:opacity-80 transition-opacity cursor-pointer"
+              style={{ fontFamily: FONT_BODY }}
+            >
+              <span style={{
+                width: 24, height: 24, borderRadius: '50%',
+                background: '#E8593C', color: 'white',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                fontSize: 10
+              }}>▶</span>
+              Watch setup guide (60 sec)
+            </button>
             <p style={{ fontFamily: FONT_BODY, fontWeight: 400, fontSize: "15px", lineHeight: 1.7, color: "rgba(36,27,20,0.7)", margin: "0 0 32px 0" }}>
               Auren reads your inbox, calendar, and GitHub activity, and executes multi-step actions from a single typed command.
             </p>
@@ -268,6 +283,7 @@ export default function DocsPage() {
       </div>
 
       <Footer />
+      <WatchDemoModal isOpen={showVideo} onClose={() => setShowVideo(false)} />
     </div>
   );
 }
