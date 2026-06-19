@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+  
+  * { 
+    margin: 0; 
+    padding: 0; 
+    box-sizing: border-box; 
+  }
+  
+  body { 
+    width: 1200px; 
+    height: 630px; 
+    overflow: hidden;
+    background: radial-gradient(100% 100% at 0% 0%, #FAF9F6 0%, #F5EFEB 100%);
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    display: flex; 
+    align-items: center; 
+    justify-content: space-between;
+    padding: 80px 100px;
+    position: relative;
+  }
+  
+  /* Decorative soft ambient glow */
+  body::before {
+    content: '';
+    position: absolute;
+    top: -10%;
+    right: -10%;
+    width: 600px;
+    height: 600px;
+    background: radial-gradient(circle, rgba(232, 89, 60, 0.04) 0%, rgba(232, 89, 60, 0) 70%);
+    z-index: 1;
+    pointer-events: none;
+  }
+
+  .left { 
+    max-width: 500px; 
+    display: flex;
+    flex-direction: column;
+    z-index: 2;
+  }
+  
+  .brand-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 40px;
+  }
+  
+  .logo-img {
+    width: 32px;
+    height: 32px;
+    object-fit: contain;
+  }
+  
+  .logo-text { 
+    font-size: 24px; 
+    font-weight: 800; 
+    color: #241B14; 
+    letter-spacing: -0.03em;
+  }
+  
+  .logo-text span { 
+    color: #E8593C; 
+  }
+  
+  h1 { 
+    font-size: 46px; 
+    font-weight: 800; 
+    color: #241B14; 
+    line-height: 1.15; 
+    letter-spacing: -0.03em; 
+    margin-bottom: 24px; 
+  }
+  
+  h1 em { 
+    color: #E8593C; 
+    font-style: normal; 
+  }
+  
+  p { 
+    font-size: 18px; 
+    color: rgba(36, 27, 20, 0.6); 
+    line-height: 1.6; 
+    font-weight: 500;
+  }
+  
+  .url { 
+    font-size: 14px; 
+    color: #E8593C; 
+    font-weight: 700; 
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    margin-top: 48px; 
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  
+  .url::before {
+    content: '';
+    display: inline-block;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #E8593C;
+  }
+
+  .right { 
+    width: 500px;
+    height: 470px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 2;
+  }
+  
+  .hero-illustration {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+    mix-blend-mode: multiply;
+  }
+</style>
+</head>
+<body>
+  <div class="left">
+    <div class="brand-row">
+      <img class="logo-img" src="auren_logo.webp" alt="Auren Logo">
+      <div class="logo-text">Auren<span>.</span></div>
+    </div>
+    <h1>The execution layer between thinking and <em>doing.</em></h1>
+    <p>Gmail + Calendar + GitHub.<br/>One command. One approval.</p>
+    <div class="url">tryauren.in</div>
+  </div>
+  <div class="right">
+    <img class="hero-illustration" src="auren_hero.webp" alt="Auren Mascot">
+  </div>
+</body>
+</html>

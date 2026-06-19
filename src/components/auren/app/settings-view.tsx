@@ -544,31 +544,23 @@ export function SettingsView() {
           {/* TAB 3: INTEGRATIONS */}
           {activeTab === "integrations" && (
             <div className="flex flex-col gap-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-              <div className="space-y-1.5">
-                <h2 className="text-[28px] tracking-tight text-[#241B14] dark:text-[#F4F4F5]" style={{ fontFamily: "var(--font-civane, Georgia, serif)" }}>
-                  Integrations
-                </h2>
-                <p className="font-sans text-[13px] text-[rgba(36,27,20,0.5)] dark:text-[rgba(255,255,255,0.5)]">Connect action parameters dynamically to third-party providers.</p>
-              </div>
-
-              <button
-                type="button"
-                onClick={() => setShowVideo(true)}
-                className="w-full flex items-center justify-between p-4 rounded-xl border border-[#E8593C]/20 bg-[#E8593C]/5 text-[#E8593C] hover:bg-[#E8593C]/10 transition-all duration-200 cursor-pointer shadow-sm hover:shadow text-left"
-              >
-                <div className="flex items-center gap-3">
-                  <span className="w-8 h-8 rounded-full bg-[#E8593C] text-white flex items-center justify-center text-xs shadow-sm shadow-[#E8593C]/30 animate-pulse shrink-0">
-                    ▶
-                  </span>
-                  <div>
-                    <div className="font-ui font-bold text-[13px] text-[#241B14] dark:text-[#F4F4F5]">Need help connecting?</div>
-                    <div className="text-[11px] text-[rgba(36,27,20,0.5)] dark:text-[rgba(255,255,255,0.5)]">Watch our 60-second connection setup guide</div>
-                  </div>
+              <div className="flex items-start justify-between gap-4">
+                <div className="space-y-1.5">
+                  <h2 className="text-[28px] tracking-tight text-[#241B14] dark:text-[#F4F4F5]" style={{ fontFamily: "var(--font-civane, Georgia, serif)" }}>
+                    Integrations
+                  </h2>
+                  <p className="font-sans text-[13px] text-[rgba(36,27,20,0.5)] dark:text-[rgba(255,255,255,0.5)]">Connect action parameters dynamically to third-party providers.</p>
                 </div>
-                <span className="text-[12px] font-semibold uppercase tracking-wider bg-[#E8593C]/10 px-2.5 py-1 rounded-md border border-[#E8593C]/25 text-[#E8593C] hover:bg-[#E8593C] hover:text-white transition-colors duration-150 shrink-0">
-                  Watch guide
-                </span>
-              </button>
+                
+                <button
+                  type="button"
+                  onClick={() => setShowVideo(true)}
+                  className="flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#E8593C]/5 hover:bg-[#E8593C]/10 text-[#E8593C] border border-[#E8593C]/20 text-[11.5px] font-semibold transition-all duration-200 cursor-pointer shadow-sm hover:shadow shrink-0 mt-1"
+                >
+                  <span className="w-1.5 h-1.5 rounded-full bg-[#E8593C] animate-pulse" />
+                  <span>Setup Guide</span>
+                </button>
+              </div>
 
               <div className="grid grid-cols-1 gap-4">
                 {/* Google */}

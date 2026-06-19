@@ -167,6 +167,16 @@ export default function OnboardingPage() {
       
       {/* Top Header with Profile Icon / Sign Out */}
       <div className="absolute top-6 right-6 z-20 flex items-center gap-3">
+        {/* Watch Setup Guide Trigger */}
+        <button
+          type="button"
+          onClick={() => setShowVideo(true)}
+          className="flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#E8593C]/5 hover:bg-[#E8593C]/10 text-[#E8593C] border border-[#E8593C]/20 text-[11.5px] font-semibold transition-all duration-200 cursor-pointer shadow-sm hover:shadow"
+        >
+          <span className="w-1.5 h-1.5 rounded-full bg-[#E8593C] animate-pulse" />
+          <span>Setup Guide</span>
+        </button>
+
         {isLoaded && user && (
           <div className="flex items-center gap-2.5 px-3 py-1.5 rounded-full bg-[var(--auren-surface)] border border-[var(--auren-border)] shadow-[0_1px_2px_rgba(0,0,0,0.02)] transition-all hover:bg-[var(--auren-surface-hover)]">
             <span className="text-[11.5px] font-semibold text-[var(--auren-muted)] max-w-[120px] truncate">
@@ -203,25 +213,6 @@ export default function OnboardingPage() {
 
         {/* ─── MAIN ONBOARDING CARD ─── */}
         <div className="bg-[var(--auren-surface)] border border-[var(--auren-border)] rounded-[24px] shadow-[0_24px_60px_-15px_rgba(36,27,20,0.06)] dark:shadow-[0_24px_60px_-15px_rgba(0,0,0,0.45)] p-6 md:p-8 flex flex-col gap-6 transition-all duration-300">
-          
-          <button
-            type="button"
-            onClick={() => setShowVideo(true)}
-            className="w-full flex items-center justify-between p-4 rounded-xl border border-[#E8593C]/20 bg-[#E8593C]/5 text-[#E8593C] hover:bg-[#E8593C]/10 transition-all duration-200 cursor-pointer shadow-sm hover:shadow text-left mb-2"
-          >
-            <div className="flex items-center gap-3">
-              <span className="w-8 h-8 rounded-full bg-[#E8593C] text-white flex items-center justify-center text-xs shadow-sm shadow-[#E8593C]/30 animate-pulse shrink-0">
-                ▶
-              </span>
-              <div>
-                <div className="font-ui font-bold text-[13px] text-[#241B14] dark:text-[#F4F4F5]">Need help connecting?</div>
-                <div className="text-[11px] text-[rgba(36,27,20,0.5)] dark:text-[rgba(255,255,255,0.5)]">Watch our 60-second connection setup guide</div>
-              </div>
-            </div>
-            <span className="text-[12px] font-semibold uppercase tracking-wider bg-[#E8593C]/10 px-2.5 py-1 rounded-md border border-[#E8593C]/25 text-[#E8593C] hover:bg-[#E8593C] hover:text-white transition-colors duration-150 shrink-0">
-              Watch guide
-            </span>
-          </button>
           
           <div className="flex flex-col gap-4">
             
