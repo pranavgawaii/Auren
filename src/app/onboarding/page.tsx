@@ -205,16 +205,22 @@ export default function OnboardingPage() {
         <div className="bg-[var(--auren-surface)] border border-[var(--auren-border)] rounded-[24px] shadow-[0_24px_60px_-15px_rgba(36,27,20,0.06)] dark:shadow-[0_24px_60px_-15px_rgba(0,0,0,0.45)] p-6 md:p-8 flex flex-col gap-6 transition-all duration-300">
           
           <button
+            type="button"
             onClick={() => setShowVideo(true)}
-            className="flex items-center gap-2 text-[#E8593C] text-[13px] font-semibold mb-5 hover:opacity-80 transition-opacity mx-auto"
+            className="w-full flex items-center justify-between p-4 rounded-xl border border-[#E8593C]/20 bg-[#E8593C]/5 text-[#E8593C] hover:bg-[#E8593C]/10 transition-all duration-200 cursor-pointer shadow-sm hover:shadow text-left mb-2"
           >
-            <span style={{
-              width: 24, height: 24, borderRadius: '50%',
-              background: '#E8593C', color: 'white',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              fontSize: 10
-            }}>▶</span>
-            Watch how to connect your accounts (60 sec)
+            <div className="flex items-center gap-3">
+              <span className="w-8 h-8 rounded-full bg-[#E8593C] text-white flex items-center justify-center text-xs shadow-sm shadow-[#E8593C]/30 animate-pulse shrink-0">
+                ▶
+              </span>
+              <div>
+                <div className="font-ui font-bold text-[13px] text-[#241B14] dark:text-[#F4F4F5]">Need help connecting?</div>
+                <div className="text-[11px] text-[rgba(36,27,20,0.5)] dark:text-[rgba(255,255,255,0.5)]">Watch our 60-second connection setup guide</div>
+              </div>
+            </div>
+            <span className="text-[12px] font-semibold uppercase tracking-wider bg-[#E8593C]/10 px-2.5 py-1 rounded-md border border-[#E8593C]/25 text-[#E8593C] hover:bg-[#E8593C] hover:text-white transition-colors duration-150 shrink-0">
+              Watch guide
+            </span>
           </button>
           
           <div className="flex flex-col gap-4">

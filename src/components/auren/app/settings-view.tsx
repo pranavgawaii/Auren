@@ -551,6 +551,25 @@ export function SettingsView() {
                 <p className="font-sans text-[13px] text-[rgba(36,27,20,0.5)] dark:text-[rgba(255,255,255,0.5)]">Connect action parameters dynamically to third-party providers.</p>
               </div>
 
+              <button
+                type="button"
+                onClick={() => setShowVideo(true)}
+                className="w-full flex items-center justify-between p-4 rounded-xl border border-[#E8593C]/20 bg-[#E8593C]/5 text-[#E8593C] hover:bg-[#E8593C]/10 transition-all duration-200 cursor-pointer shadow-sm hover:shadow text-left"
+              >
+                <div className="flex items-center gap-3">
+                  <span className="w-8 h-8 rounded-full bg-[#E8593C] text-white flex items-center justify-center text-xs shadow-sm shadow-[#E8593C]/30 animate-pulse shrink-0">
+                    ▶
+                  </span>
+                  <div>
+                    <div className="font-ui font-bold text-[13px] text-[#241B14] dark:text-[#F4F4F5]">Need help connecting?</div>
+                    <div className="text-[11px] text-[rgba(36,27,20,0.5)] dark:text-[rgba(255,255,255,0.5)]">Watch our 60-second connection setup guide</div>
+                  </div>
+                </div>
+                <span className="text-[12px] font-semibold uppercase tracking-wider bg-[#E8593C]/10 px-2.5 py-1 rounded-md border border-[#E8593C]/25 text-[#E8593C] hover:bg-[#E8593C] hover:text-white transition-colors duration-150 shrink-0">
+                  Watch guide
+                </span>
+              </button>
+
               <div className="grid grid-cols-1 gap-4">
                 {/* Google */}
                 <div className="bg-white dark:bg-[#383838] rounded-[16px] border border-[rgba(36,27,20,0.08)] dark:border-[rgba(255,255,255,0.08)] shadow-sm p-5 flex items-center justify-between transition-all hover:shadow-md">
@@ -564,12 +583,6 @@ export function SettingsView() {
                         {connected.google && <span className="text-[9px] font-bold bg-[#10B981]/10 text-[#10B981] px-2 py-0.5 rounded-full border border-[#10B981]/20">ACTIVE</span>}
                       </div>
                       <p className="text-[12px] text-[rgba(36,27,20,0.5)] dark:text-[rgba(255,255,255,0.5)] max-w-sm">Sync your inbox messages and calendar appointments dynamically.</p>
-                      <button
-                        onClick={() => setShowVideo(true)}
-                        className="text-[12px] text-[rgba(36,27,20,0.4)] hover:text-[#E8593C] transition-colors flex items-center gap-1 mt-1 cursor-pointer font-sans"
-                      >
-                        Need help connecting? Watch setup guide →
-                      </button>
                     </div>
                   </div>
                   <Switch 
