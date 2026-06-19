@@ -6,10 +6,10 @@ Auren is an AI-powered command center for Gmail, Google Calendar, and GitHub.
 Type one natural language command — Auren plans the steps, shows you the
 full execution plan, and executes everything simultaneously with a single approval.
 
-[![Live](https://img.shields.io/badge/Live-tryauren.in-E8593C?style=flat-square)](https://tryauren.in)
-[![Next.js](https://img.shields.io/badge/Next.js-16-black?style=flat-square&logo=next.js)](https://nextjs.org)
-[![TypeScript](https://img.shields.io/badge/TypeScript-5-blue?style=flat-square&logo=typescript)](https://typescriptlang.org)
-[![License](https://img.shields.io/badge/License-MIT-green?style=flat-square)](LICENSE)
+<br />
+<a href="https://www.youtube.com/watch?v=C-uXkFPFwmc"><code>➜ demo video: Watch 60-Second Demo</code></a><br>
+<a href="https://tryauren.in"><code>➜ try live: tryauren.in</code></a><br>
+<br />
 
 ---
 
@@ -30,6 +30,9 @@ event creates simultaneously → one approval, everything done in 4 seconds.
 **Human-in-the-Loop Execution**
 The agent always shows you the full plan before any API call is made.
 Review, edit, or cancel — you are always in control.
+
+**Premium Guided Onboarding**
+A clean, guided workspace setup experience that gets you connected to Google Workspace (Gmail & Calendar) and GitHub in less than a minute, complete with a video setup walkthrough.
 
 **Parallel Multi-Tool Execution**
 One command fires Gmail, Google Calendar, and GitHub simultaneously.
@@ -274,12 +277,7 @@ MIT — see [LICENSE](LICENSE) for details.
 
 ## Author
 
-**Pranav Gawai**
-Final year B.Tech CSE — MIT-ADT University, Pune
-
-[![X](https://img.shields.io/badge/X-@pranavgawaii__-black?style=flat-square&logo=x)](https://x.com/pranavgawaii_)
-[![Portfolio](https://img.shields.io/badge/Portfolio-pranavx.in-E8593C?style=flat-square)](https://pranavx.in)
-[![Product](https://img.shields.io/badge/Product-tryauren.in-241B14?style=flat-square)](https://tryauren.in)
+Developed by **Pranav Gawai** — [X/Twitter](https://x.com/pranavgawaii_) • [Portfolio](https://pranavx.in)
 
 ---
 
