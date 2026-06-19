@@ -93,18 +93,21 @@ export async function getDefaultGithubUsername(): Promise<string> {
   try {
     const user = await currentUser();
     if (user) {
-      const email = user.emailAddresses[0]?.emailAddress || "";
-      const isPranav = email.includes("pranav") || email.includes("pranvg");
-      if (!isPranav) {
-        const prefix = email.split("@")[0];
-        if (prefix) return prefix;
+      const githubAccount = user.externalAccounts?.find(a => a.provider === "oauth_github" || a.provider === "github");
+      if (githubAccount && githubAccount.username) {
+        return githubAccount.username;
       }
+      if (user.username) {
+        return user.username;
+      }
+      const email = user.emailAddresses?.[0]?.emailAddress || "";
+      const prefix = email.split("@")[0];
+      if (prefix) return prefix;
     }
   } catch (e) {
     console.warn("Failed to get clerk user in getDefaultGithubUsername:", e);
   }
-  const defaultRepo = process.env.GITHUB_DEFAULT_REPO || "pranavgawaii/Auren";
-  return defaultRepo.split("/")[0];
+  return "";
 }
 
 export async function getConnectedGithubRepos(): Promise<any[]> {
