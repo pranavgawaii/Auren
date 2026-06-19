@@ -32,7 +32,7 @@ export function GitHubIntegrationView() {
         return;
       }
 
-      // Retrieve connected GitHub username from platform with robust fallbacks
+      // Retrieve connected GitHub username from platform
       let connectedName: string | null = null;
       try {
         connectedName = await getConnectedGithubUsername();
@@ -40,21 +40,14 @@ export function GitHubIntegrationView() {
         console.warn("Failed to get connected github username from Corsair:", e);
       }
       
-      const githubAccount = user?.externalAccounts?.find(a => (a.provider as string) === "oauth_github" || (a.provider as string) === "github");
-      const localManualUsername = typeof window !== "undefined" ? localStorage.getItem("auren_github_username") : "";
-      
-      const resolvedName = connectedName || localManualUsername || githubAccount?.username || user?.username || "";
-      
-      if (!resolvedName) {
-        const defaultUsername = await getDefaultGithubUsername();
-        setTempUsername(defaultUsername);
+      if (!connectedName) {
         setNeedsUsername(true);
         setIsLoading(false);
         return;
       }
 
       setNeedsUsername(false);
-      const usernameToFetch = resolvedName;
+      const usernameToFetch = connectedName;
       setConnectedUsername(usernameToFetch);
       if (typeof window !== "undefined" && usernameToFetch) {
         localStorage.setItem("auren_github_username", usernameToFetch);

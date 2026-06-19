@@ -129,16 +129,6 @@ export function SettingsView() {
           setGithubUsername(username);
           localStorage.setItem("auren_github_username", username);
           window.dispatchEvent(new Event("auren_preferences_updated"));
-        } else {
-          const defaultUsername = await getDefaultGithubUsername();
-          const fallback = localStorage.getItem("auren_github_username") || user?.username || defaultUsername || "";
-          if (fallback) {
-            setGithubUsername(fallback);
-            if (fallback !== defaultUsername || localStorage.getItem("auren_github_username")) {
-              localStorage.setItem("auren_github_username", fallback);
-            }
-            window.dispatchEvent(new Event("auren_preferences_updated"));
-          }
         }
       } catch (e) {
         console.warn("Failed to load github username in settings:", e);
