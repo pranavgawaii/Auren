@@ -26,6 +26,7 @@ import {
   Info,
   Zap,
   TrendingUp,
+  MessageSquare,
   X
 } from "lucide-react";
 import Link from "next/link";
@@ -52,13 +53,13 @@ export default function AdminWorkspace() {
   const [data, setData] = useState<any>(null);
   const [sysStatus, setSysStatus] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<"overview" | "customers" | "tokens">("overview");
+  const [activeTab, setActiveTab] = useState<"overview" | "customers" | "tokens" | "prompts">("overview");
   const [isToggling, setIsToggling] = useState<string | null>(null);
   const [isResetting, setIsResetting] = useState<string | null>(null);
   const [isDeleting, setIsDeleting] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedUser, setSelectedUser] = useState<AdminUser | null>(null);
-  const [drawerTab, setDrawerTab] = useState<"general" | "details">("general");
+  const [drawerTab, setDrawerTab] = useState<"general" | "details" | "prompts">("general");
 
   const loadData = async () => {
     setIsLoading(true);
@@ -191,6 +192,12 @@ export default function AdminWorkspace() {
           >
             <Cpu size={16} /> Token Analytics
           </button>
+          <button 
+            onClick={() => setActiveTab("prompts")}
+            className={`flex items-center gap-3 px-3.5 py-2.5 rounded-lg transition-all text-[13px] font-medium ${activeTab === "prompts" ? "bg-white dark:bg-[#201F1D] border border-[rgba(36,27,20,0.08)] dark:border-[rgba(255,255,255,0.08)] shadow-sm text-[#E8593C]" : "text-[rgba(36,27,20,0.6)] dark:text-[rgba(255,255,255,0.6)] hover:text-[#241B14] dark:hover:text-[#F4F4F5] hover:bg-[rgba(36,27,20,0.04)] dark:hover:bg-[rgba(255,255,255,0.04)]"}`}
+          >
+            <MessageSquare size={16} /> Prompts & Queries
+          </button>
         </div>
         <div className="p-5 border-t border-[rgba(36,27,20,0.08)] dark:border-[rgba(255,255,255,0.08)] text-[11px] font-mono text-[rgba(36,27,20,0.4)] dark:text-[rgba(255,255,255,0.4)] flex items-center justify-between">
           <span>SECURE INSTANCE</span>
@@ -314,7 +321,8 @@ export default function AdminWorkspace() {
                       <tr className="border-b border-[rgba(36,27,20,0.08)] dark:border-[rgba(255,255,255,0.08)] bg-[#FAF8F5]/50 dark:bg-[#201E1B]/30 text-[rgba(36,27,20,0.5)] dark:text-[rgba(255,255,255,0.5)] font-mono text-[11px] tracking-wider">
                         <th className="px-6 py-3.5 font-medium uppercase">Customer Profile</th>
                         <th className="px-6 py-3.5 font-medium uppercase">Account Plan</th>
-                        <th className="px-6 py-3.5 font-medium uppercase">Command Usage</th>
+                        <th className="px-6 py-3.5 font-medium uppercase">Integrations</th>
+                        <th className="px-6 py-3.5 font-medium uppercase">Usage & Tokens</th>
                         <th className="px-6 py-3.5 text-right font-medium uppercase">Quick Actions</th>
                       </tr>
                     </thead>
@@ -350,19 +358,38 @@ export default function AdminWorkspace() {
                             )}
                           </td>
                           <td className="px-6 py-4">
-                            {user.isPro ? (
-                              <span className="text-[rgba(36,27,20,0.4)] dark:text-[rgba(255,255,255,0.4)] font-mono text-[12px] font-medium">Unlimited Limit</span>
-                            ) : (
-                              <div className="flex items-center gap-2">
-                                <div className="w-20 h-1.5 bg-[rgba(36,27,20,0.05)] dark:bg-[rgba(255,255,255,0.05)] rounded-full overflow-hidden">
-                                  <div 
-                                    className={`h-full ${user.commandsUsed >= data.limit * 0.8 ? 'bg-[#E8593C]' : 'bg-[#241B14] dark:bg-[#A8A29E]'}`} 
-                                    style={{ width: `${Math.min(100, (user.commandsUsed / data.limit) * 100)}%` }}
-                                  />
+                            <div className="flex flex-col gap-1.5">
+                              {['google', 'github'].map(provider => {
+                                const isConnected = user.integrations?.some(i => i.provider === provider && i.status === 'connected');
+                                return (
+                                  <div key={provider} className="flex items-center gap-1.5">
+                                    <div className={`w-1.5 h-1.5 rounded-full ${isConnected ? 'bg-emerald-500' : 'bg-[rgba(36,27,20,0.2)] dark:bg-[rgba(255,255,255,0.2)]'}`} />
+                                    <span className={`text-[11px] font-medium capitalize ${isConnected ? 'text-[#241B14] dark:text-[#F4F4F5]' : 'text-[rgba(36,27,20,0.4)] dark:text-[rgba(255,255,255,0.4)]'}`}>{provider}</span>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          </td>
+                          <td className="px-6 py-4">
+                            <div className="flex flex-col gap-2">
+                              {/* Commands bar */}
+                              {!user.isPro ? (
+                                <div className="flex items-center gap-2">
+                                  <div className="w-16 h-1.5 bg-[rgba(36,27,20,0.05)] dark:bg-[rgba(255,255,255,0.05)] rounded-full overflow-hidden shrink-0">
+                                    <div className={`h-full ${user.commandsUsed >= data.limit * 0.8 ? 'bg-[#E8593C]' : 'bg-[#241B14] dark:bg-[#A8A29E]'}`} style={{ width: `${Math.min(100, (user.commandsUsed / data.limit) * 100)}%` }} />
+                                  </div>
+                                  <span className="font-mono text-[10.5px] text-[rgba(36,27,20,0.6)] dark:text-[rgba(255,255,255,0.6)]">{user.commandsUsed} <span className="opacity-40">cmds</span></span>
                                 </div>
-                                <span className="font-mono text-[11.5px] text-[rgba(36,27,20,0.6)] dark:text-[rgba(255,255,255,0.6)]">{user.commandsUsed} <span className="opacity-40">/ {data.limit}</span></span>
+                              ) : (
+                                <span className="text-[rgba(36,27,20,0.4)] dark:text-[rgba(255,255,255,0.4)] font-mono text-[10.5px] font-medium">∞ commands</span>
+                              )}
+                              
+                              {/* Token stat */}
+                              <div className="flex items-center gap-1.5">
+                                <Cpu size={12} className="text-[#E8593C]" />
+                                <span className="font-mono text-[10.5px] text-[#241B14] dark:text-[#F4F4F5]">{(user.tokenConsumption?.totalTokens || 0).toLocaleString()} <span className="text-[rgba(36,27,20,0.4)] dark:text-[rgba(255,255,255,0.4)]">tks</span></span>
                               </div>
-                            )}
+                            </div>
                           </td>
                           <td className="px-6 py-4 text-right" onClick={(e) => e.stopPropagation()}>
                             <div className="flex items-center justify-end gap-2">
@@ -392,7 +419,7 @@ export default function AdminWorkspace() {
                       ))}
                       {filteredUsers.length === 0 && (
                         <tr>
-                          <td colSpan={4} className="px-6 py-16 text-center text-[rgba(36,27,20,0.45)] dark:text-[rgba(255,255,255,0.45)]">
+                          <td colSpan={5} className="px-6 py-16 text-center text-[rgba(36,27,20,0.45)] dark:text-[rgba(255,255,255,0.45)]">
                             <div className="flex flex-col items-center justify-center gap-2">
                               <Info size={20} className="opacity-40" />
                               <span className="text-[13px] font-medium">No matching accounts found</span>
@@ -427,13 +454,20 @@ export default function AdminWorkspace() {
                       <Cpu size={16} className="text-[#E8593C]" /> Model Volume Distribution
                     </h3>
                     <div className="space-y-4">
-                      <TokenBar name="Claude 3.5 Sonnet (OpenRouter)" percentage={65} tokens="809,685" cost="$2.42" color="bg-[#E8593C]" />
-                      <TokenBar name="Claude 3 Haiku (Direct)" percentage={25} tokens="311,417" cost="$0.77" color="bg-[#D0A98C]" />
-                      <TokenBar name="Gemini 1.5 Pro (Workspace Mappings)" percentage={10} tokens="124,567" cost="$0.00" color="bg-[#4D4D4D] dark:bg-[#A8A29E]" />
+                      {data.globalTokenMetrics?.byModel.map((model: any) => (
+                        <TokenBar 
+                          key={model.modelName} 
+                          name={model.modelName} 
+                          percentage={model.percentage} 
+                          tokens={model.tokens.toLocaleString()} 
+                          cost="" 
+                          color={model.modelName.includes("Sonnet") ? "bg-[#E8593C]" : model.modelName.includes("Haiku") ? "bg-[#D0A98C]" : "bg-[#4D4D4D] dark:bg-[#A8A29E]"} 
+                        />
+                      ))}
                     </div>
                     <div className="border-t border-[rgba(36,27,20,0.06)] dark:border-[rgba(255,255,255,0.06)] pt-4 flex items-center justify-between text-[12px] font-mono">
                       <span className="text-[rgba(36,27,20,0.5)] dark:text-[rgba(255,255,255,0.5)]">EST. CUMULATIVE COST</span>
-                      <span className="font-bold text-[#E8593C] text-[13.5px]">$3.19 USD</span>
+                      <span className="font-bold text-[#E8593C] text-[13.5px]">${(data.globalTokenMetrics?.estimatedCost || 0).toFixed(2)} USD</span>
                     </div>
                   </div>
 
@@ -472,6 +506,68 @@ export default function AdminWorkspace() {
                       <span className="text-[#E8593C]">84 tokens</span>
                     </div>
                   </div>
+                </div>
+              </motion.div>
+            )}
+
+            {activeTab === "prompts" && (
+              <motion.div 
+                key="prompts"
+                initial={{ opacity: 0, y: 15 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -15 }}
+                className="space-y-6"
+              >
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h2 className="text-[22px] font-semibold text-[#241B14] dark:text-[#F4F4F5] tracking-tight" style={{ fontFamily: "var(--font-civane, Georgia, serif)" }}>Command History & Prompts</h2>
+                    <p className="text-[12.5px] text-[rgba(36,27,20,0.5)] dark:text-[rgba(255,255,255,0.5)] mt-1">Live feed of global user requests, AI actions, and system commands.</p>
+                  </div>
+                  <button onClick={loadData} className="flex items-center gap-2 text-[11.5px] font-mono font-medium text-[rgba(36,27,20,0.6)] dark:text-[rgba(255,255,255,0.6)] hover:text-[#E8593C] dark:hover:text-[#E8593C] transition-colors border border-[rgba(36,27,20,0.08)] dark:border-[rgba(255,255,255,0.08)] bg-white dark:bg-[#1B1917] px-3 py-1.5 rounded-lg shadow-sm">
+                    <RefreshCw size={12} className={isLoading ? "animate-spin" : ""} /> Sync Feed
+                  </button>
+                </div>
+
+                <div className="bg-white dark:bg-[#1B1917] border border-[rgba(36,27,20,0.08)] dark:border-[rgba(255,255,255,0.08)] rounded-xl shadow-sm overflow-hidden flex flex-col">
+                  {(!data.globalRecentCommands || data.globalRecentCommands.length === 0) ? (
+                    <div className="py-20 flex flex-col items-center justify-center gap-3 text-[rgba(36,27,20,0.45)] dark:text-[rgba(255,255,255,0.45)]">
+                      <MessageSquare size={24} className="opacity-40" />
+                      <span className="text-[13px] font-medium">No recent commands found in the database.</span>
+                    </div>
+                  ) : (
+                    <div className="divide-y divide-[rgba(36,27,20,0.04)] dark:divide-[rgba(255,255,255,0.04)] max-h-[calc(100vh-200px)] overflow-y-auto custom-scrollbar">
+                      {data.globalRecentCommands.map((cmd: any) => (
+                        <div key={cmd.id} className="p-5 flex gap-4 hover:bg-[#FAF8F5]/40 dark:hover:bg-[#201F1D]/40 transition-colors group">
+                          <div className="shrink-0 pt-0.5">
+                            <img src={cmd.userImage || `https://api.dicebear.com/7.x/notionists/svg?seed=${cmd.userEmail}`} alt="" className="w-9 h-9 rounded-full border border-[rgba(36,27,20,0.08)] dark:border-[rgba(255,255,255,0.08)] bg-[#FAF8F5] dark:bg-[#151413] shadow-sm" />
+                          </div>
+                          <div className="flex-1 flex flex-col gap-2 min-w-0">
+                            <div className="flex items-center justify-between gap-4">
+                              <div className="flex items-center gap-2.5 truncate">
+                                <span className="font-semibold text-[13px] text-[#241B14] dark:text-[#F4F4F5] truncate">{cmd.userName}</span>
+                                <span className="text-[11px] text-[rgba(36,27,20,0.4)] dark:text-[rgba(255,255,255,0.4)] font-mono truncate">{cmd.userEmail}</span>
+                              </div>
+                              <div className="flex items-center gap-3 shrink-0">
+                                <span className={`text-[9.5px] font-bold px-2 py-0.5 rounded uppercase tracking-wider ${
+                                  cmd.status === "completed" ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-500" :
+                                  cmd.status === "failed" ? "bg-red-500/10 text-red-600 dark:text-red-500" :
+                                  "bg-amber-500/10 text-amber-600 dark:text-amber-500"
+                                }`}>
+                                  {cmd.status === "completed" ? "✓ SUCCESS" : cmd.status === "failed" ? "✕ FAILED" : "↻ ACTIVE"}
+                                </span>
+                                <span className="text-[10px] text-[rgba(36,27,20,0.4)] dark:text-[rgba(255,255,255,0.4)] font-mono">
+                                  {new Date(cmd.createdAt).toLocaleString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                                </span>
+                              </div>
+                            </div>
+                            <div className="text-[12.5px] leading-relaxed text-[#241B14] dark:text-[rgba(255,255,255,0.9)] bg-[#FAF8F5] dark:bg-[#121110] p-3.5 rounded-lg border border-[rgba(36,27,20,0.04)] dark:border-[rgba(255,255,255,0.04)] font-mono shadow-inner overflow-x-auto whitespace-pre-wrap">
+                              {cmd.command}
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
               </motion.div>
             )}
@@ -542,6 +638,23 @@ export default function AdminWorkspace() {
                   >
                     <span>In-Depth Profile</span>
                     {drawerTab === "details" && (
+                      <motion.div
+                        layoutId="drawerTabUnderline"
+                        className="absolute bottom-0 left-0 right-0 h-[2px] bg-[#E8593C]"
+                      />
+                    )}
+                  </button>
+
+                  <button
+                    onClick={() => setDrawerTab("prompts")}
+                    className={`font-sans text-[12px] pb-[10px] pt-[12px] px-3 relative transition-all font-semibold ${
+                      drawerTab === "prompts"
+                        ? "text-[#E8593C]"
+                        : "text-[rgba(36,27,20,0.5)] dark:text-[rgba(255,255,255,0.5)] hover:text-[#E8593C]"
+                    }`}
+                  >
+                    <span>Recent Prompts</span>
+                    {drawerTab === "prompts" && (
                       <motion.div
                         layoutId="drawerTabUnderline"
                         className="absolute bottom-0 left-0 right-0 h-[2px] bg-[#E8593C]"
@@ -636,7 +749,7 @@ export default function AdminWorkspace() {
                         </button>
                       </div>
                     </>
-                  ) : (
+                  ) : drawerTab === "details" ? (
                     <>
                       {/* IN-DEPTH PROFILE TAB */}
                       {/* OAuth Connection Statuses */}
@@ -699,33 +812,40 @@ export default function AdminWorkspace() {
                         ) : null}
                       </div>
 
-                      {/* Command History */}
-                      <div className="space-y-3 pt-4 border-t border-[rgba(36,27,20,0.06)] dark:border-[rgba(255,255,255,0.06)] flex-1 flex flex-col min-h-0">
-                        <h4 className="font-semibold text-[12.5px] text-[#241B14] dark:text-[#F4F4F5] uppercase tracking-wider font-mono">Command logs</h4>
-                        <div className="flex-1 overflow-y-auto max-h-[220px] border border-[rgba(36,27,20,0.08)] dark:border-[rgba(255,255,255,0.08)] rounded-xl bg-white dark:bg-[#1B1917] divide-y divide-[rgba(36,27,20,0.04)] dark:divide-[rgba(255,255,255,0.04)] font-mono text-[11.5px]">
-                          {selectedUser.recentCommands && selectedUser.recentCommands.length > 0 ? (
-                            selectedUser.recentCommands.map(cmd => (
-                              <div key={cmd.id} className="p-3 flex flex-col gap-1 hover:bg-[#FAF8F5]/40 dark:hover:bg-[#201F1D]/20">
-                                <div className="flex items-center justify-between">
-                                  <span className={`text-[9.5px] font-bold px-1.5 py-0.5 rounded leading-none ${
-                                    cmd.status === "completed" ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-500" :
-                                    cmd.status === "failed" ? "bg-red-500/10 text-red-600 dark:text-red-500" :
-                                    "bg-amber-500/10 text-amber-600 dark:text-amber-500"
-                                  }`}>{cmd.status.toUpperCase()}</span>
-                                  <span className="text-[10px] text-[rgba(36,27,20,0.4)] dark:text-[rgba(255,255,255,0.4)]">{new Date(cmd.createdAt).toLocaleString([], {hour: '2-digit', minute:'2-digit'})}</span>
-                                </div>
-                                <span className="text-[#241B14] dark:text-[#F4F4F5] mt-1 break-words">{cmd.command}</span>
-                              </div>
-                            ))
-                          ) : (
-                            <div className="p-8 text-center text-[rgba(36,27,20,0.45)] dark:text-[rgba(255,255,255,0.45)]">
-                              No commands recorded
-                            </div>
-                          )}
-                        </div>
-                      </div>
                     </>
-                  )}
+                  ) : drawerTab === "prompts" ? (
+                    <div className="space-y-4">
+                      {(!selectedUser.recentCommands || selectedUser.recentCommands.length === 0) ? (
+                        <div className="py-16 flex flex-col items-center justify-center text-[rgba(36,27,20,0.4)] dark:text-[rgba(255,255,255,0.4)]">
+                          <MessageSquare size={24} className="mb-3 opacity-40" />
+                          <span className="text-[13px] font-medium">No commands executed yet.</span>
+                          <span className="text-[11px] mt-1 opacity-70">This user hasn't made any requests to Auren.</span>
+                        </div>
+                      ) : (
+                        <div className="space-y-3">
+                          {selectedUser.recentCommands.map((cmd) => (
+                            <div key={cmd.id} className="p-4 bg-white dark:bg-[#1B1917] border border-[rgba(36,27,20,0.08)] dark:border-[rgba(255,255,255,0.08)] rounded-xl shadow-sm flex flex-col gap-3 group hover:border-[rgba(36,27,20,0.15)] dark:hover:border-[rgba(255,255,255,0.15)] transition-all">
+                              <div className="flex items-center justify-between">
+                                <span className={`text-[9px] font-bold px-2 py-0.5 rounded uppercase tracking-wider ${
+                                  cmd.status === "completed" ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-500" :
+                                  cmd.status === "failed" ? "bg-red-500/10 text-red-600 dark:text-red-500" :
+                                  "bg-amber-500/10 text-amber-600 dark:text-amber-500"
+                                }`}>
+                                  {cmd.status === "completed" ? "✓ SUCCESS" : cmd.status === "failed" ? "✕ FAILED" : "↻ ACTIVE"}
+                                </span>
+                                <span className="text-[10px] font-mono text-[rgba(36,27,20,0.4)] dark:text-[rgba(255,255,255,0.4)]">
+                                  {new Date(cmd.createdAt).toLocaleString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                                </span>
+                              </div>
+                              <div className="text-[12.5px] leading-relaxed text-[#241B14] dark:text-[#F4F4F5] bg-[#FAF8F5] dark:bg-[#121110] p-3 rounded-lg border border-[rgba(36,27,20,0.04)] dark:border-[rgba(255,255,255,0.04)] font-mono whitespace-pre-wrap max-h-[180px] overflow-y-auto custom-scrollbar shadow-inner">
+                                {cmd.command}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  ) : null}
                 </div>
 
                 {/* Drawer Footer */}

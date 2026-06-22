@@ -4,6 +4,7 @@ import { currentUser, clerkClient } from "@clerk/nextjs/server";
 import { createHash } from "crypto";
 import { createServerSupabaseClient } from "@/lib/supabase";
 import { RATE_LIMITS } from "@/lib/rate-limit";
+import { getCorsairInstance } from "@/lib/corsair";
 
 export type AdminUser = {
   id: string; // Clerk ID
@@ -63,8 +64,9 @@ export async function getAdminAnalytics() {
     const { data: actions } = await supabase.from("agent_actions").select("*").order("created_at", { ascending: false });
     
     let totalCommands = 0;
+    const inst = getCorsairInstance();
     
-    const adminUsers: AdminUser[] = users.data.map((u) => {
+    const adminUsers: AdminUser[] = await Promise.all(users.data.map(async (u) => {
       const email = u.emailAddresses[0]?.emailAddress || "unknown";
       const name = `${u.firstName || ""} ${u.lastName || ""}`.trim() || email;
       const isPro = u.publicMetadata?.isPro === true || u.publicMetadata?.plan === "pro";
@@ -77,14 +79,24 @@ export async function getAdminAnalytics() {
       const commandsUsed = rl?.commands_count || 0;
       totalCommands += commandsUsed;
       
-      // User specific integrations
-      const userIntegrations = integrations
-        ?.filter(i => i.user_id === supabaseId)
-        ?.map(i => ({
-          provider: i.provider,
-          status: i.status,
-          connectedAt: i.connected_at
-        })) || [];
+      // Fetch real integrations from Corsair
+      let userIntegrations: any[] = [];
+      try {
+        const [gmail, calendar, githubCredentials] = await Promise.all([
+          inst.plugins.credentials.list("gmail", supabaseId).catch(() => ({ fields: [] })),
+          inst.plugins.credentials.list("googlecalendar", supabaseId).catch(() => ({ fields: [] })),
+          inst.plugins.credentials.list("github", supabaseId).catch(() => ({ fields: [] }))
+        ]);
+        
+        const googleConnected = (gmail.fields?.find((f: any) => f.field === "access_token")?.set) || 
+                                (calendar.fields?.find((f: any) => f.field === "access_token")?.set);
+        const githubConnected = githubCredentials.fields?.find((f: any) => f.field === "access_token")?.set;
+        
+        if (googleConnected) userIntegrations.push({ provider: "google", status: "connected", connectedAt: new Date().toISOString() });
+        if (githubConnected) userIntegrations.push({ provider: "github", status: "connected", connectedAt: new Date().toISOString() });
+      } catch (err) {
+        console.error(`Failed to fetch corsair credentials for ${supabaseId}:`, err);
+      }
 
       // User specific recent actions
       const userActions = actions?.filter(a => a.user_id === supabaseId) || [];
@@ -140,8 +152,62 @@ export async function getAdminAnalytics() {
           byModel
         }
       };
-    });
+    }));
     
+    let globalTotalTokens = 0;
+    let globalEstimatedCost = 0;
+    let globalSonnetTokens = 0;
+    let globalHaikuTokens = 0;
+    let globalGeminiTokens = 0;
+
+    adminUsers.forEach(u => {
+      if (u.tokenConsumption) {
+        globalTotalTokens += u.tokenConsumption.totalTokens;
+        globalEstimatedCost += u.tokenConsumption.estimatedCost;
+        const sonnet = u.tokenConsumption.byModel.find(m => m.modelName.includes("Sonnet"))?.tokens || 0;
+        const haiku = u.tokenConsumption.byModel.find(m => m.modelName.includes("Haiku"))?.tokens || 0;
+        const gemini = u.tokenConsumption.byModel.find(m => m.modelName.includes("Gemini"))?.tokens || 0;
+        globalSonnetTokens += sonnet;
+        globalHaikuTokens += haiku;
+        globalGeminiTokens += gemini;
+      }
+    });
+
+    const globalTokenMetrics = {
+      totalTokens: globalTotalTokens,
+      estimatedCost: globalEstimatedCost,
+      byModel: [
+        { 
+          modelName: "Claude 3.5 Sonnet (OpenRouter)", 
+          tokens: globalSonnetTokens, 
+          percentage: globalTotalTokens > 0 ? Math.round((globalSonnetTokens / globalTotalTokens) * 100) : 0 
+        },
+        { 
+          modelName: "Claude 3 Haiku (Direct)", 
+          tokens: globalHaikuTokens, 
+          percentage: globalTotalTokens > 0 ? Math.round((globalHaikuTokens / globalTotalTokens) * 100) : 0 
+        },
+        { 
+          modelName: "Gemini 1.5 Pro (Workspace Mappings)", 
+          tokens: globalGeminiTokens, 
+          percentage: globalTotalTokens > 0 ? Math.round((globalGeminiTokens / globalTotalTokens) * 100) : 0 
+        }
+      ]
+    };
+    
+    const globalRecentCommands = (actions || []).slice(0, 100).map((a: any) => {
+      const user = adminUsers.find(u => u.supabaseId === a.user_id);
+      return {
+        id: a.id,
+        userEmail: user?.email || "Unknown",
+        userName: user?.name || "Unknown",
+        userImage: user?.imageUrl || "",
+        command: a.command,
+        status: a.status,
+        createdAt: a.created_at
+      };
+    });
+
     return { 
       success: true, 
       data: {
@@ -149,7 +215,9 @@ export async function getAdminAnalytics() {
         totalUsers: adminUsers.length,
         proUsers: adminUsers.filter(u => u.isPro).length,
         totalCommands,
-        limit: RATE_LIMITS.COMMANDS_PER_HOUR
+        limit: RATE_LIMITS.COMMANDS_PER_HOUR,
+        globalTokenMetrics,
+        globalRecentCommands
       }
     };
   } catch (error: any) {
