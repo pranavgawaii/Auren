@@ -90,6 +90,10 @@ a unified interface that lets the AI agent execute actions across connected user
 
 ## Architecture
 
+<p align="center">
+  <img src="public/auren_architecture_diagram.png" alt="Auren AI Software Architecture Diagram" width="800" />
+</p>
+
 ```
 User Command
      ↓
