@@ -275,7 +275,7 @@ export default function AdminWorkspace() {
                     <StatusRow name="Anthropic Engine" active={sysStatus.anthropic} desc="Corsair mailbox webhook classification scheduler" />
                     <StatusRow name="OpenAI Engine" active={sysStatus.openai} desc="Vector embedding creation & semantic query indexing" />
                     <StatusRow name="OpenRouter API Router" active={sysStatus.openrouter} desc="Intelligent model switching routing system" />
-                    <StatusRow name="Supabase Telemetry DB" active={sysStatus.supabase} isLast desc="Core database connection pool & Realtime events engine" />
+                    <StatusRow name="MongoDB Document DB" active={sysStatus.database} isLast desc="High availability document store for action logs & rate limiting" />
                   </div>
                 </div>
               </motion.div>

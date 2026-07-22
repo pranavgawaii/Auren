@@ -364,19 +364,21 @@ export function HeroWidget() {
     >
 
       {/* Tabs row */}
-      <div 
-        className="flex max-w-full overflow-x-auto scrollbar-none"
-        style={{ 
-          background: "#FBF3EC", 
-          borderRadius: "8px", 
-          padding: "4px", 
-          marginBottom: "0",
-          scrollbarWidth: "none",
-        }}
-      >
-        {TABS.map(tab => (
-          <button
-            key={tab}
+      <div className="flex justify-center w-full">
+        <div 
+          className="inline-flex max-w-full overflow-x-auto scrollbar-none"
+          style={{ 
+            background: "#FBF3EC", 
+            borderRadius: "8px", 
+            padding: "4px", 
+            marginBottom: "0",
+            scrollbarWidth: "none",
+            width: "fit-content",
+          }}
+        >
+          {TABS.map(tab => (
+            <button
+              key={tab}
             onClick={() => setActiveTab(tab)}
             style={{
               fontFamily: "var(--font-sans), sans-serif",
@@ -393,6 +395,7 @@ export function HeroWidget() {
             {tab}
           </button>
         ))}
+        </div>
       </div>
 
       {/* Tab content — padded area below tabs */}

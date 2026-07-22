@@ -1,6 +1,6 @@
 "use server";
 
-import { createServerSupabaseClient } from "@/lib/supabase";
+import { getDb } from "@/lib/db";
 import { classifyWithHaiku } from "@/lib/anthropic";
 
 interface EmailRecord {
@@ -28,42 +28,40 @@ async function generateRelationshipSummary(
 }
 
 export async function updateContacts(emails: EmailRecord[], userId: string): Promise<void> {
-  const supabase = createServerSupabaseClient();
+  const db = await getDb();
+  if (!db) return;
+
+  const contactsCollection = db.collection("contacts");
+  const emailsCollection = db.collection("emails");
 
   for (const email of emails) {
     if (!email.fromEmail) continue;
 
-    const { data: existing } = await supabase
-      .from("contacts")
-      .select("id, email_count")
-      .eq("user_id", userId)
-      .eq("email", email.fromEmail)
-      .single();
-
+    const existing = await contactsCollection.findOne({ user_id: userId, email: email.fromEmail });
     const newCount = (existing?.email_count ?? 0) + 1;
 
-    const { error: upsertError } = await supabase.from("contacts").upsert(
+    await contactsCollection.updateOne(
+      { user_id: userId, email: email.fromEmail },
       {
-        user_id: userId,
-        email: email.fromEmail,
-        name: email.fromName || email.fromEmail.split("@")[0],
-        email_count: newCount,
-        last_email_date: email.receivedAt,
+        $set: {
+          user_id: userId,
+          email: email.fromEmail,
+          name: email.fromName || email.fromEmail.split("@")[0],
+          email_count: newCount,
+          last_email_date: email.receivedAt,
+          updated_at: new Date().toISOString(),
+        },
       },
-      { onConflict: "user_id,email" }
+      { upsert: true }
     );
-
-    if (upsertError) continue;
 
     if (newCount >= 3) {
       try {
-        const { data: recentEmails } = await supabase
-          .from("emails")
-          .select("subject")
-          .eq("user_id", userId)
-          .eq("from_email", email.fromEmail)
-          .order("received_at", { ascending: false })
-          .limit(5);
+        const recentEmails = await emailsCollection
+          .find({ user_id: userId, from_email: email.fromEmail })
+          .sort({ received_at: -1 })
+          .limit(5)
+          .toArray();
 
         const subjects = (recentEmails ?? []).map((e) => String(e.subject));
         if (subjects.length > 0) {
@@ -72,14 +70,13 @@ export async function updateContacts(emails: EmailRecord[], userId: string): Pro
             email.fromName || email.fromEmail,
             subjects
           );
-          await supabase
-            .from("contacts")
-            .update({ relationship_summary: relationshipSummary })
-            .eq("user_id", userId)
-            .eq("email", email.fromEmail);
+          await contactsCollection.updateOne(
+            { user_id: userId, email: email.fromEmail },
+            { $set: { relationship_summary: relationshipSummary } }
+          );
         }
       } catch {
-        // Relationship summary failure is non-fatal
+        // Non-fatal
       }
     }
   }

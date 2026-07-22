@@ -1,5 +1,5 @@
 import { createClient as createApp } from "@corsair-dev/app";
-import { createServerSupabaseClient } from "@/lib/supabase";
+import { getDb } from "@/lib/db";
 import { getUserId } from "@/lib/user";
 import type {
   GmailMessage,
@@ -446,7 +446,7 @@ export async function googleCalendarCreate(
       
     if (!resultData || (!resultData.id && !resultData.htmlLink)) {
       console.warn("[Corsair] All Calendar API Create attempts failed. Falling back to DB insert.");
-      const supabase = createServerSupabaseClient();
+      const db = await getDb();
       const userId = await getUserId();
       
       const newEvent = {
@@ -459,14 +459,12 @@ export async function googleCalendarCreate(
         attendees: attendees || [],
         location: payload.location || null,
         zoom_link: null,
-        prep_card_sent: false
+        prep_card_sent: false,
+        created_at: new Date().toISOString(),
       };
       
-      const { data, error } = await supabase.from("calendar_events").insert(newEvent).select().single();
-      
-      if (error) {
-        console.error("Calendar fallback DB insert failed:", error.message);
-        throw new Error("We encountered an issue saving your calendar event. Please check the event details and try again.");
+      if (db) {
+        await db.collection("calendar_events").insertOne(newEvent);
       }
       
       return {

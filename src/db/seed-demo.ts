@@ -1,26 +1,13 @@
-import { createServerSupabaseClient } from "../lib/supabase";
+import "dotenv/config";
+import { getDb } from "../lib/db";
 
 const DEMO_USER_ID = '00000000-0000-0000-0000-000000000001';
 
 async function seed() {
-  const supabase = createServerSupabaseClient();
-  
-  // Create demo user in auth.users if it doesn't exist to satisfy foreign key constraints
-  const { data: existingUser } = await supabase.auth.admin.getUserById(DEMO_USER_ID);
-  
-  if (!existingUser.user) {
-    console.log("Creating demo user...");
-    const { error: userError } = await supabase.auth.admin.createUser({
-      id: DEMO_USER_ID,
-      email: "demo@auren.ai",
-      password: "password123",
-      email_confirm: true
-    });
-    
-    if (userError && !userError.message.includes("already exists")) {
-      console.error("Error creating demo user:", userError);
-      process.exit(1);
-    }
+  const db = await getDb();
+  if (!db) {
+    console.error("No MongoDB database connection available for seeding.");
+    process.exit(1);
   }
 
   const now = new Date();
@@ -134,17 +121,19 @@ async function seed() {
     }
   ];
 
-  const { data, error } = await supabase
-    .from('emails')
-    .upsert(demoEmails, { onConflict: 'gmail_id' })
-    .select();
-
-  if (error) {
-    console.error("Error seeding emails:", error);
-    process.exit(1);
+  const collection = db.collection("emails");
+  for (const email of demoEmails) {
+    await collection.updateOne(
+      { gmail_id: email.gmail_id },
+      { $set: email },
+      { upsert: true }
+    );
   }
 
-  console.log(`Successfully seeded ${data.length} emails into Supabase.`);
+  console.log(`Successfully seeded ${demoEmails.length} emails into MongoDB.`);
 }
 
-seed();
+seed().then(() => process.exit(0)).catch((err) => {
+  console.error("Seed error:", err);
+  process.exit(1);
+});

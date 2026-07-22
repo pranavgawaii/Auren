@@ -1,7 +1,7 @@
 "use server";
 
 import { gmailSend, googleCalendarCreate, githubCreateIssue, githubListIssues, githubReviewPr } from "@/lib/corsair";
-import { createServerSupabaseClient } from "@/lib/supabase";
+import { getDb } from "@/lib/db";
 import { getUserId } from "@/lib/user";
 import type { AgentReasoningResult, GmailSendPayload, CalendarEventPayload, GitHubIssuePayload, GitHubListIssuesPayload, GitHubReviewPrPayload } from "@/types";
 
@@ -38,10 +38,10 @@ export async function executePlan(
       }
     }
 
-    const supabase = createServerSupabaseClient();
     const userId = await getUserId();
+    const db = await getDb();
     
-    // Log actions to the database using the correct agent_actions schema
+    // Format action items for logging
     const actionsTaken = [];
     let allSuccess = true;
     let combinedError = "";
@@ -64,14 +64,17 @@ export async function executePlan(
       });
     }
 
-    await supabase.from("agent_actions").insert({
-      user_id: userId,
-      command: command || plan.explanation || "Agent command execution",
-      status: allSuccess ? "completed" : "failed",
-      actions_taken: actionsTaken,
-      error_message: allSuccess ? null : combinedError,
-      completed_at: new Date().toISOString()
-    });
+    if (db) {
+      await db.collection("agent_actions").insertOne({
+        user_id: userId,
+        command: command || plan.explanation || "Agent command execution",
+        status: allSuccess ? "completed" : "failed",
+        actions_taken: actionsTaken,
+        error_message: allSuccess ? null : combinedError,
+        completed_at: new Date().toISOString(),
+        created_at: new Date().toISOString(),
+      });
+    }
 
     const failedResults = results.filter(r => !r.success);
     const hasErrors = failedResults.length > 0;
@@ -80,7 +83,6 @@ export async function executePlan(
       console.error("[ExecutePlan] Actions failed:", failedResults);
       const errorMsg = failedResults
         .map(r => {
-           // Corsair error might be under r.data.message or similar if it's passed back
            const errObj = r.data as any;
            const details = errObj?.message || errObj?.code || JSON.stringify(errObj);
            return `${r.tool}: ${details}`;

@@ -1,14 +1,14 @@
 "use server";
 
-import { createServerSupabaseClient } from "@/lib/supabase";
+import { getDb } from "@/lib/db";
 import { getUserId } from "@/lib/user";
 import { syncCalendarEvents } from "./sync-calendar";
 import type { CalendarEventResult } from "@/types";
 
 export async function getCalendarEvents(shouldSync: boolean = false): Promise<{ success: boolean; data?: CalendarEventResult[]; error?: string }> {
   try {
-    const supabase = createServerSupabaseClient();
     const userId = await getUserId();
+    const db = await getDb();
 
     if (shouldSync) {
       const syncResult = await syncCalendarEvents();
@@ -17,29 +17,25 @@ export async function getCalendarEvents(shouldSync: boolean = false): Promise<{ 
       }
     }
 
-    const { data: dbEvents, error: dbError } = await supabase
-      .from("calendar_events")
-      .select("*")
-      .eq("user_id", userId)
-      .order("start_at", { ascending: true });
-
-    if (dbError) {
-      console.error("Failed to fetch calendar from DB:", dbError);
-      return { success: false, error: dbError.message };
+    if (!db) {
+      return { success: true, data: [] };
     }
+
+    const collection = db.collection("calendar_events");
+    const dbEvents = await collection
+      .find({ user_id: userId })
+      .sort({ start_at: 1 })
+      .toArray();
 
     if ((!dbEvents || dbEvents.length === 0) && !shouldSync) {
       const syncResult = await syncCalendarEvents();
       if (syncResult.success) {
-        const { data: refetchedEvents, error: refetchError } = await supabase
-          .from("calendar_events")
-          .select("*")
-          .eq("user_id", userId)
-          .order("start_at", { ascending: true });
+        const refetchedEvents = await collection
+          .find({ user_id: userId })
+          .sort({ start_at: 1 })
+          .toArray();
         
-        if (!refetchError && refetchedEvents) {
-          return { success: true, data: mapDbEventsToCalendarResults(refetchedEvents) };
-        }
+        return { success: true, data: mapDbEventsToCalendarResults(refetchedEvents) };
       }
     }
 
@@ -51,7 +47,7 @@ export async function getCalendarEvents(shouldSync: boolean = false): Promise<{ 
 
 function mapDbEventsToCalendarResults(dbEvents: any[]): CalendarEventResult[] {
   return dbEvents.map(evt => ({
-    id: evt.gcal_id,
+    id: evt.gcal_id || evt._id.toString(),
     title: evt.title,
     startAt: evt.start_at,
     endAt: evt.end_at,

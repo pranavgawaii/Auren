@@ -7,7 +7,7 @@ import { ArrowLeft } from "lucide-react";
 export default function NotFound() {
   return (
     <div style={{ background: "#FBF3EC", color: "#241B14", fontFamily: "var(--font-sans)", minHeight: "100vh", display: "flex", flexDirection: "column" }}>
-      <title>404: Page Not Found — Auren</title>
+      <title>404: Page Not Found | Auren</title>
       
       {/* Top minimal header */}
       <header style={{

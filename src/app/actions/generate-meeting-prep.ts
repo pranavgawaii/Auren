@@ -2,7 +2,7 @@
 
 import { gmailSearch } from "@/lib/corsair";
 import { classifyWithHaiku } from "@/lib/anthropic";
-import { createServerSupabaseClient } from "@/lib/supabase";
+import { getDb } from "@/lib/db";
 import { z } from "zod";
 import type { CorsairResponse } from "@/types";
 
@@ -52,14 +52,12 @@ export async function generateMeetingPrep(
 
     const parsed = meetingBriefSchema.parse(JSON.parse(jsonMatch[0]));
 
-    const supabase = createServerSupabaseClient();
-    const { error: updateError } = await supabase
-      .from("calendar_events")
-      .update({ meeting_prep: parsed })
-      .eq("gcal_id", eventId);
-
-    if (updateError) {
-      console.error("Failed to persist meeting prep:", updateError.message);
+    const db = await getDb();
+    if (db) {
+      await db.collection("calendar_events").updateOne(
+        { gcal_id: eventId },
+        { $set: { meeting_prep: parsed } }
+      );
     }
 
     return { success: true, data: parsed };

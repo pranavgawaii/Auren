@@ -2,7 +2,7 @@
 
 import { currentUser, clerkClient } from "@clerk/nextjs/server";
 import { createHash } from "crypto";
-import { createServerSupabaseClient } from "@/lib/supabase";
+import { getDb } from "@/lib/db";
 import { RATE_LIMITS } from "@/lib/rate-limit";
 import { getCorsairInstance } from "@/lib/corsair";
 
@@ -34,6 +34,8 @@ export async function getSystemStatus() {
     return { success: false, error: "Unauthorized." };
   }
 
+  const db = await getDb();
+
   return {
     success: true,
     data: {
@@ -41,7 +43,7 @@ export async function getSystemStatus() {
       anthropic: !!process.env.ANTHROPIC_API_KEY,
       openai: !!process.env.OPENAI_API_KEY,
       openrouter: !!process.env.OPENROUTER_API_KEY,
-      supabase: !!process.env.NEXT_PUBLIC_SUPABASE_URL,
+      database: !!db,
     }
   };
 }
@@ -58,10 +60,9 @@ export async function getAdminAnalytics() {
     const client = await clerkClient();
     const users = await client.users.getUserList({ limit: 100 });
     
-    const supabase = createServerSupabaseClient();
-    const { data: rateLimits } = await supabase.from("user_rate_limits").select("*");
-    const { data: integrations } = await supabase.from("integrations").select("*");
-    const { data: actions } = await supabase.from("agent_actions").select("*").order("created_at", { ascending: false });
+    const db = await getDb();
+    const rateLimits = db ? await db.collection("user_rate_limits").find({}).toArray() : [];
+    const actions = db ? await db.collection("agent_actions").find({}).sort({ created_at: -1 }).toArray() : [];
     
     let totalCommands = 0;
     const inst = getCorsairInstance();
@@ -101,10 +102,10 @@ export async function getAdminAnalytics() {
       // User specific recent actions
       const userActions = actions?.filter(a => a.user_id === supabaseId) || [];
       const recentCommands = userActions.slice(0, 10).map(a => ({
-        id: a.id,
+        id: a._id ? a._id.toString() : String(a.id || Math.random()),
         command: a.command,
         status: a.status,
-        createdAt: a.created_at
+        createdAt: a.created_at || new Date().toISOString()
       }));
 
       // Calculate token metrics for this user
@@ -112,7 +113,7 @@ export async function getAdminAnalytics() {
       let outputTokens = 0;
       
       userActions.forEach(action => {
-        inputTokens += 400 + (action.command.length * 3);
+        inputTokens += 400 + ((action.command || "").length * 3);
         outputTokens += 600;
         
         const actionsCount = Array.isArray(action.actions_taken) ? action.actions_taken.length : 0;
@@ -198,13 +199,13 @@ export async function getAdminAnalytics() {
     const globalRecentCommands = (actions || []).slice(0, 100).map((a: any) => {
       const user = adminUsers.find(u => u.supabaseId === a.user_id);
       return {
-        id: a.id,
+        id: a._id ? a._id.toString() : String(a.id || Math.random()),
         userEmail: user?.email || "Unknown",
         userName: user?.name || "Unknown",
         userImage: user?.imageUrl || "",
         command: a.command,
         status: a.status,
-        createdAt: a.created_at
+        createdAt: a.created_at || new Date().toISOString()
       };
     });
 
@@ -258,15 +259,18 @@ export async function resetUserRateLimit(supabaseUserId: string) {
     if (adminEmail !== "pranvgg@gmail.com") {
       return { success: false, error: "Unauthorized." };
     }
-    const supabase = createServerSupabaseClient();
-    const { error } = await supabase
-      .from("user_rate_limits")
-      .update({
-        commands_count: 0,
-        commands_reset_at: new Date(Date.now() + 60 * 60 * 1000).toISOString()
-      })
-      .eq("user_id", supabaseUserId);
-    if (error) throw error;
+    const db = await getDb();
+    if (db) {
+      await db.collection("user_rate_limits").updateOne(
+        { user_id: supabaseUserId },
+        {
+          $set: {
+            commands_count: 0,
+            commands_reset_at: new Date(Date.now() + 60 * 60 * 1000).toISOString()
+          }
+        }
+      );
+    }
     return { success: true, message: "Successfully reset user rate limits." };
   } catch (error: any) {
     console.error("Failed to reset rate limit:", error);

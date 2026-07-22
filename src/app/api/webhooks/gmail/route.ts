@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { classifyWithHaiku } from "@/lib/anthropic";
-import { createServerSupabaseClient } from "@/lib/supabase";
+import { getDb } from "@/lib/db";
 import { EMAIL_PRIORITY_VALUES, EMAIL_PRIORITY, type EmailPriority } from "@/lib/constants";
 
 const PrioritySchema = z.object({
@@ -9,7 +9,6 @@ const PrioritySchema = z.object({
 });
 
 export async function POST(req: Request) {
-  // Webhook secret verification (backward-compatible — only enforced if WEBHOOK_SECRET is set)
   const secret = req.headers.get('x-webhook-secret') || req.headers.get('x-corsair-secret');
   const expectedSecret = process.env.WEBHOOK_SECRET;
   if (expectedSecret && secret !== expectedSecret) {
@@ -18,11 +17,8 @@ export async function POST(req: Request) {
 
   try {
     const body = await req.json();
-
-    // Support both { data: { id, ... } } wrapper and flat object payload from Corsair webhooks
     const payload = body.data || body;
 
-    // Validate required fields
     if (!payload || !payload.id || !payload.from || !payload.subject) {
       return NextResponse.json(
         { error: "Missing required fields in webhook payload" },
@@ -34,7 +30,7 @@ export async function POST(req: Request) {
       id: payload.id,
       threadId: payload.threadId || payload.id,
       from: payload.from,
-      fromName: payload.from, // simplified
+      fromName: payload.from,
       to: payload.to || "",
       subject: payload.subject,
       snippet: payload.snippet || "",
@@ -43,11 +39,8 @@ export async function POST(req: Request) {
       isRead: payload.isRead || false,
     };
 
-    const supabase = createServerSupabaseClient();
+    const userId = payload.userId || payload.tenantId || process.env.CORSAIR_TENANT_ID || "default-user";
 
-    const userId = "00000000-0000-0000-0000-000000000001";
-
-    // Classify Priority
     const systemPrompt = `You are an email classifier.
 Return only valid JSON with one field called priority.
 The value must be exactly one of: urg, nrm, or fyi.
@@ -66,36 +59,30 @@ Preview: ${email.snippet}`;
       const validated = PrioritySchema.parse(parsed);
       priority = validated.priority;
     } catch {
-      // Fallback
       priority = EMAIL_PRIORITY.NORMAL;
     }
 
-    // Upsert into Supabase
-    const { error: upsertError } = await supabase
-      .from("emails")
-      .upsert(
+    const db = await getDb();
+    if (db) {
+      await db.collection("emails").updateOne(
+        { gmail_id: email.id },
         {
-          user_id: userId,
-          gmail_id: email.id,
-          thread_id: email.threadId,
-          from_email: email.from,
-          from_name: email.fromName,
-          subject: email.subject,
-          snippet: email.snippet,
-          body: email.body,
-          priority: priority,
-          is_read: email.isRead,
-          received_at: email.date,
+          $set: {
+            user_id: userId,
+            gmail_id: email.id,
+            thread_id: email.threadId,
+            from_email: email.from,
+            from_name: email.fromName,
+            subject: email.subject,
+            snippet: email.snippet,
+            body: email.body,
+            priority: priority,
+            is_read: email.isRead,
+            received_at: email.date,
+            updated_at: new Date().toISOString(),
+          },
         },
-        {
-          onConflict: "gmail_id",
-        }
-      );
-
-    if (upsertError) {
-      return NextResponse.json(
-        { error: `Database upsert failed: ${upsertError.message}` },
-        { status: 500 }
+        { upsert: true }
       );
     }
 

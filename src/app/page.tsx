@@ -10,7 +10,7 @@ import { Features } from "@/components/blocks/features-10";
 import { WatchDemoModal } from "@/components/auren/watch-demo-modal";
 
 export const metadata = {
-  title: "Auren — AI Execution Layer",
+  title: "Auren | AI Execution Layer",
   description: "Your inbox, calendar, and GitHub. Executed in one line.",
 };
 

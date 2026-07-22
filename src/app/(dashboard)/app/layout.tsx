@@ -10,7 +10,7 @@ export default function AppLayout({
 
 export const metadata: Metadata = {
   title: {
-    template: "%s — Auren",
+    template: "%s | Auren",
     default: "Auren App",
   },
 };

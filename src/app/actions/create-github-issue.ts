@@ -1,7 +1,7 @@
 "use server";
 
 import { githubCreateIssue } from "@/lib/corsair";
-import { createServerSupabaseClient } from "@/lib/supabase";
+import { getDb } from "@/lib/db";
 import { DEMO_USER_ID, ACTION_STATUS } from "@/lib/constants";
 
 interface CreateGithubIssuePayload {
@@ -23,25 +23,24 @@ export async function createGithubIssue(payload: CreateGithubIssuePayload) {
     }
 
     const issue = result.data;
-    const supabase = createServerSupabaseClient();
+    const db = await getDb();
 
-    const { error: dbError } = await supabase.from("agent_actions").insert({
-      user_id: DEMO_USER_ID,
-      command: "Create GitHub issue",
-      status: ACTION_STATUS.COMPLETED,
-      actions_taken: [
-        {
-          tool: "github_create_issue",
-          input: { title: payload.title, body: payload.body, repoUrl: payload.repo || "" },
-          output: { issueUrl: issue.htmlUrl, issueNumber: issue.number },
-          executedAt: new Date().toISOString(),
-        },
-      ],
-      completed_at: new Date().toISOString(),
-    });
-
-    if (dbError) {
-      console.error("Failed to log agent action:", dbError);
+    if (db) {
+      await db.collection("agent_actions").insertOne({
+        user_id: DEMO_USER_ID,
+        command: "Create GitHub issue",
+        status: ACTION_STATUS.COMPLETED,
+        actions_taken: [
+          {
+            tool: "github_create_issue",
+            input: { title: payload.title, body: payload.body, repoUrl: payload.repo || "" },
+            output: { issueUrl: issue.htmlUrl, issueNumber: issue.number },
+            executedAt: new Date().toISOString(),
+          },
+        ],
+        completed_at: new Date().toISOString(),
+        created_at: new Date().toISOString(),
+      });
     }
 
     return { success: true, data: { issueUrl: issue.htmlUrl, issueNumber: issue.number } };

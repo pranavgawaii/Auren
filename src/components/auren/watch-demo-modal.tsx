@@ -39,7 +39,7 @@ export function WatchDemoModal({ isOpen: controlledIsOpen, onClose, videoId }: W
     return () => document.removeEventListener('click', handleClick, true);
   }, [controlledIsOpen]);
 
-  const activeVideoId = videoId || process.env.NEXT_PUBLIC_ONBOARDING_VIDEO_ID || "C-uXkFPFwmc";
+  const activeVideoId = videoId || process.env.NEXT_PUBLIC_ONBOARDING_VIDEO_ID || "uBdourG9P2w";
   const videoSrc = `https://www.youtube.com/embed/${activeVideoId}?autoplay=1`;
 
   return (

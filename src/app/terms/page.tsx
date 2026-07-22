@@ -2,7 +2,7 @@ import { Topbar } from "@/components/auren/topbar";
 import { Footer } from "@/components/auren/footer";
 
 export const metadata = {
-  title: "Terms of Service — Auren",
+  title: "Terms of Service | Auren",
 };
 
 export default function TermsPage() {

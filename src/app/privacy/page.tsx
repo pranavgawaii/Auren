@@ -2,7 +2,7 @@ import { Topbar } from "@/components/auren/topbar";
 import { Footer } from "@/components/auren/footer";
 
 export const metadata = {
-  title: "Privacy Policy — Auren",
+  title: "Privacy Policy | Auren",
 };
 
 export default function PrivacyPage() {

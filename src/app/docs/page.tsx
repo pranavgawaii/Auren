@@ -124,7 +124,7 @@ export default function DocsPage() {
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                 fontSize: 10
               }}>▶</span>
-              Watch setup guide (60 sec)
+              Watch setup guide
             </button>
             <p style={{ fontFamily: FONT_BODY, fontWeight: 400, fontSize: "15px", lineHeight: 1.7, color: "rgba(36,27,20,0.7)", margin: "0 0 32px 0" }}>
               Auren reads your inbox, calendar, and GitHub activity, and executes multi-step actions from a single typed command.

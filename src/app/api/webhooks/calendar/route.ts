@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createServerSupabaseClient } from "@/lib/supabase";
+import { getDb } from "@/lib/db";
 import { generateMeetingPrep } from "@/app/actions/generate-meeting-prep";
 
 interface CalendarWebhookPayload {
@@ -16,7 +16,6 @@ interface CalendarWebhookPayload {
 const MEETING_PREP_WINDOW_MINUTES = 35;
 
 export async function POST(request: NextRequest): Promise<NextResponse> {
-  // Webhook secret verification (backward-compatible)
   const secret = request.headers.get('x-webhook-secret') || request.headers.get('x-corsair-secret');
   const expectedSecret = process.env.WEBHOOK_SECRET;
   if (expectedSecret && secret !== expectedSecret) {
@@ -26,8 +25,8 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
   try {
     const payload = await request.json() as CalendarWebhookPayload;
 
-    const supabase = createServerSupabaseClient();
-    const userId = payload.user_id ?? "00000000-0000-0000-0000-000000000001";
+    const db = await getDb();
+    const userId = payload.user_id ?? process.env.CORSAIR_TENANT_ID ?? "default-user";
 
     const attendees = (payload.attendees ?? []).map((a) => ({
       email: a.email,
@@ -35,19 +34,25 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       responseStatus: a.responseStatus ?? "needsAction",
     }));
 
-    await supabase.from("calendar_events").upsert(
-      {
-        gcal_id: payload.gcal_id,
-        user_id: userId,
-        title: payload.title,
-        start_at: payload.start_at,
-        end_at: payload.end_at,
-        attendees,
-        description: payload.description ?? null,
-        location: payload.location ?? null,
-      },
-      { onConflict: "gcal_id" }
-    );
+    if (db) {
+      await db.collection("calendar_events").updateOne(
+        { gcal_id: payload.gcal_id },
+        {
+          $set: {
+            gcal_id: payload.gcal_id,
+            user_id: userId,
+            title: payload.title,
+            start_at: payload.start_at,
+            end_at: payload.end_at,
+            attendees,
+            description: payload.description ?? null,
+            location: payload.location ?? null,
+            updated_at: new Date().toISOString(),
+          },
+        },
+        { upsert: true }
+      );
+    }
 
     const startTime = new Date(payload.start_at);
     const minutesUntilStart = (startTime.getTime() - Date.now()) / 60000;

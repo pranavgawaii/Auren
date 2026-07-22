@@ -1,35 +1,34 @@
 "use server";
 
-import { createServerSupabaseClient } from "@/lib/supabase";
+import { getDb } from "@/lib/db";
 import { getUserId } from "@/lib/user";
 import type { AgentAction } from "@/types";
 
 export async function getAgentHistory(limit = 50): Promise<{ success: boolean; data?: AgentAction[]; error?: string }> {
   try {
-    const supabase = createServerSupabaseClient();
     const userId = await getUserId();
+    const db = await getDb();
 
-    const { data, error } = await supabase
-      .from("agent_actions")
-      .select("*")
-      .eq("user_id", userId)
-      .order("created_at", { ascending: false })
-      .limit(limit);
-
-    if (error) {
-      console.error("Failed to fetch agent history:", error);
-      return { success: false, error: error.message };
+    if (!db) {
+      return { success: true, data: [] }; // Fail open with clean empty list if DB offline
     }
 
-    const formattedData: AgentAction[] = (data || []).map(row => ({
-      id: row.id,
+    const collection = db.collection("agent_actions");
+    const rows = await collection
+      .find({ user_id: userId })
+      .sort({ created_at: -1 })
+      .limit(limit)
+      .toArray();
+
+    const formattedData: AgentAction[] = rows.map((row) => ({
+      id: row._id.toString(),
       userId: row.user_id,
       command: row.command,
       status: row.status,
       actionsTaken: row.actions_taken || [],
       errorMessage: row.error_message,
-      createdAt: row.created_at,
-      completedAt: row.completed_at
+      createdAt: row.created_at || new Date().toISOString(),
+      completedAt: row.completed_at || new Date().toISOString(),
     }));
 
     return { success: true, data: formattedData };

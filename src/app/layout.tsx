@@ -33,11 +33,11 @@ const civane = localFont({
 });
 
 export const metadata: Metadata = {
-  title: 'Auren — AI Execution Layer',
+  title: 'Auren | AI Execution Layer',
   description: 'Type one command. Gmail, Calendar, and GitHub execute simultaneously. One approval. The execution layer between thinking and doing.',
   metadataBase: new URL('https://tryauren.in'),
   openGraph: {
-    title: 'Auren — AI Execution Layer',
+    title: 'Auren | AI Execution Layer',
     description: 'Type one command. Gmail, Calendar, and GitHub execute simultaneously. One approval.',
     url: 'https://tryauren.in',
     siteName: 'Auren',
@@ -46,14 +46,14 @@ export const metadata: Metadata = {
         url: '/og-image.png',
         width: 1200,
         height: 630,
-        alt: 'Auren — AI Execution Layer',
+        alt: 'Auren | AI Execution Layer',
       }
     ],
     type: 'website',
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Auren — AI Execution Layer',
+    title: 'Auren | AI Execution Layer',
     description: 'Type one command. Gmail, Calendar, and GitHub execute simultaneously. One approval.',
     images: ['/og-image.png'],
     creator: '@pranavgawaii_',

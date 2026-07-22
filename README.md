@@ -8,7 +8,7 @@ full execution plan, and executes everything simultaneously with a single approv
 
 <br />
 <a href="https://www.youtube.com/watch?v=C-uXkFPFwmc"><code>➜ onboarding guide: Watch Setup Walkthrough</code></a><br>
-<a href="https://youtu.be/uBdourG9P2w"><code>➜ demo video: Watch 60-Second Demo</code></a><br>
+<a href="https://youtu.be/uBdourG9P2w"><code>➜ demo video: Watch Demo Video</code></a><br>
 <a href="https://tryauren.in"><code>➜ try live: tryauren.in</code></a><br>
 <br />
 
@@ -45,7 +45,7 @@ by Claude Haiku via Corsair webhooks. No polling. Instant.
 
 **Semantic Email Search**
 Search your inbox by meaning, not just keywords.
-Powered by vector embeddings and Corsair's DB search API.
+Powered by OpenAI vector embeddings and Supabase pgvector RPC search.
 
 **Agent History & Audit Trail**
 Every action the AI takes is logged. Full transparency —
@@ -66,16 +66,16 @@ includes a Google Meet link. No extra steps.
 | Layer | Technology |
 |---|---|
 | Frontend | Next.js 16, TypeScript, Tailwind CSS, Framer Motion |
-| Database | Supabase (PostgreSQL + RLS + Realtime) |
+| Database | MongoDB Atlas (24/7 High Availability Document Store) |
 | Auth | Clerk |
-| AI — Agent | OpenRouter (auto-routing to best model) |
+| AI — Agent | OpenRouter API (auto-routing) |
 | AI — Classification | Claude Haiku (per-email priority classification) |
-| Integrations | Corsair MCP (Gmail, Google Calendar, GitHub) |
+| Integrations | Corsair App SDK (Gmail, Google Calendar, GitHub) |
 | Deploy | Vercel |
 
 ---
 
-## Integrations via Corsair MCP
+## Integrations via Corsair App SDK
 
 | Integration | Capabilities |
 |---|---|
@@ -83,9 +83,8 @@ includes a Google Meet link. No extra steps.
 | **Google Calendar** | List events, create events, Google Meet links, real-time webhooks |
 | **GitHub** | Create issues, list issues, submit PR reviews |
 
-All integrations are handled through Corsair's Model Context Protocol (MCP) —
-a unified interface that lets the AI agent reason across all tools
-without complex prompt engineering per integration.
+All integrations are handled through Corsair's App SDK —
+a unified interface that lets the AI agent execute actions across connected user services.
 
 ---
 
@@ -94,21 +93,20 @@ without complex prompt engineering per integration.
 ```
 User Command
      ↓
-Corsair MCP ←→ Claude Sonnet (OpenRouter)
+Auren Agent (OpenRouter AI)
      ↓
 ┌────────────────────────────┐
-│  Gmail API                 │
-│  Google Calendar API       │  ← executes in parallel
-│  GitHub API                │
+│  Gmail API (Corsair)       │
+│  Google Calendar (Corsair) │  ← executes in parallel
+│  GitHub API (Corsair)      │
 └────────────────────────────┘
      ↓
 Human-in-the-Loop Confirmation
      ↓
-Execution + Agent History Log
+Execution + Agent History Log (MongoDB Atlas)
 
 Real-time webhook pipeline:
-Gmail Inbox → Corsair Webhook → Claude Haiku → Priority Classification
-           → Vector Embeddings → Supabase → Auren UI (live update)
+Gmail Inbox → Corsair Webhook → Claude Haiku → Priority Classification → MongoDB Atlas
 ```
 
 ---

@@ -1,6 +1,6 @@
 "use server";
 
-import { createServerSupabaseClient } from "@/lib/supabase";
+import { getDb } from "@/lib/db";
 import { syncInboxEmails } from "./sync-emails";
 import { getUserId } from "@/lib/user";
 import { checkSyncRateLimit } from "@/lib/rate-limit";
@@ -12,73 +12,45 @@ export async function getInboxEmails(
   folderType: "INBOX" | "SENT" | "DRAFT" = "INBOX"
 ): Promise<{ success: boolean; data?: GmailMessage[]; error?: string }> {
   try {
-    const supabase = createServerSupabaseClient();
     const userId = await getUserId();
+    const db = await getDb();
 
-    // If sync is requested, sync first
     if (shouldSync) {
       const rateLimit = await checkSyncRateLimit();
-      if (!rateLimit.success) {
-        console.warn("Sync rate limit exceeded:", rateLimit.error);
-        // Continue to query from DB anyway so we don't crash
-      } else {
-        const syncResult = await syncInboxEmails(maxResults, folderType as "INBOX" | "SENT" | "DRAFT");
+      if (rateLimit.success) {
+        const syncResult = await syncInboxEmails(maxResults, folderType);
         if (!syncResult.success) {
           console.error("Failed to sync emails:", syncResult.error);
         }
       }
     }
 
-    // Fetch emails from Supabase for this specific user
-    let query = supabase
-      .from("emails")
-      .select("*")
-      .eq("user_id", userId)
-      .order("received_at", { ascending: false });
+    if (!db) {
+      return { success: true, data: [] };
+    }
 
-    // Apply folder filter
+    const collection = db.collection("emails");
+    const filter: Record<string, unknown> = { user_id: userId };
     if (folderType === "INBOX") {
-      query = query.contains("labels", ["INBOX"]);
+      filter.labels = { $in: ["INBOX"] };
     } else if (folderType === "SENT") {
-      query = query.contains("labels", ["SENT"]);
+      filter.labels = { $in: ["SENT"] };
     } else if (folderType === "DRAFT") {
-      query = query.contains("labels", ["DRAFT"]);
+      filter.labels = { $in: ["DRAFT"] };
     }
 
-    let { data: dbEmails, error: dbError } = await query;
+    let dbEmails = await collection
+      .find(filter)
+      .sort({ received_at: -1 })
+      .toArray();
 
-    // Fallback if the 'labels' column doesn't exist yet (user didn't run SQL migration)
-    if (dbError && dbError.message.includes("Could not find the 'labels' column")) {
-      console.warn("Labels column missing. Falling back to fetching all emails.");
-      const fallbackQuery = await supabase
-        .from("emails")
-        .select("*")
-        .eq("user_id", userId)
-        .order("received_at", { ascending: false });
-      
-      dbEmails = fallbackQuery.data;
-      dbError = fallbackQuery.error;
-    }
-
-    if (dbError) {
-      console.error("Failed to fetch emails from DB:", dbError);
-      return { success: false, error: dbError.message };
-    }
-
-    // If DB is empty and shouldSync wasn't run, trigger an initial sync automatically
     if ((!dbEmails || dbEmails.length === 0) && !shouldSync) {
-      const syncResult = await syncInboxEmails(maxResults, folderType as "INBOX" | "SENT" | "DRAFT");
+      const syncResult = await syncInboxEmails(maxResults, folderType);
       if (syncResult.success) {
-        // Fetch again after initial sync
-        const refetch = await supabase
-          .from("emails")
-          .select("*")
-          .eq("user_id", userId)
-          .order("received_at", { ascending: false });
-        
-        if (!refetch.error && refetch.data) {
-          return { success: true, data: mapDbEmailsToGmailMessages(refetch.data) };
-        }
+        dbEmails = await collection
+          .find(filter)
+          .sort({ received_at: -1 })
+          .toArray();
       }
     }
 
@@ -89,18 +61,16 @@ export async function getInboxEmails(
   }
 }
 
-
 function mapDbEmailsToGmailMessages(dbEmails: any[]): GmailMessage[] {
   return dbEmails
     .filter((email) => {
-      // Skip corrupted rows — must have at least a sender email OR a subject
       const hasSender = email.from_email && email.from_email.trim() !== "";
       const hasSubject = email.subject && email.subject.trim() !== "" && email.subject !== "(No Subject)";
       return hasSender || hasSubject;
     })
     .map((email) => ({
-      id: email.gmail_id,
-      threadId: email.thread_id,
+      id: email.gmail_id || email._id.toString(),
+      threadId: email.thread_id || email.gmail_id,
       from: email.from_email || "",
       fromName: email.from_name || email.from_email || "Unknown Sender",
       to: "",

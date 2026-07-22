@@ -1,7 +1,7 @@
 "use server";
 
 import { gmailSend } from "@/lib/corsair";
-import { createServerSupabaseClient } from "@/lib/supabase";
+import { getDb } from "@/lib/db";
 import { DEMO_USER_ID, ACTION_STATUS } from "@/lib/constants";
 
 interface SendEmailPayload {
@@ -26,26 +26,24 @@ export async function sendEmail(payload: SendEmailPayload) {
     }
 
     const messageId = result.data;
+    const db = await getDb();
 
-    const supabase = createServerSupabaseClient();
-
-    const { error: dbError } = await supabase.from("agent_actions").insert({
-      user_id: DEMO_USER_ID,
-      command: "Send email",
-      status: ACTION_STATUS.COMPLETED,
-      actions_taken: [
-        {
-          tool: "gmail_send",
-          input: { to: payload.to, subject: payload.subject, threadId: payload.threadId },
-          output: { messageId },
-          executedAt: new Date().toISOString(),
-        },
-      ],
-      completed_at: new Date().toISOString(),
-    });
-
-    if (dbError) {
-      console.error("Failed to log agent action:", dbError);
+    if (db) {
+      await db.collection("agent_actions").insertOne({
+        user_id: DEMO_USER_ID,
+        command: "Send email",
+        status: ACTION_STATUS.COMPLETED,
+        actions_taken: [
+          {
+            tool: "gmail_send",
+            input: { to: payload.to, subject: payload.subject, threadId: payload.threadId },
+            output: { messageId },
+            executedAt: new Date().toISOString(),
+          },
+        ],
+        completed_at: new Date().toISOString(),
+        created_at: new Date().toISOString(),
+      });
     }
 
     return { success: true, data: messageId };

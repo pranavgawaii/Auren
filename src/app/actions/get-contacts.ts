@@ -1,39 +1,31 @@
 "use server";
 
-import { createServerSupabaseClient } from "@/lib/supabase";
+import { getDb } from "@/lib/db";
 import { getUserId } from "@/lib/user";
 
 export async function getContacts(): Promise<{ success: boolean; data?: { name: string; email: string }[]; error?: string }> {
   try {
-    const supabase = createServerSupabaseClient();
     const userId = await getUserId();
+    const db = await getDb();
 
-    // Query contacts table ordered by email count
-    const { data: contactsData, error: contactsError } = await supabase
-      .from("contacts")
-      .select("name, email")
-      .eq("user_id", userId)
-      .order("email_count", { ascending: false });
-
-    if (contactsError) {
-      console.error("Error fetching contacts from DB:", contactsError);
+    if (!db) {
+      return { success: true, data: [] };
     }
 
+    const contactsData = await db.collection("contacts")
+      .find({ user_id: userId })
+      .sort({ email_count: -1 })
+      .toArray();
+
     if (contactsData && contactsData.length > 0) {
-      return { success: true, data: contactsData };
+      return { success: true, data: contactsData.map(c => ({ name: c.name, email: c.email })) };
     }
 
     // Fallback: extract from emails if contacts is empty
-    const { data: emailsData, error: emailsError } = await supabase
-      .from("emails")
-      .select("from_name, from_email")
-      .eq("user_id", userId)
-      .limit(100);
-
-    if (emailsError) {
-      console.error("Error fetching emails for fallback contacts:", emailsError);
-      return { success: false, error: emailsError.message };
-    }
+    const emailsData = await db.collection("emails")
+      .find({ user_id: userId })
+      .limit(100)
+      .toArray();
 
     const uniqueContacts = new Map<string, string>();
     (emailsData || []).forEach(e => {

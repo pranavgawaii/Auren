@@ -1,9 +1,9 @@
-import { createServerSupabaseClient } from "./supabase";
+import { getDb } from "./db";
 import { getUserId } from "./user";
 import { currentUser } from "@clerk/nextjs/server";
 
 export const RATE_LIMITS = {
-  COMMANDS_PER_HOUR: 1000, // Increased default limit for development
+  COMMANDS_PER_HOUR: 1000,
   SYNC_COOLDOWN_MS: 3 * 60 * 1000, // 3 minutes
 };
 
@@ -21,62 +21,48 @@ export async function checkCommandRateLimit(): Promise<{ success: boolean; error
       return { success: true }; // Unlimited for Pro users
     }
 
-    const supabase = createServerSupabaseClient();
+    const db = await getDb();
+    if (!db) return { success: true }; // Fail open for 100% uptime if DB offline
 
-    // Fetch current rate limit record
-    const { data, error } = await supabase
-      .from("user_rate_limits")
-      .select("*")
-      .eq("user_id", userId)
-      .single();
-
+    const collection = db.collection("user_rate_limits");
+    const data = await collection.findOne({ user_id: userId });
     const now = new Date();
 
-    if (error && error.code !== "PGRST116") {
-      // PGRST116 means no rows returned, which is fine (first time)
-      console.error("Rate limit fetch error:", error);
-      return { success: true }; // Fail open so we don't break app on DB error
-    }
-
     if (!data) {
-      // Create first record
-      await supabase.from("user_rate_limits").insert({
+      await collection.insertOne({
         user_id: userId,
         commands_count: 1,
         commands_reset_at: new Date(now.getTime() + 60 * 60 * 1000).toISOString(),
+        created_at: new Date().toISOString(),
       });
       return { success: true };
     }
 
-    // Check if reset time has passed
-    const resetTime = new Date(data.commands_reset_at);
+    const resetTime = new Date(data.commands_reset_at || Date.now());
     if (now > resetTime) {
-      // Reset counter
-      await supabase
-        .from("user_rate_limits")
-        .update({
-          commands_count: 1,
-          commands_reset_at: new Date(now.getTime() + 60 * 60 * 1000).toISOString(),
-        })
-        .eq("user_id", userId);
+      await collection.updateOne(
+        { user_id: userId },
+        {
+          $set: {
+            commands_count: 1,
+            commands_reset_at: new Date(now.getTime() + 60 * 60 * 1000).toISOString(),
+          },
+        }
+      );
       return { success: true };
     }
 
-    // Check if over limit
-    if (data.commands_count >= RATE_LIMITS.COMMANDS_PER_HOUR) {
+    if ((data.commands_count || 0) >= RATE_LIMITS.COMMANDS_PER_HOUR) {
       return { 
         success: false, 
-        error: `Rate limit exceeded. You can run up to ${RATE_LIMITS.COMMANDS_PER_HOUR} commands per hour. Upgrade to Auren Pro for unlimited access.` 
+        error: `Rate limit exceeded. You can run up to ${RATE_LIMITS.COMMANDS_PER_HOUR} commands per hour.` 
       };
     }
 
-    // Increment counter
-    await supabase
-      .from("user_rate_limits")
-      .update({
-        commands_count: data.commands_count + 1,
-      })
-      .eq("user_id", userId);
+    await collection.updateOne(
+      { user_id: userId },
+      { $inc: { commands_count: 1 } }
+    );
 
     return { success: true };
   } catch (err) {
@@ -88,22 +74,15 @@ export async function checkCommandRateLimit(): Promise<{ success: boolean; error
 export async function checkSyncRateLimit(): Promise<{ success: boolean; error?: string }> {
   try {
     const userId = await getUserId();
-    const supabase = createServerSupabaseClient();
+    const db = await getDb();
+    if (!db) return { success: true }; // Fail open
 
-    const { data, error } = await supabase
-      .from("user_rate_limits")
-      .select("*")
-      .eq("user_id", userId)
-      .single();
-
+    const collection = db.collection("user_rate_limits");
+    const data = await collection.findOne({ user_id: userId });
     const now = new Date();
 
-    if (error && error.code !== "PGRST116") {
-      return { success: true };
-    }
-
     if (!data) {
-      await supabase.from("user_rate_limits").insert({
+      await collection.insertOne({
         user_id: userId,
         last_sync_at: now.toISOString(),
       });
@@ -120,12 +99,10 @@ export async function checkSyncRateLimit(): Promise<{ success: boolean; error?: 
       }
     }
 
-    await supabase
-      .from("user_rate_limits")
-      .update({
-        last_sync_at: now.toISOString(),
-      })
-      .eq("user_id", userId);
+    await collection.updateOne(
+      { user_id: userId },
+      { $set: { last_sync_at: now.toISOString() } }
+    );
 
     return { success: true };
   } catch (err) {

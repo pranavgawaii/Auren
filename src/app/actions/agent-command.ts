@@ -1,6 +1,6 @@
 "use server";
 
-import { createServerSupabaseClient } from "@/lib/supabase";
+import { getDb } from "@/lib/db";
 import { sendEmail } from "@/app/actions/send-email";
 import { createCalendarEvent } from "@/app/actions/create-event";
 import { createGithubIssue } from "@/app/actions/create-github-issue";
@@ -22,17 +22,23 @@ interface UserPrefsSnapshot {
 
 async function fetchUserPreferences(userId: string): Promise<UserPrefsSnapshot> {
   try {
-    const supabase = createServerSupabaseClient();
-    const { data } = await supabase
-      .from("user_preferences")
-      .select("reply_tone, working_hours_start, working_hours_end, timezone")
-      .eq("user_id", userId)
-      .single();
+    const db = await getDb();
+    if (db) {
+      const data = await db.collection("user_preferences").findOne({ user_id: userId });
+      if (data) {
+        return {
+          replyTone: String(data.reply_tone ?? DEFAULT_REPLY_TONE),
+          workingHoursStart: String(data.working_hours_start ?? DEFAULT_WORKING_HOURS_START),
+          workingHoursEnd: String(data.working_hours_end ?? DEFAULT_WORKING_HOURS_END),
+          timezone: String(data.timezone ?? DEFAULT_TIMEZONE),
+        };
+      }
+    }
     return {
-      replyTone: String(data?.reply_tone ?? DEFAULT_REPLY_TONE),
-      workingHoursStart: String(data?.working_hours_start ?? DEFAULT_WORKING_HOURS_START),
-      workingHoursEnd: String(data?.working_hours_end ?? DEFAULT_WORKING_HOURS_END),
-      timezone: String(data?.timezone ?? DEFAULT_TIMEZONE),
+      replyTone: DEFAULT_REPLY_TONE,
+      workingHoursStart: DEFAULT_WORKING_HOURS_START,
+      workingHoursEnd: DEFAULT_WORKING_HOURS_END,
+      timezone: DEFAULT_TIMEZONE,
     };
   } catch {
     return {
@@ -44,90 +50,103 @@ async function fetchUserPreferences(userId: string): Promise<UserPrefsSnapshot> 
   }
 }
 
-function buildMcpUrl(): string {
-  const instanceId = process.env.CORSAIR_INSTANCE_ID;
-  const tenantId = process.env.CORSAIR_TENANT_ID;
-  if (!instanceId || !tenantId) throw new Error("Missing CORSAIR_INSTANCE_ID or CORSAIR_TENANT_ID");
-  return `https://api.corsair.dev/mcp/${instanceId}?tenantId=${tenantId}`;
-}
-
 function parseCommandLocally(command: string): PlannedAction[] {
-  const lower = command.toLowerCase();
   const actions: PlannedAction[] = [];
+  const lower = command.toLowerCase();
 
-  if (lower.includes("reply") || lower.includes("respond")) {
-    actions.push({ tool: "gmail_send", parameters: { command }, description: "Send reply via Gmail" });
+  if (lower.includes("send") || lower.includes("email") || lower.includes("mail")) {
+    actions.push({
+      tool: "gmail_send",
+      description: `Send email: ${command}`,
+      parameters: { to: "recipient@example.com", subject: "Follow-up", body: command },
+    });
   }
-  if (lower.includes("calendar") || lower.includes("schedule") || lower.includes("thursday") || /\d(am|pm)/.test(lower)) {
-    actions.push({ tool: "calendar_create", parameters: { command }, description: "Create calendar event" });
+
+  if (lower.includes("meeting") || lower.includes("event") || lower.includes("calendar") || lower.includes("schedule")) {
+    const start = new Date(Date.now() + 3600 * 1000);
+    const end = new Date(start.getTime() + 3600 * 1000);
+    actions.push({
+      tool: "calendar_create",
+      description: `Create calendar event: ${command}`,
+      parameters: { title: command, startAt: start.toISOString(), endAt: end.toISOString() },
+    });
   }
-  if (lower.includes("github") || lower.includes("issue") || lower.includes("bug")) {
-    actions.push({ tool: "github_create_issue", parameters: { command }, description: "Create GitHub issue" });
+
+  if (lower.includes("issue") || lower.includes("github") || lower.includes("bug")) {
+    actions.push({
+      tool: "github_create_issue",
+      description: `Create GitHub issue: ${command}`,
+      parameters: { title: command, body: `Created from agent command: ${command}` },
+    });
   }
+
+  if (actions.length === 0) {
+    actions.push({
+      tool: "gmail_send",
+      description: `Send email note: ${command}`,
+      parameters: { to: "recipient@example.com", subject: "Note", body: command },
+    });
+  }
+
   return actions;
 }
 
-async function executeFallbackActions(plannedActions: PlannedAction[], command: string) {
-  for (const action of plannedActions) {
-    try {
-      if (action.tool === "gmail_send") {
-        await sendEmail({ to: process.env.FALLBACK_REPLY_TO ?? "", subject: `Re: ${command}`, body: command });
-      } else if (action.tool === "calendar_create") {
-        const start = new Date();
-        start.setHours(start.getHours() + 24);
-        const end = new Date(start);
-        end.setMinutes(end.getMinutes() + 30);
-        await createCalendarEvent({ title: command, startAt: start.toISOString(), endAt: end.toISOString(), attendees: [] });
-      } else if (action.tool === "github_create_issue") {
-        await createGithubIssue({ title: command, body: `Created from agent command: ${command}` });
-      }
-    } catch (actionError: unknown) {
-      console.error(`Fallback action ${action.tool} failed:`, actionError instanceof Error ? actionError.message : actionError);
+async function executeFallbackActions(actions: PlannedAction[], command: string) {
+  for (const action of actions) {
+    if (action.tool === "gmail_send") {
+      const p = action.parameters as Record<string, string>;
+      await sendEmail({ to: p.to, subject: p.subject, body: p.body });
+    } else if (action.tool === "calendar_create") {
+      const p = action.parameters as Record<string, string>;
+      await createCalendarEvent({ title: p.title || command, startAt: p.startAt, endAt: p.endAt, attendees: [] });
+    } else if (action.tool === "github_create_issue") {
+      const p = action.parameters as Record<string, string>;
+      await createGithubIssue({ title: p.title || command, body: p.body || "" });
     }
   }
 }
 
-export async function executeAgentCommand(command: string, userId: string): Promise<AgentCommandResult> {
+export async function processAgentCommand(
+  command: string,
+  userId: string,
+  _emailContextId?: string
+): Promise<AgentCommandResult> {
   try {
     const prefs = await fetchUserPreferences(userId);
-    const mcpToken = process.env.CORSAIR_MCP_TOKEN;
-    const mcpUrl = buildMcpUrl();
+    const anthropicKey = process.env.ANTHROPIC_API_KEY;
 
-    if (mcpToken) {
-      const response = await fetch(mcpUrl, {
+    if (anthropicKey) {
+      const prompt = `User preferences: ${JSON.stringify(prefs)}. Analyze command: "${command}". Return JSON with plannedActions array.`;
+      const res = await fetch("https://api.anthropic.com/v1/messages", {
         method: "POST",
         headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${mcpToken}`,
+          "x-api-key": anthropicKey,
+          "anthropic-version": "2023-06-01",
+          "content-type": "application/json",
         },
         body: JSON.stringify({
-          jsonrpc: "2.0",
-          id: 1,
-          method: "tools/call",
-          params: {
-            name: "execute_command",
-            arguments: {
-              command,
-              userId,
-              systemContext: `User prefers ${prefs.replyTone} tone in replies. Working hours are ${prefs.workingHoursStart}–${prefs.workingHoursEnd} ${prefs.timezone}. Do not schedule events outside working hours.`,
-            },
-          },
+          model: "claude-3-haiku-20240307",
+          max_tokens: 1000,
+          messages: [{ role: "user", content: prompt }],
         }),
       });
 
-      if (response.ok) {
-        const json = await response.json() as Record<string, unknown>;
+      if (res.ok) {
+        const json = await res.json();
         const result = json.result as Record<string, unknown> | undefined;
         const rawActions = (result?.plannedActions ?? []) as PlannedAction[];
 
-        const supabase = createServerSupabaseClient();
-        for (const action of rawActions) {
-          await supabase.from("agent_actions").insert({
-            user_id: userId,
-            command,
-            status: ACTION_STATUS.PENDING,
-            actions_taken: [{ tool: action.tool, input: action.parameters, output: null, executedAt: new Date().toISOString() }],
-          });
+        const db = await getDb();
+        if (db) {
+          for (const action of rawActions) {
+            await db.collection("agent_actions").insertOne({
+              user_id: userId,
+              command,
+              status: ACTION_STATUS.PENDING,
+              actions_taken: [{ tool: action.tool, input: action.parameters, output: null, executedAt: new Date().toISOString() }],
+              created_at: new Date().toISOString(),
+            });
+          }
         }
         return { success: true, plannedActions: rawActions };
       }

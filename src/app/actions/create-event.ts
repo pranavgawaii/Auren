@@ -1,7 +1,7 @@
 "use server";
 
 import { googleCalendarCreate } from "@/lib/corsair";
-import { createServerSupabaseClient } from "@/lib/supabase";
+import { getDb } from "@/lib/db";
 import { DEMO_USER_ID, ACTION_STATUS } from "@/lib/constants";
 import type { CalendarEventPayload } from "@/types";
 
@@ -22,21 +22,24 @@ export async function createCalendarEvent(payload: CalendarEventPayload) {
       conferenceDataVersion: 1,
     } as CalendarEventPayload & Record<string, unknown>);
 
+    const db = await getDb();
+
     if (!result.success) {
-      // Fallback: save locally with warning
-      const supabase = createServerSupabaseClient();
       const newGcalId = `evt_fallback_${Date.now()}`;
-      await supabase.from("calendar_events").insert({
-        user_id: DEMO_USER_ID,
-        gcal_id: newGcalId,
-        title: payload.title,
-        start_at: payload.startAt,
-        end_at: payload.endAt,
-        attendees: payload.attendees || [],
-        location: payload.location || null,
-        description: payload.description || null,
-        prep_card_sent: false,
-      });
+      if (db) {
+        await db.collection("calendar_events").insertOne({
+          user_id: DEMO_USER_ID,
+          gcal_id: newGcalId,
+          title: payload.title,
+          start_at: payload.startAt,
+          end_at: payload.endAt,
+          attendees: payload.attendees || [],
+          location: payload.location || null,
+          description: payload.description || null,
+          prep_card_sent: false,
+          created_at: new Date().toISOString(),
+        });
+      }
       return {
         success: true,
         warning: "calendar_sync_failed",
@@ -45,50 +48,48 @@ export async function createCalendarEvent(payload: CalendarEventPayload) {
     }
 
     const event = result.data;
-
-    // Extract Google Meet link from Corsair response
     const raw = event as unknown as Record<string, unknown>;
     const meetLink: string | null =
       (raw.hangoutLink as string) ||
       ((raw.conferenceData as Record<string, unknown>)?.entryPoints as Array<Record<string, string>>)?.[0]?.uri ||
       null;
 
-    const supabase = createServerSupabaseClient();
-
-    const { error: eventError } = await supabase.from("calendar_events").upsert({
-      user_id: DEMO_USER_ID,
-      gcal_id: event.id,
-      title: event.title,
-      start_at: event.startAt,
-      end_at: event.endAt,
-      attendees: event.attendees,
-      location: payload.location || null,
-      zoom_link: meetLink,
-      description: payload.description || null,
-      prep_card_sent: false,
-    }, { onConflict: "gcal_id" });
-
-    if (eventError) {
-      console.error("Failed to upsert calendar event:", eventError);
-    }
-
-    const { error: dbError } = await supabase.from("agent_actions").insert({
-      user_id: DEMO_USER_ID,
-      command: "Create calendar event",
-      status: ACTION_STATUS.COMPLETED,
-      actions_taken: [
+    if (db) {
+      await db.collection("calendar_events").updateOne(
+        { gcal_id: event.id },
         {
-          tool: "calendar_create",
-          input: { title: payload.title, startAt: payload.startAt, endAt: payload.endAt },
-          output: { eventId: event.id, meetLink },
-          executedAt: new Date().toISOString(),
+          $set: {
+            user_id: DEMO_USER_ID,
+            gcal_id: event.id,
+            title: event.title,
+            start_at: event.startAt,
+            end_at: event.endAt,
+            attendees: event.attendees,
+            location: payload.location || null,
+            zoom_link: meetLink,
+            description: payload.description || null,
+            prep_card_sent: false,
+            updated_at: new Date().toISOString(),
+          },
         },
-      ],
-      completed_at: new Date().toISOString(),
-    });
+        { upsert: true }
+      );
 
-    if (dbError) {
-      console.error("Failed to log agent action:", dbError);
+      await db.collection("agent_actions").insertOne({
+        user_id: DEMO_USER_ID,
+        command: "Create calendar event",
+        status: ACTION_STATUS.COMPLETED,
+        actions_taken: [
+          {
+            tool: "calendar_create",
+            input: { title: payload.title, startAt: payload.startAt, endAt: payload.endAt },
+            output: { eventId: event.id, meetLink },
+            executedAt: new Date().toISOString(),
+          },
+        ],
+        completed_at: new Date().toISOString(),
+        created_at: new Date().toISOString(),
+      });
     }
 
     return { success: true, data: { eventId: event.id, meetLink } };
