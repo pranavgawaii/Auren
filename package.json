@@ -6,7 +6,10 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint src"
+    "lint": "next lint"
+  },
+  "eslintConfig": {
+    "extends": "next/core-web-vitals"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.104.1",
