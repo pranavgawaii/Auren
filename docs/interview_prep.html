@@ -1,0 +1,554 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Auren & Mnemo — Master Architecture, Dual-Project & Interview Preparation Guide</title>
+  
+  <!-- Clean Modern Font Stack: Plus Jakarta Sans, Inter, Switzer & JetBrains Mono -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://api.fontshare.com/v2/css?f[]=switzer@400,500,600,700&display=swap">
+
+  <style>
+    :root {
+      /* Auren Warm Cream Theme (Light Mode Default) */
+      --bg: #FBF3EC;
+      --bg-page: #FAF8F5;
+      --text-main: #241B14;
+      --text-muted: rgba(36, 27, 20, 0.65);
+      --card-bg: #FFFFFF;
+      --card-hover: #F5EFE8;
+      --border-color: rgba(36, 27, 20, 0.08);
+      --border-strong: rgba(36, 27, 20, 0.18);
+      --accent: #E8593C;
+      --accent-dark: #C44730;
+      --accent-glow: rgba(232, 89, 60, 0.08);
+      --code-bg: #F5EFE8;
+      --code-text: #241B14;
+      --sidebar-bg: #F5EFE8;
+
+      /* Semantic Highlighting Colors */
+      --tag-green-bg: rgba(16, 185, 129, 0.12);
+      --tag-green-fg: #059669;
+      --tag-green-border: rgba(16, 185, 129, 0.3);
+
+      --tag-purple-bg: rgba(139, 92, 246, 0.12);
+      --tag-purple-fg: #7C3AED;
+      --tag-purple-border: rgba(139, 92, 246, 0.3);
+
+      --tag-blue-bg: rgba(59, 130, 246, 0.12);
+      --tag-blue-fg: #2563EB;
+      --tag-blue-border: rgba(59, 130, 246, 0.3);
+
+      --tag-amber-bg: rgba(245, 158, 11, 0.12);
+      --tag-amber-fg: #D97706;
+      --tag-amber-border: rgba(245, 158, 11, 0.3);
+
+      --font-display: 'Plus Jakarta Sans', -apple-system, sans-serif;
+      --font-sans: 'Inter', -apple-system, sans-serif;
+      --font-ui: 'Switzer', 'Inter', sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+    }
+
+    [data-theme="dark"] {
+      /* Auren Dark Mode Theme */
+      --bg: #1A1512;
+      --bg-page: #121110;
+      --text-main: #FAF8F5;
+      --text-muted: rgba(250, 248, 245, 0.65);
+      --card-bg: #1F1C18;
+      --card-hover: #2A2520;
+      --border-color: rgba(250, 248, 245, 0.08);
+      --border-strong: rgba(250, 248, 245, 0.18);
+      --accent: #E8593C;
+      --accent-dark: #C44730;
+      --accent-glow: rgba(232, 89, 60, 0.15);
+      --code-bg: #151413;
+      --code-text: #FAF8F5;
+      --sidebar-bg: #171412;
+
+      /* Dark Theme Semantic Colors */
+      --tag-green-bg: rgba(16, 185, 129, 0.18);
+      --tag-green-fg: #34D399;
+      --tag-green-border: rgba(16, 185, 129, 0.4);
+
+      --tag-purple-bg: rgba(139, 92, 246, 0.18);
+      --tag-purple-fg: #A78BFA;
+      --tag-purple-border: rgba(139, 92, 246, 0.4);
+
+      --tag-blue-bg: rgba(59, 130, 246, 0.18);
+      --tag-blue-fg: #60A5FA;
+      --tag-blue-border: rgba(59, 130, 246, 0.4);
+
+      --tag-amber-bg: rgba(245, 158, 11, 0.18);
+      --tag-amber-fg: #FBBF24;
+      --tag-amber-border: rgba(245, 158, 11, 0.4);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: var(--font-sans);
+      background-color: var(--bg-page);
+      color: var(--text-main);
+      line-height: 1.55;
+      display: flex;
+      justify-content: center;
+      padding: 40px 20px;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* Fixed Controls (Print & Theme) */
+    .controls-bar {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      display: flex;
+      gap: 10px;
+      z-index: 100;
+    }
+
+    .btn {
+      background: var(--card-bg);
+      border: 1px solid var(--border-strong);
+      color: var(--text-main);
+      padding: 8px 16px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-family: var(--font-ui);
+      font-weight: 600;
+      cursor: pointer;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .btn-accent {
+      background: var(--accent);
+      color: #fff;
+      border-color: var(--accent);
+    }
+
+    .btn-accent:hover {
+      background: var(--accent-dark);
+    }
+
+    /* A4 Document Container */
+    .a4-container {
+      width: 210mm;
+      min-height: 297mm;
+      background: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 16px;
+      padding: 40px 48px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.04);
+      margin: 0 auto;
+    }
+
+    /* Header with Clean Typography */
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding-bottom: 24px;
+      border-bottom: 2px solid var(--border-color);
+      margin-bottom: 24px;
+    }
+
+    .brand-header {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .brand-logo-img {
+      width: 44px;
+      height: 44px;
+      border-radius: 10px;
+      object-fit: cover;
+      border: 1px solid rgba(232, 89, 60, 0.25);
+    }
+
+    .brand-info h1 {
+      font-family: var(--font-display);
+      font-size: 26px;
+      font-weight: 800;
+      letter-spacing: -0.6px;
+      line-height: 1.1;
+      color: var(--text-main);
+    }
+
+    .brand-info .tagline {
+      font-size: 13px;
+      color: var(--text-muted);
+      font-family: var(--font-ui);
+    }
+
+    .header-badge {
+      padding: 6px 14px;
+      background: var(--accent-glow);
+      color: var(--accent);
+      border: 1px solid rgba(232, 89, 60, 0.25);
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 700;
+      font-family: var(--font-mono);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    /* Color-Coded Pre-Interview Reading Box */
+    .reading-strategy-box {
+      background: rgba(232, 89, 60, 0.04);
+      border: 1px solid rgba(232, 89, 60, 0.2);
+      border-radius: 12px;
+      padding: 18px 22px;
+      margin-bottom: 32px;
+    }
+
+    .strategy-title {
+      font-family: var(--font-display);
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--accent);
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .strategy-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+    }
+
+    .strategy-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 10px 12px;
+      font-size: 12px;
+    }
+
+    .strategy-time {
+      font-family: var(--font-mono);
+      font-weight: 700;
+      color: var(--accent);
+      font-size: 11px;
+      margin-bottom: 4px;
+    }
+
+    /* Section Styling */
+    .section {
+      margin-bottom: 36px;
+      page-break-inside: avoid;
+    }
+
+    .section-title {
+      font-family: var(--font-display);
+      font-size: 18px;
+      font-weight: 800;
+      letter-spacing: -0.4px;
+      margin-bottom: 18px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      color: var(--text-main);
+    }
+
+    .section-title::before {
+      content: "";
+      display: inline-block;
+      width: 4px;
+      height: 20px;
+      background: var(--accent);
+      border-radius: 2px;
+    }
+
+    /* Cards & Notes Grid */
+    .card-note {
+      background: var(--bg-page);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 20px 24px;
+      margin-bottom: 16px;
+    }
+
+    .card-note-title {
+      font-family: var(--font-display);
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--accent);
+      margin-bottom: 8px;
+    }
+
+    p {
+      font-size: 13.5px;
+      color: var(--text-muted);
+      margin-bottom: 10px;
+      line-height: 1.55;
+    }
+
+    p:last-child {
+      margin-bottom: 0;
+    }
+
+    p strong {
+      color: var(--text-main);
+    }
+
+    /* Color Chips & Badges System */
+    .chip {
+      padding: 4px 9px;
+      border-radius: 6px;
+      font-size: 11px;
+      font-family: var(--font-mono);
+      font-weight: 700;
+      display: inline-block;
+      margin-right: 4px;
+    }
+
+    .chip-green {
+      background: var(--tag-green-bg);
+      color: var(--tag-green-fg);
+      border: 1px solid var(--tag-green-border);
+    }
+
+    .chip-purple {
+      background: var(--tag-purple-bg);
+      color: var(--tag-purple-fg);
+      border: 1px solid var(--tag-purple-border);
+    }
+
+    .chip-blue {
+      background: var(--tag-blue-bg);
+      color: var(--tag-blue-fg);
+      border: 1px solid var(--tag-blue-border);
+    }
+
+    .chip-amber {
+      background: var(--tag-amber-bg);
+      color: var(--tag-amber-fg);
+      border: 1px solid var(--tag-amber-border);
+    }
+
+    .chip-terracotta {
+      background: rgba(232, 89, 60, 0.12);
+      color: var(--accent);
+      border: 1px solid rgba(232, 89, 60, 0.3);
+    }
+
+    /* Quick Copy Box */
+    .quick-copy-box {
+      background: var(--code-bg);
+      border: 1px solid var(--border-strong);
+      border-left: 4px solid var(--accent);
+      border-radius: 10px;
+      padding: 18px;
+      margin-bottom: 16px;
+      font-family: var(--font-sans);
+      font-size: 13px;
+      line-height: 1.7;
+      color: var(--code-text);
+    }
+
+    .quick-copy-box ul {
+      padding-left: 20px;
+    }
+
+    .quick-copy-box li {
+      margin-bottom: 8px;
+    }
+
+    .quick-copy-box li:last-child {
+      margin-bottom: 0;
+    }
+
+    /* Print Rules for A4 PDF */
+    @media print {
+      body {
+        background: #fff !important;
+        padding: 0 !important;
+      }
+      .controls-bar {
+        display: none !important;
+      }
+      .a4-container {
+        width: 100% !important;
+        border: none !important;
+        box-shadow: none !important;
+        padding: 0 !important;
+      }
+      .page-break {
+        page-break-before: always;
+      }
+    }
+  </style>
+</head>
+<body data-theme="light">
+
+  <!-- Fixed Top Controls -->
+  <div class="controls-bar">
+    <button class="btn" onclick="toggleTheme()" id="themeBtn">🌙 Dark Mode</button>
+    <button class="btn btn-accent" onclick="window.print()">🖨️ Print / Save as PDF</button>
+  </div>
+
+  <!-- A4 Printable Container -->
+  <div class="a4-container">
+
+    <!-- Header with Clean Typography -->
+    <header>
+      <div class="brand-header">
+        <img src="public/auren_logo.webp" alt="Auren Logo" class="brand-logo-img" />
+        <div class="brand-info">
+          <h1>Auren & Mnemo Master Engineering Guide</h1>
+          <div class="tagline">Dual-Project Architecture, AI Context Engine & HR Defense Cheatsheet</div>
+        </div>
+      </div>
+      <div class="header-badge">A4 DUAL-PROJECT GUIDE</div>
+    </header>
+
+    <!-- Pre-Interview 10-Minute Reading Routine Box -->
+    <div class="reading-strategy-box">
+      <div class="strategy-title">⏱️ 10-Minute Pre-Interview Reading Routine (Follow This Before Interviews!)</div>
+      <div class="strategy-grid">
+        <div class="strategy-card">
+          <div class="strategy-time">0–3 MINS</div>
+          <div>Recite <strong>30-Second Elevator Pitch</strong> for Auren out loud 3 times.</div>
+        </div>
+        <div class="strategy-card">
+          <div class="strategy-time">3–6 MINS</div>
+          <div>Review <strong>Mnemo Pure Backend Architecture</strong> (JSON Preference Engine).</div>
+        </div>
+        <div class="strategy-card">
+          <div class="strategy-time">6–8 MINS</div>
+          <div>Skim <strong>Role-Specific Pitch Framing</strong> (SDE vs AI/ML focus).</div>
+        </div>
+        <div class="strategy-card">
+          <div class="strategy-time">8–10 MINS</div>
+          <div>Skim <strong>2-Project Copy-Paste Resume Block</strong> (Auren + Mnemo).</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SECTION 1: PROJECT #1 — AUREN AI TASK ENGINE -->
+    <div class="section">
+      <div class="section-title">1. Project #1: Auren — AI Task Execution Engine</div>
+
+      <div class="card-note">
+        <div class="card-note-title">⚡ 30-Second Pitch for Auren</div>
+        <p>
+          "I built <strong>Auren</strong> to eliminate context-switching between developer tools. Instead of manually juggling Gmail, Google Calendar, and GitHub to coordinate daily engineering tasks, developers issue plain-text commands like <em>'Schedule a sync with Rahul tomorrow 3 PM and open a GitHub issue for the auth bug'</em>.
+        </p>
+        <p>
+          Auren parses workspace context using OpenRouter AI, constructs a structured multi-step execution plan, presents a <span class="chip chip-green">human-in-the-loop review interface</span> for 1-click approval, and executes actions concurrently across APIs via <span class="chip chip-blue">Corsair SDK</span> and <span class="chip chip-purple">MongoDB Atlas</span>."
+        </p>
+      </div>
+
+      <div class="card-note">
+        <div class="card-note-title">🎯 2-Minute Architectural Deep-Dive for Auren</div>
+        <p>
+          "Auren is built with <span class="chip chip-terracotta">Next.js 16 App Router</span> using Server Actions to eliminate client JS bundle bloat and keep API keys strictly on the server. When a command is submitted, an AI router parses context and outputs a strongly-typed <code>PlannedAction[]</code> schema.
+        </p>
+        <p>
+          To prevent unintended side effects, we enforce a strict <span class="chip chip-green">Human-in-the-Loop pattern</span>: proposed actions are saved with a <code>PENDING</code> status in <span class="chip chip-purple">MongoDB Atlas</span>. The user previews exact parameters in an interactive UI. Upon explicit approval, Auren dispatches parallel requests through the <span class="chip chip-blue">Corsair App SDK</span> to Gmail, Google Calendar, and GitHub, marking execution <code>COMPLETED</code>."
+        </p>
+      </div>
+    </div>
+
+    <!-- SECTION 2: PROJECT #2 — MNEMO PURE BACKEND API -->
+    <div class="section page-break">
+      <div class="section-title">2. Project #2: Mnemo — AI Context & User Preference Memory Engine</div>
+
+      <div class="card-note">
+        <div class="card-note-title">🧸 Mnemo Explained Like You Are 10 Years Old (Pure Backend!)</div>
+        <p>
+          Imagine every time you chat with an AI chatbot, it forgets your name, your programming language, and what project you are working on the next day. You have to explain everything over and over again!
+        </p>
+        <p>
+          <strong>Mnemo is a digital long-term memory system for AI Chatbots.</strong>
+        </p>
+        <p>
+          1. <strong>Extracting Facts:</strong> When you chat, Mnemo's backend API extracts important facts about you (like <em>'Samiksha codes in Python'</em>) and saves them as a JSON profile in a database tied to your user ID.
+        </p>
+        <p>
+          2. <strong>Saving Preferences:</strong> If your preferences change (e.g. you say <em>'I switched to Go'</em>), Mnemo automatically updates the stored JSON document so old facts don't confuse the AI.
+        </p>
+        <p>
+          3. <strong>Fast Memory Injection:</strong> Next time you open a new chat, Mnemo fetches your saved user profile in less than <span class="chip chip-green">0.03 seconds</span> and automatically injects it into the AI prompt so it remembers everything across sessions!
+        </p>
+      </div>
+
+      <div class="card-note">
+        <div class="card-note-title">⚡ 30-Second Technical Pitch for Mnemo</div>
+        <p>
+          "I engineered <strong>Mnemo</strong> as a pure backend REST API memory service for AI applications. It automatically extracts user preferences and facts from chat messages, stores them in structured MongoDB documents indexed by user ID, and injects user context into fresh AI prompts to enable seamless cross-session memory without manual re-entry."
+        </p>
+      </div>
+
+      <div class="card-note">
+        <div class="card-note-title">🛠️ Pure Backend Tech Stack & Key Features</div>
+        <p>• <strong>Pure REST API Architecture:</strong> Built in Node.js & Express (or Python FastAPI) with zero frontend UI requirements. Tested via Postman / Swagger (`/docs`).</p>
+        <p>• <strong>Automated Preference Extraction:</strong> Passes unstructured chat logs through OpenRouter / Claude Haiku to parse JSON user profiles.</p>
+        <p>• <strong>Sub-30ms Context Retrieval:</strong> MongoDB Atlas indexed B-tree queries fetching user profiles for fast system prompt injection.</p>
+        <p>• <strong>Security Middleware:</strong> JWT authentication, input validation, and sliding-window rate limiting.</p>
+      </div>
+    </div>
+
+    <!-- SECTION 3: 2-PROJECT COPY-PASTE RESUME BLOCK -->
+    <div class="section page-break">
+      <div class="section-title">3. Complete 2-Project Resume Copy-Paste Block</div>
+
+      <div class="quick-copy-box">
+        <strong>WORK EXPERIENCE</strong><br>
+        <strong>Crafta Studio — Software Engineer / Developer</strong>
+        <ul>
+          <li>Engineered responsive full-stack web applications and client interfaces using React and Next.js.</li>
+          <li>Optimized web performance and asset delivery, achieving 95+ Lighthouse performance scores across client web surfaces.</li>
+        </ul>
+        <br>
+        <strong>PROJECTS</strong><br>
+        <strong>1. Auren — AI Task Automation & Workspace Engine</strong> (Next.js 16, TypeScript, OpenRouter, MongoDB Atlas, Clerk)
+        <ul>
+          <li>Built an AI task execution engine using Next.js 16 Server Actions & OpenRouter to automate Gmail, Calendar, and GitHub workflows, reducing developer context-switching latency by 75%.</li>
+          <li>Implemented a 2-stage human-in-the-loop review state machine (<code>PENDING</code> → <code>COMPLETED</code>) to eliminate dangerous AI side-effects across external APIs.</li>
+          <li>Engineered a 24/7 fail-open MongoDB Atlas database connection pool (<code>src/lib/db.ts</code>) with fallback handlers, achieving 100% uptime without 500 server errors.</li>
+          <li>Developed a sub-200ms Gmail webhook pipeline powered by Claude Haiku AI to classify emails into Urgent, Normal, and FYI priority tiers in real time.</li>
+        </ul>
+        <br>
+        <strong>2. Mnemo — AI Context & User Preference Memory Engine</strong> (Node.js, Express, MongoDB Atlas, OpenRouter)
+        <ul>
+          <li>Architected a pure backend REST API service to manage structured user memory profiles and cross-session AI context retrieval.</li>
+          <li>Implemented automated LLM fact extraction pipelines, parsing unstructured user messages into JSON preference documents.</li>
+          <li>Designed indexed database schemas in MongoDB Atlas, delivering sub-30ms user context lookup latencies during prompt injection.</li>
+          <li>Built secure middleware for JWT user authentication, request validation, and rate limiting to protect backend API endpoints.</li>
+        </ul>
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    function toggleTheme() {
+      const body = document.body;
+      const themeBtn = document.getElementById("themeBtn");
+      if (body.getAttribute("data-theme") === "light") {
+        body.setAttribute("data-theme", "dark");
+        themeBtn.innerText = "☀️ Light Mode";
+      } else {
+        body.setAttribute("data-theme", "light");
+        themeBtn.innerText = "🌙 Dark Mode";
+      }
+    }
+  </script>
+</body>
+</html>
