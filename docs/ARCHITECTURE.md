@@ -1,72 +1,106 @@
-# System Architecture & Execution Lifecycle — Auren
+# System Architecture & Execution Lifecycle
 
-Auren is a unified AI task execution platform designed to eliminate developer context-switching across Gmail, Google Calendar, and GitHub.
+Auren is an intelligent command center and automated execution engine for **Gmail**, **Google Calendar**, and **GitHub**. It converts single natural-language user prompts into multi-tool execution plans, allowing users to review, edit, and run complex multi-service workflows simultaneously with a single click.
 
 ---
 
 ## 🏗️ High-Level System Architecture
 
-```
-[ User Intent (Natural Language) ]
-               │
-               ▼
-   [ Next.js 16 App Router ] ── (Clerk Auth & SHA-1 User Hashing)
-               │
-               ▼
-   [ OpenRouter / Claude Haiku ] ── (Zod Schema Validation: PlannedAction[])
-               │
-               ▼
-   [ Human-in-the-Loop Gate ] ── (Status: PENDING in MongoDB Atlas)
-               │
-      (User 1-Click Approval)
-               │
-               ▼
-   [ Corsair App SDK ] ── (Parallel API Dispatch: Promise.all())
-         ├── Gmail API (Send Email)
-         ├── Google Calendar API (Create Meet Event)
-         └── GitHub API (Create Issue)
-               │
-               ▼
-   [ MongoDB Atlas Persistence ] ── (Fail-Open Connection Pool)
+Auren is built on Next.js 16 App Router, using Clerk for authentication, MongoDB Atlas for state persistence, OpenRouter / Claude Haiku for intent parsing, and the Corsair App SDK for third-party API dispatches.
+
+```mermaid
+flowchart TD
+    subgraph Client Layer
+        UI[Next.js 16 Web Dashboard]
+        Palette[⌘K Command Palette / Voice Input]
+    end
+
+    subgraph Authentication & Identity
+        Clerk[Clerk Auth Session]
+        Hasher[SHA-1 Deterministic UUID Generator]
+    end
+
+    subgraph Intelligence & Parsing Layer
+        LLM[OpenRouter API / Claude Haiku]
+        Zod[Zod Structured Output Schema]
+    end
+
+    subgraph Governance & Safety Gate
+        Mongo[MongoDB Atlas Document Store]
+        PendingActions[agent_actions Staging - Status: PENDING]
+    end
+
+    subgraph Parallel Execution Engine
+        Corsair[Corsair App SDK Tenant Client]
+        Gmail[Gmail API]
+        Calendar[Google Calendar API]
+        GitHub[GitHub API]
+    end
+
+    UI --> Clerk
+    Clerk --> Hasher
+    Palette --> LLM
+    LLM --> Zod
+    Zod --> PendingActions
+    PendingActions --> Mongo
+    Mongo --> UI
+    UI -- User 1-Click Approval --> Corsair
+    Corsair -->|Promise.all| Gmail
+    Corsair -->|Promise.all| Calendar
+    Corsair -->|Promise.all| GitHub
 ```
 
 ---
 
-## 🔄 End-to-End Execution Flow
+## 🔄 Step-by-Step Execution Lifecycle
 
-### 1. Ingestion & Authentication Isolation
-- User submits natural language intent via the Next.js `/app` dashboard.
-- Clerk handles OAuth session authentication.
-- `getUserId()` hashes the Clerk user string ID using SHA-1 into a 32-character hex UUID to guarantee strict multi-tenant query isolation across database collections.
+### 1. User Ingestion & Multi-Tenant Identity Isolation
+- User submits a command via the Next.js interactive web dashboard or the ⌘K command palette.
+- Clerk authenticates the session and provides a user string identifier (e.g., `user_2x...`).
+- `getUserId()` hashes the raw Clerk ID into a canonical SHA-1 32-character hex UUID format (`xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx`).
+- This guarantees strict multi-tenant data isolation and index performance across MongoDB database queries.
 
-### 2. Context Extraction & AI Intent Parsing
-- `processAgentCommand` compiles workspace context (unread emails, upcoming calendar events).
-- The prompt and context payload are dispatched to OpenRouter / Claude Haiku.
-- The model returns a structured JSON payload validated against a Zod schema producing a strongly-typed `PlannedAction[]` array.
+```typescript
+// src/lib/user.ts
+export async function getUserId(): Promise<string> {
+  const { userId } = await auth();
+  if (!userId) throw new Error("Unauthorized");
 
-### 3. Human-in-the-Loop Safety Gate (Stage 1)
-- To prevent destructive side-effects, Auren logs proposed actions in MongoDB Atlas (`agent_actions`) with a status of `PENDING`.
-- Zero external APIs are invoked at this stage.
-- The UI renders an interactive parameter review modal displaying exact email targets, calendar times, or issue descriptions.
+  const hash = createHash("sha1").update(userId).digest("hex");
+  return `${hash.slice(0, 8)}-${hash.slice(8, 12)}-${hash.slice(12, 16)}-${hash.slice(16, 20)}-${hash.slice(20, 32)}`;
+}
+```
 
-### 4. Parallel Tool Execution (Stage 2)
-- Upon explicit user confirmation, Server Actions fire parallel Corsair SDK requests using `Promise.all()`.
-- Operations run concurrently:
-  - `gmailSend`: Dispatches formatted email messages.
-  - `googleCalendarCreate`: Schedules event and generates Google Meet video links.
-  - `githubCreateIssue`: Creates issue in the designated repository.
-- Action status updates to `COMPLETED` upon success.
+### 2. Workspace Context Assembly & Intent Parsing
+- `processAgentCommand` gathers recent workspace context, such as unread emails and upcoming calendar events.
+- Prompt payload and context are submitted to OpenRouter (routing to Claude Haiku or GPT-4o).
+- The LLM output is strictly validated against Zod JSON schemas, producing a strongly typed `PlannedAction[]` array.
 
-### 5. Asynchronous Webhook & Priority Pipeline
-- Gmail webhooks hit `/api/webhooks/gmail`.
-- Header cryptographic HMAC signatures are verified.
-- Snippet payloads are evaluated by Claude Haiku in under 200ms to classify messages into `URGENT`, `NORMAL`, or `FYI` tiers.
-- Contacts and classified messages are upserted into MongoDB Atlas.
+### 3. Human-in-the-Loop Governance Gate (Stage 1)
+- Proposed actions are written to MongoDB (`agent_actions` collection) with a status of `PENDING`.
+- **Zero external APIs are called during this phase.**
+- The UI presents an interactive confirmation modal showing exact action parameters (recipient emails, meeting schedules, GitHub issue text) for user review and editing.
+
+### 4. Parallel Multi-Tool Execution (Stage 2)
+- When the user clicks **Approve & Execute**, Next.js Server Actions initiate concurrent API dispatches via `Promise.all()`.
+- Operations execute simultaneously rather than sequentially:
+  - **Gmail:** Dispatches email responses or drafts.
+  - **Google Calendar:** Creates events and generates Google Meet video links.
+  - **GitHub:** Opens repository issues or submits PR reviews.
+- Upon completion, action statuses transition to `COMPLETED` and results are logged to the audit trail.
+
+### 5. Asynchronous Webhooks & Intelligent Inbox Ingestion
+- Real-time Gmail webhooks land at `/api/webhooks/gmail`.
+- Secret HMAC headers are validated to verify request authenticity.
+- Incoming messages are classified asynchronously by Claude Haiku in under 200ms into `URGENT`, `NORMAL`, or `FYI` priority buckets, updating MongoDB collections (`emails`, `contacts`).
 
 ---
 
-## 🛡️ Key Resilience Patterns
+## 🛡️ Architectural Resilience & Design Guarantees
 
-- **Fail-Open Database Resilience (`src/lib/db.ts`)**: Singleton `MongoClient` connection helper catches connection drops and returns graceful fallback states, ensuring 100% UI availability.
-- **Deterministic SHA-1 User Hashing**: Maps string user IDs to clean B-tree collection index keys.
-- **Strict Slotted Rate Limiting**: Caps user command velocity to prevent API abuse.
+> [!NOTE]
+> **Fail-Open Database Connectivity:** The MongoDB helper (`src/lib/db.ts`) catches connection errors gracefully and fails open, allowing UI components to remain operational even during temporary database latency spikes.
+
+- **Deterministic Tenant Isolation:** SHA-1 user identity hashing enforces separation across database collections and Corsair tenant instances.
+- **Strict Rate Limiting:** Request velocity limits protect against API abuse and accidental LLM loop execution (`src/lib/rate-limit.ts`).
+- **Complete Audit Trail:** Every action planned, approved, or executed is persisted with timestamps, parameters, and execution status for full operational transparency.
