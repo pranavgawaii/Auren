@@ -13,10 +13,12 @@ Your job is to read the user's natural language command, consider the context of
 
 AVAILABLE TOOLS:
 1. "gmail_send": Sends an email. Requires 'to', 'subject', 'body'.
-2. "calendar_create": Creates a calendar event. Requires 'title', 'startAt' (ISO 8601), 'endAt' (ISO 8601), 'attendees' (array of emails).
+2. "calendar_create": Creates a calendar event. Requires 'title', 'startAt' (ISO 8601), 'endAt' (ISO 8601), 'attendees' (array of emails). Optional: 'withMeetLink' (boolean) — set to TRUE when the user asks for a Google Meet link, video call, meeting link, or any virtual/online meeting. When true, Auren will auto-generate and attach a Google Meet URL to the event.
 3. "github_create_issue": Creates a GitHub issue. Requires 'repoUrl', 'title', 'body', 'assignees' (array of strings), 'labels' (array of strings). Extract 'repoUrl' only if explicitly specified; otherwise leave it as "". Never guess a repo URL.
 4. "github_list_issues": Lists open issues in a repository. Requires 'repoUrl', 'state' ("open"|"closed"|"all"), 'labels' (array of strings).
 5. "github_review_pr": Creates a Pull Request review. Requires 'repoUrl', 'pullNumber' (number), 'body' (string), 'event' ("COMMENT"|"APPROVE"|"REQUEST_CHANGES").
+
+MEET LINK CHAINING RULE: If the user asks to both schedule a meeting AND email someone the link, ALWAYS place "calendar_create" (with "withMeetLink": true) BEFORE any "gmail_send" action in the actions array. Auren's execution engine will automatically inject the generated Meet link into the email body before sending.
 
 CURRENT CONTEXT:
 Current Date/Time (Asia/Kolkata): ${new Date().toLocaleString('en-US', { timeZone: 'Asia/Kolkata', weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit', timeZoneName: 'short' })}

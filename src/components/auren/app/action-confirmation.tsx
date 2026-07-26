@@ -291,8 +291,28 @@ export function ActionConfirmation({
                                 onChange={(e) => updateParam(i, "title", e.target.value)}
                               />
                             </div>
+                            {/* Google Meet Toggle */}
+                            <div className="flex items-center justify-between px-3 py-2.5 rounded-[10px] border border-[rgba(36,27,20,0.08)] dark:border-[rgba(255,255,255,0.08)] bg-[#F0FDF4] dark:bg-[#166534]/10">
+                              <div className="flex items-center gap-2">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" className="text-[#16A34A] shrink-0">
+                                  <path d="M15 10L20.5 7.5V16.5L15 14M4 8H14C14.5523 8 15 8.44772 15 9V15C15 15.5523 14.5523 16 14 16H4C3.44772 16 3 15.5523 3 15V9C3 8.44772 3.44772 8 4 8Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                                </svg>
+                                <div className="flex flex-col">
+                                  <span className="font-sans font-semibold text-[12px] text-[#16A34A]">Add Google Meet link</span>
+                                  <span className="font-sans text-[10px] text-[rgba(36,27,20,0.4)] dark:text-[rgba(255,255,255,0.4)]">Auto-generates a meet.google.com link</span>
+                                </div>
+                              </div>
+                              <button
+                                type="button"
+                                onClick={() => updateParam(i, "withMeetLink", !action.parameters.withMeetLink)}
+                                className={`relative w-10 h-5 rounded-full transition-colors shrink-0 ${action.parameters.withMeetLink ? "bg-[#16A34A]" : "bg-[rgba(36,27,20,0.12)] dark:bg-[rgba(255,255,255,0.12)]"}`}
+                                aria-label="Toggle Google Meet link"
+                              >
+                                <span className={`absolute top-0.5 w-4 h-4 rounded-full bg-white shadow transition-transform ${action.parameters.withMeetLink ? "translate-x-5" : "translate-x-0.5"}`} />
+                              </button>
+                            </div>
                             <div className="flex flex-col gap-3">
-                              <label className="font-sans text-[11px] font-semibold text-[rgba(36,27,20,0.6)] dark:text-[rgba(255,255,255,0.6)] uppercase tracking-wider">Date & Time Range</label>
+                              <label className="font-sans text-[11px] font-semibold text-[rgba(36,27,20,0.6)] dark:text-[rgba(255,255,255,0.6)] uppercase tracking-wider">Date &amp; Time Range</label>
                               
                               <div className="flex justify-center p-3 border border-[rgba(36,27,20,0.08)] dark:border-[rgba(255,255,255,0.08)] bg-white dark:bg-[#383838] rounded-[12px] shadow-sm">
                                 <RangeCalendar

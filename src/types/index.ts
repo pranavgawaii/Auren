@@ -144,6 +144,7 @@ export interface CalendarEventPayload {
   attendees: string[];
   location?: string;
   description?: string;
+  withMeetLink?: boolean; // When true, auto-generates a Google Meet link for the event
 }
 
 export interface CalendarEventResult {
@@ -155,6 +156,7 @@ export interface CalendarEventResult {
   htmlLink: string;
   description?: string;
   location?: string;
+  meetLink?: string; // Google Meet URL, e.g. https://meet.google.com/abc-defg-hij
 }
 
 export interface GitHubIssuePayload {

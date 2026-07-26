@@ -12,15 +12,33 @@ export async function executePlan(
   try {
     const results = [];
 
+    // Execute actions sequentially so results from earlier steps
+    // (e.g. a Google Meet link from calendar_create) can be injected
+    // into later steps (e.g. the body of a gmail_send).
+    let lastMeetLink: string | null = null;
+
     for (const action of plan.actions) {
       if (action.tool === "gmail_send") {
+        // Inject Meet link into email body if a preceding calendar step generated one
+        if (lastMeetLink && action.parameters.body) {
+          const meetSection = `\n\n📹 Join Google Meet: ${lastMeetLink}`;
+          if (!String(action.parameters.body).includes(lastMeetLink)) {
+            action.parameters.body = String(action.parameters.body) + meetSection;
+          }
+        }
         const payload = action.parameters as unknown as GmailSendPayload;
         const res = await gmailSend(payload);
         results.push({ tool: "gmail_send", success: res.success, data: "data" in res ? res.data : res.error });
       } else if (action.tool === "calendar_create") {
         const payload = action.parameters as unknown as CalendarEventPayload;
         const res = await googleCalendarCreate(payload);
-        results.push({ tool: action.tool, success: res.success, data: "data" in res ? res.data : res.error });
+        const eventData = res.success ? res.data : null;
+        const eventError = !res.success ? res.error : null;
+        // Capture Meet link for sequential chaining
+        if (eventData && typeof eventData === "object" && "meetLink" in eventData && eventData.meetLink) {
+          lastMeetLink = eventData.meetLink as string;
+        }
+        results.push({ tool: action.tool, success: res.success, data: eventData ?? eventError });
       } else if (action.tool === "github_create_issue") {
         const payload = action.parameters as unknown as GitHubIssuePayload;
         const res = await githubCreateIssue(payload);

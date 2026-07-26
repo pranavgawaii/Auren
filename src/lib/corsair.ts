@@ -418,15 +418,24 @@ export async function googleCalendarCreate(
       endIso = end.toISOString();
     }
 
-    const runParams = {
+    const runParams: Record<string, unknown> = {
       calendarId: "primary",
+      ...(payload.withMeetLink && { conferenceDataVersion: 1 }),
       event: {
         summary: payload.title,
         description,
         start: { dateTime: startIso },
         end: { dateTime: endIso },
         ...(attendees && { attendees }),
-      }
+        ...(payload.withMeetLink && {
+          conferenceData: {
+            createRequest: {
+              requestId: `auren-meet-${Date.now()}`,
+              conferenceSolutionKey: { type: "hangoutsMeet" },
+            },
+          },
+        }),
+      },
     };
     
     let resultData: Record<string, unknown> = {};
@@ -482,6 +491,16 @@ export async function googleCalendarCreate(
       };
     }
     
+    const meetLink = payload.withMeetLink
+      ? String(
+          resultData.hangoutLink ||
+          (resultData.conferenceData as any)?.entryPoints?.find(
+            (ep: any) => ep.entryPointType === "video"
+          )?.uri ||
+          ""
+        )
+      : undefined;
+
     const eventResult: CalendarEventResult = {
       id: String(resultData.id || ""),
       title: String(resultData.summary || payload.title),
@@ -489,6 +508,7 @@ export async function googleCalendarCreate(
       endAt: String((resultData.end as Record<string, unknown>)?.dateTime || payload.endAt),
       attendees: (resultData.attendees as import("@/types").CalendarAttendee[]) || [],
       htmlLink: String(resultData.htmlLink || ""),
+      ...(meetLink && { meetLink }),
     };
 
     return { success: true, data: eventResult };

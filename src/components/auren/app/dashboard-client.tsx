@@ -395,7 +395,15 @@ export function DashboardClient() {
           setIsConfirmOpen(false);
           
           if (res.success) {
-            showToast.success("Actions executed successfully!");
+            // Check if any action produced a Google Meet link
+            const meetResult = res.results?.find(
+              (r: any) => r.tool === "calendar_create" && r.data?.meetLink
+            ) as any;
+            if (meetResult?.data?.meetLink) {
+              showToast.success(`✅ Event created! 📹 Meet: ${meetResult.data.meetLink}`);
+            } else {
+              showToast.success("Actions executed successfully!");
+            }
             setIsExecuting(false);
             setIsConfirmOpen(false);
             setTimeout(() => router.refresh(), 1500); // Reload to sync state after toast without unmounting client
