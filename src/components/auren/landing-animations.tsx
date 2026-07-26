@@ -63,14 +63,14 @@ export function IntegrationsStrip() {
         overflow: "hidden",
       }}
     >
-      <motion.h3 
+      <motion.h2 
         initial={{ opacity: 0, y: 10 }}
         whileInView={{ opacity: 1, y: 0 }}
         viewport={{ once: true }}
         style={{ fontFamily: "var(--font-civane, Georgia, serif)", fontWeight: 300, fontSize: "24px", color: "#241B14", marginBottom: "48px" }}
       >
         Connects to the tools you already use
-      </motion.h3>
+      </motion.h2>
       
       {/* Infinite scrolling marquee */}
       <div style={{ display: "flex", overflow: "hidden", whiteSpace: "nowrap" }}>

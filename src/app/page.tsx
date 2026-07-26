@@ -34,7 +34,7 @@ export default async function LandingPage() {
 
 
   return (
-    <div style={{ background: "#FBF3EC", color: "#241B14", fontFamily: FONT_BODY, overflowX: "clip", minHeight: "100vh" }}>
+    <main style={{ background: "#FBF3EC", color: "#241B14", fontFamily: FONT_BODY, overflowX: "clip", minHeight: "100vh" }}>
 
       {/* ═══════════════════════════════════════════════
           NAV — sticky
@@ -165,6 +165,6 @@ export default async function LandingPage() {
       <Footer />
 
       <WatchDemoModal />
-    </div>
+    </main>
   );
 }

@@ -83,6 +83,7 @@ export function Topbar() {
             target="_blank"
             rel="noopener noreferrer"
             className="nav-github-link"
+            aria-label="View Auren on GitHub"
             style={{ display: "flex", alignItems: "center", justifyContent: "center", padding: "10px", borderRadius: "6px" }}
           >
             <motion.svg 
