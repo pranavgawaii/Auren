@@ -21,10 +21,17 @@ export async function executePlan(
       if (action.tool === "gmail_send") {
         // Inject Meet link into email body if a preceding calendar step generated one
         if (lastMeetLink && action.parameters.body) {
-          const meetSection = `\n\n📹 Join Google Meet: ${lastMeetLink}`;
-          if (!String(action.parameters.body).includes(lastMeetLink)) {
-            action.parameters.body = String(action.parameters.body) + meetSection;
+          let bodyStr = String(action.parameters.body);
+          if (bodyStr.includes("[Auto-generated upon execution]")) {
+            bodyStr = bodyStr.replace("[Auto-generated upon execution]", lastMeetLink);
+          } else if (bodyStr.includes("[Auto-generated upon confirmation]")) {
+            bodyStr = bodyStr.replace("[Auto-generated upon confirmation]", lastMeetLink);
+          } else if (bodyStr.includes("link below.") || bodyStr.includes("link below")) {
+            bodyStr = bodyStr.replace(/link below\.?/gi, `link: ${lastMeetLink}`);
+          } else if (!bodyStr.includes(lastMeetLink)) {
+            bodyStr += `\n\n📹 Join Google Meet: ${lastMeetLink}`;
           }
+          action.parameters.body = bodyStr;
         }
         const payload = action.parameters as unknown as GmailSendPayload;
         const res = await gmailSend(payload);

@@ -43,7 +43,7 @@ ${history && history.length > 0 ? history.map((h) => `[${h.role.toUpperCase()}] 
 
 IMPORTANT RULES FOR PARAMETERS & MISSING CONTEXT:
 1. NEVER LEAVE PARAMETERS EMPTY: Every action in the 'actions' array MUST have filled-in, meaningful parameters. NEVER output empty strings ("") or empty arrays ([]) for 'to', 'subject', 'body', 'title', or 'attendees'.
-2. GMAIL_SEND PARAMETERS: Must always include 'to' (single resolved email string like "pranavgawai1518@gmail.com"), 'subject' (descriptive subject like "Google Meet Link / Meeting Sync"), and 'body' (full friendly email message text signed by ${userName}).
+2. GMAIL_SEND PARAMETERS: Must always include 'to' (single resolved email string like "pranavgawai1518@gmail.com"), 'subject' (descriptive subject like "Google Meet Link / Meeting Sync"), and 'body' (full friendly email message text). If a Google Meet call is scheduled, include "📹 Google Meet Link: [Auto-generated upon execution]" inside the draft body text.
 3. CALENDAR_CREATE PARAMETERS: Must always include 'title' (event summary string like "Google Meet Sync with Pranav Gawai"), 'startAt' (ISO 8601 string), 'endAt' (ISO 8601 string), 'attendees' (array of emails), and 'withMeetLink' (boolean).
 4. RESOLVING MENTIONS: If the user types a mention like "@Pranav Gawai", look up their email from RESOLVED MENTIONS MAP above and use their exact email address (e.g. "pranavgawai1518@gmail.com") in both 'to' and 'attendees'.
 5. USE PLACEHOLDERS FOR MISSING DETAILS: If the user didn't specify an email body or subject, write a clear professional default body and subject instead of leaving them empty.
