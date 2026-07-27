@@ -4,7 +4,25 @@ import React, { useState, useEffect, useTransition } from "react";
 import { getTeamContacts, addTeamContact, deleteTeamContact, type TeamContact } from "@/app/actions/team";
 import { showToast } from "@/components/ui/premium-toast";
 import { motion, AnimatePresence } from "framer-motion";
-import { UserPlus, Search, Trash2, Mail, Briefcase, AtSign, Sparkles, Copy, Check, Users, ShieldCheck } from "lucide-react";
+import { 
+  Users, 
+  UserPlus, 
+  Search, 
+  Trash2, 
+  Mail, 
+  Briefcase, 
+  AtSign, 
+  Sparkles, 
+  Copy, 
+  Check, 
+  ShieldCheck, 
+  Calendar,
+  Grid,
+  List as ListIcon,
+  X,
+  ExternalLink,
+  Plus
+} from "lucide-react";
 
 function getInitials(name: string) {
   if (!name) return "??";
@@ -29,11 +47,12 @@ function getAvatarPalette(name: string) {
 export function TeamView() {
   const [contacts, setContacts] = useState<TeamContact[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [showAddForm, setShowAddForm] = useState(false);
-  const [selectedContact, setSelectedContact] = useState<TeamContact | null>(null);
-  const [isPending, startTransition] = useTransition();
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
+  const [activeTab, setActiveTab] = useState<"all" | "core" | "synced">("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [copiedField, setCopiedField] = useState<string | null>(null);
+  const [isPending, startTransition] = useTransition();
 
   const [form, setForm] = useState({ name: "", email: "", role: "" });
   const [formError, setFormError] = useState("");
@@ -42,11 +61,7 @@ export function TeamView() {
     setIsLoading(true);
     const res = await getTeamContacts();
     if (res.success) {
-      const data = res.data || [];
-      setContacts(data);
-      if (data.length > 0 && !selectedContact) {
-        setSelectedContact(data[0]);
-      }
+      setContacts(res.data || []);
     }
     setIsLoading(false);
   };
@@ -61,7 +76,7 @@ export function TeamView() {
       if (res.success) {
         showToast.success(`${form.name} added to your team!`);
         setForm({ name: "", email: "", role: "" });
-        setShowAddForm(false);
+        setShowAddModal(false);
         load();
       } else {
         setFormError(res.error || "Failed to add contact");
@@ -75,9 +90,6 @@ export function TeamView() {
       const res = await deleteTeamContact(contact.id);
       if (res.success) {
         showToast.success(`${contact.name} removed`);
-        if (selectedContact?.id === contact.id) {
-          setSelectedContact(null);
-        }
         load();
       } else {
         showToast.error("Failed to remove contact");
@@ -92,356 +104,418 @@ export function TeamView() {
     setTimeout(() => setCopiedField(null), 2000);
   };
 
-  const filtered = contacts.filter(c =>
-    c.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    c.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    (c.role || "").toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const triggerAIChat = (promptText: string) => {
+    document.dispatchEvent(new CustomEvent("open-ai-chat", { detail: { text: promptText } }));
+  };
+
+  const filtered = contacts.filter(c => {
+    const matchesSearch =
+      c.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      c.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (c.role || "").toLowerCase().includes(searchQuery.toLowerCase());
+
+    if (!matchesSearch) return false;
+    if (activeTab === "core") return c.role && c.role.toLowerCase() !== "synced contact";
+    if (activeTab === "synced") return c.role && c.role.toLowerCase() === "synced contact";
+    return true;
+  });
 
   return (
-    <div className="flex w-full h-full min-h-0 bg-white dark:bg-[#383838] overflow-hidden flex-1 relative">
-      {/* LEFT COLUMN: Contact Directory & Management (380px) */}
-      <div className="w-full md:w-[380px] shrink-0 border-r border-[rgba(36,27,20,0.08)] dark:border-[rgba(255,255,255,0.08)] flex flex-col h-full bg-[#FAF8F5]/50 dark:bg-[#2C2C2C]/50">
-        
-        {/* Directory Header */}
-        <div className="p-5 border-b border-[rgba(36,27,20,0.08)] dark:border-[rgba(255,255,255,0.08)] shrink-0 bg-white dark:bg-[#383838]">
-          <div className="flex items-center justify-between mb-3">
-            <div className="flex items-center gap-2.5">
-              <div className="w-8 h-8 rounded-[8px] bg-[#E8593C]/10 text-[#E8593C] flex items-center justify-center font-bold">
-                <Users size={18} />
-              </div>
-              <div>
-                <h1 className="text-[16px] font-semibold text-[#241B14] dark:text-[#F4F4F5] tracking-tight leading-none">
-                  Team Directory
-                </h1>
-                <span className="text-[11px] text-[rgba(36,27,20,0.45)] dark:text-[rgba(255,255,255,0.45)] font-medium">
-                  {contacts.length} {contacts.length === 1 ? "member" : "members"}
+    <div className="flex-1 w-full h-full min-h-screen bg-white dark:bg-[#383838] overflow-y-auto flex flex-col relative">
+      
+      {/* Top Banner / Stats Header */}
+      <div className="p-6 md:p-10 border-b border-[rgba(36,27,20,0.08)] dark:border-[rgba(255,255,255,0.08)] bg-[#FAF8F5]/60 dark:bg-[#2C2C2C]/60 shrink-0">
+        <div className="max-w-[1200px] mx-auto space-y-6">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div>
+              <div className="flex items-center gap-2 mb-1">
+                <span className="px-2.5 py-0.5 rounded-full bg-[#E8593C]/10 text-[#E8593C] font-mono text-[10.5px] font-bold tracking-wide uppercase">
+                  Auren Network Hub
                 </span>
               </div>
+              <h1 className="text-[26px] font-extrabold text-[#241B14] dark:text-[#F4F4F5] tracking-tight">
+                Team & People Directory
+              </h1>
+              <p className="text-[13px] text-[rgba(36,27,20,0.5)] dark:text-[rgba(255,255,255,0.5)] mt-1 max-w-[600px]">
+                Manage team members, contacts, and custom email mappings for instant AI <span className="font-semibold text-[#E8593C]">@mentions</span>.
+              </p>
             </div>
-            
-            <button
-              onClick={() => { setShowAddForm(!showAddForm); setFormError(""); }}
-              className="flex items-center gap-1.5 h-8 px-3 bg-[#E8593C] hover:bg-[#D4472B] text-white rounded-[8px] text-[12px] font-semibold transition-all shadow-sm active:scale-95"
-            >
-              <UserPlus size={14} />
-              <span>Add</span>
-            </button>
+
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => { setShowAddModal(true); setFormError(""); }}
+                className="flex items-center gap-2 h-10 px-4 bg-[#E8593C] hover:bg-[#D4472B] text-white rounded-[10px] text-[13px] font-semibold transition-all shadow-md active:scale-95 shrink-0"
+              >
+                <UserPlus size={16} />
+                <span>Add Team Member</span>
+              </button>
+            </div>
           </div>
 
-          {/* Search Box */}
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-[rgba(36,27,20,0.35)] dark:text-[rgba(255,255,255,0.35)]" size={14} />
-            <input
-              type="text"
-              placeholder="Search team by name, email, role..."
-              value={searchQuery}
-              onChange={e => setSearchQuery(e.target.value)}
-              className="w-full h-8 pl-8 pr-3 bg-[#FAF8F5] dark:bg-[#2C2C2C] border border-[rgba(36,27,20,0.08)] dark:border-[rgba(255,255,255,0.08)] rounded-[8px] text-[12px] text-[#241B14] dark:text-[#F4F4F5] placeholder:text-[rgba(36,27,20,0.35)] dark:placeholder:text-[rgba(255,255,255,0.35)] outline-none focus:border-[#E8593C]/50 transition-colors"
-            />
+          {/* Stats Grid */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-2">
+            <div className="p-4 rounded-[14px] bg-white dark:bg-[#383838] border border-[rgba(36,27,20,0.08)] dark:border-[rgba(255,255,255,0.08)] flex items-center justify-between shadow-sm">
+              <div>
+                <span className="text-[11px] font-bold text-[rgba(36,27,20,0.4)] dark:text-[rgba(255,255,255,0.4)] uppercase tracking-wider">
+                  Total Contacts
+                </span>
+                <p className="text-[24px] font-extrabold text-[#241B14] dark:text-[#F4F4F5] mt-0.5">
+                  {contacts.length}
+                </p>
+              </div>
+              <div className="w-10 h-10 rounded-[10px] bg-[#E8593C]/10 text-[#E8593C] flex items-center justify-center font-bold">
+                <Users size={20} />
+              </div>
+            </div>
+
+            <div className="p-4 rounded-[14px] bg-white dark:bg-[#383838] border border-[rgba(36,27,20,0.08)] dark:border-[rgba(255,255,255,0.08)] flex items-center justify-between shadow-sm">
+              <div>
+                <span className="text-[11px] font-bold text-[rgba(36,27,20,0.4)] dark:text-[rgba(255,255,255,0.4)] uppercase tracking-wider">
+                  AI @Mentions
+                </span>
+                <p className="text-[24px] font-extrabold text-[#E8593C] mt-0.5">
+                  100% Ready
+                </p>
+              </div>
+              <div className="w-10 h-10 rounded-[10px] bg-purple-500/10 text-purple-500 flex items-center justify-center font-bold">
+                <AtSign size={20} />
+              </div>
+            </div>
+
+            <div className="p-4 rounded-[14px] bg-white dark:bg-[#383838] border border-[rgba(36,27,20,0.08)] dark:border-[rgba(255,255,255,0.08)] flex items-center justify-between shadow-sm">
+              <div>
+                <span className="text-[11px] font-bold text-[rgba(36,27,20,0.4)] dark:text-[rgba(255,255,255,0.4)] uppercase tracking-wider">
+                  Email Resolution
+                </span>
+                <p className="text-[24px] font-extrabold text-green-600 dark:text-green-400 mt-0.5 flex items-center gap-1.5">
+                  <ShieldCheck size={20} /> Auto-Mapped
+                </p>
+              </div>
+              <div className="w-10 h-10 rounded-[10px] bg-green-500/10 text-green-500 flex items-center justify-center font-bold">
+                <Sparkles size={20} />
+              </div>
+            </div>
           </div>
         </div>
+      </div>
 
-        {/* Add Person Inline Form */}
-        <AnimatePresence>
-          {showAddForm && (
-            <motion.div
-              initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: "auto" }}
-              exit={{ opacity: 0, height: 0 }}
-              className="border-b border-[rgba(36,27,20,0.08)] dark:border-[rgba(255,255,255,0.08)] bg-white dark:bg-[#383838] overflow-hidden"
-            >
-              <form onSubmit={handleAdd} className="p-4 flex flex-col gap-2.5">
-                <div className="flex items-center justify-between">
-                  <span className="text-[11px] font-bold text-[#E8593C] uppercase tracking-wider">New Team Contact</span>
-                  <button 
-                    type="button" 
-                    onClick={() => setShowAddForm(false)} 
-                    className="text-[11px] text-[rgba(36,27,20,0.4)] dark:text-[rgba(255,255,255,0.4)] hover:text-[#241B14] dark:hover:text-[#F4F4F5]"
-                  >
-                    Close
-                  </button>
-                </div>
-                <input
-                  type="text"
-                  placeholder="Full Name *"
-                  value={form.name}
-                  onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
-                  required
-                  className="h-8 px-3 bg-[#FAF8F5] dark:bg-[#2C2C2C] border border-[rgba(36,27,20,0.08)] dark:border-[rgba(255,255,255,0.08)] rounded-[6px] text-[12px] text-[#241B14] dark:text-[#F4F4F5] placeholder:text-[rgba(36,27,20,0.35)] dark:placeholder:text-[rgba(255,255,255,0.35)] outline-none focus:border-[#E8593C]/50"
-                />
-                <input
-                  type="email"
-                  placeholder="Email Address *"
-                  value={form.email}
-                  onChange={e => setForm(f => ({ ...f, email: e.target.value }))}
-                  required
-                  className="h-8 px-3 bg-[#FAF8F5] dark:bg-[#2C2C2C] border border-[rgba(36,27,20,0.08)] dark:border-[rgba(255,255,255,0.08)] rounded-[6px] text-[12px] text-[#241B14] dark:text-[#F4F4F5] placeholder:text-[rgba(36,27,20,0.35)] dark:placeholder:text-[rgba(255,255,255,0.35)] outline-none focus:border-[#E8593C]/50"
-                />
-                <input
-                  type="text"
-                  placeholder="Role (e.g. Founder, Developer)"
-                  value={form.role}
-                  onChange={e => setForm(f => ({ ...f, role: e.target.value }))}
-                  className="h-8 px-3 bg-[#FAF8F5] dark:bg-[#2C2C2C] border border-[rgba(36,27,20,0.08)] dark:border-[rgba(255,255,255,0.08)] rounded-[6px] text-[12px] text-[#241B14] dark:text-[#F4F4F5] placeholder:text-[rgba(36,27,20,0.35)] dark:placeholder:text-[rgba(255,255,255,0.35)] outline-none focus:border-[#E8593C]/50"
-                />
-                {formError && <p className="text-[11px] text-red-500 font-medium">{formError}</p>}
+      {/* Main Workspace Area */}
+      <div className="p-6 md:p-10 flex-1">
+        <div className="max-w-[1200px] mx-auto space-y-6">
+          
+          {/* Controls Bar: Search, Tabs, View Toggle */}
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pb-2">
+            
+            {/* Tabs */}
+            <div className="flex items-center gap-1 bg-[#FAF8F5] dark:bg-[#2C2C2C] p-1 rounded-[10px] border border-[rgba(36,27,20,0.06)] dark:border-[rgba(255,255,255,0.06)] w-full sm:w-auto">
+              {(["all", "core", "synced"] as const).map(tab => (
                 <button
-                  type="submit"
-                  disabled={isPending}
-                  className="h-8 mt-1 bg-[#E8593C] hover:bg-[#D4472B] disabled:opacity-50 text-white rounded-[6px] text-[12px] font-semibold transition-colors shadow-sm"
+                  key={tab}
+                  onClick={() => setActiveTab(tab)}
+                  className={`px-3 py-1.5 rounded-[7px] text-[12px] font-semibold transition-colors capitalize ${
+                    activeTab === tab
+                      ? "bg-white dark:bg-[#383838] text-[#E8593C] shadow-sm"
+                      : "text-[rgba(36,27,20,0.5)] dark:text-[rgba(255,255,255,0.5)] hover:text-[#241B14] dark:hover:text-[#F4F4F5]"
+                  }`}
                 >
-                  {isPending ? "Adding..." : "Save Contact"}
+                  {tab === "all" ? `All Members (${contacts.length})` : tab === "core" ? "Core Team" : "Synced"}
                 </button>
-              </form>
-            </motion.div>
-          )}
-        </AnimatePresence>
+              ))}
+            </div>
 
-        {/* Contacts Scroll Area */}
-        <div className="flex-1 overflow-y-auto p-3 space-y-1.5 scrollbar-thin">
+            {/* Search & Layout Toggle */}
+            <div className="flex items-center gap-3 w-full sm:w-auto">
+              <div className="relative flex-1 sm:w-[280px]">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-[rgba(36,27,20,0.35)] dark:text-[rgba(255,255,255,0.35)]" size={14} />
+                <input
+                  type="text"
+                  placeholder="Search by name, email, or role..."
+                  value={searchQuery}
+                  onChange={e => setSearchQuery(e.target.value)}
+                  className="w-full h-9 pl-9 pr-3 bg-[#FAF8F5] dark:bg-[#2C2C2C] border border-[rgba(36,27,20,0.08)] dark:border-[rgba(255,255,255,0.08)] rounded-[9px] text-[12px] text-[#241B14] dark:text-[#F4F4F5] placeholder:text-[rgba(36,27,20,0.35)] dark:placeholder:text-[rgba(255,255,255,0.35)] outline-none focus:border-[#E8593C]/50 transition-colors"
+                />
+              </div>
+
+              <div className="flex items-center gap-1 bg-[#FAF8F5] dark:bg-[#2C2C2C] p-1 rounded-[9px] border border-[rgba(36,27,20,0.06)] dark:border-[rgba(255,255,255,0.06)] shrink-0">
+                <button
+                  onClick={() => setViewMode("grid")}
+                  className={`p-1.5 rounded-[6px] transition-colors ${viewMode === "grid" ? "bg-white dark:bg-[#383838] text-[#E8593C] shadow-sm" : "text-[rgba(36,27,20,0.4)] dark:text-[rgba(255,255,255,0.4)]"}`}
+                  title="Grid View"
+                >
+                  <Grid size={15} />
+                </button>
+                <button
+                  onClick={() => setViewMode("list")}
+                  className={`p-1.5 rounded-[6px] transition-colors ${viewMode === "list" ? "bg-white dark:bg-[#383838] text-[#E8593C] shadow-sm" : "text-[rgba(36,27,20,0.4)] dark:text-[rgba(255,255,255,0.4)]"}`}
+                  title="List View"
+                >
+                  <ListIcon size={15} />
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* Directory Content */}
           {isLoading ? (
-            <div className="space-y-2 p-2">
-              {[1, 2, 3].map(i => (
-                <div key={i} className="h-14 bg-white dark:bg-[#383838] rounded-[10px] animate-pulse" />
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {[1, 2, 3, 4, 5, 6].map(i => (
+                <div key={i} className="h-44 bg-[#FAF8F5] dark:bg-[#2C2C2C] rounded-[16px] animate-pulse" />
               ))}
             </div>
           ) : filtered.length === 0 ? (
-            <div className="p-8 text-center flex flex-col items-center justify-center h-full">
-              <div className="w-12 h-12 rounded-full bg-[rgba(36,27,20,0.04)] dark:bg-[rgba(255,255,255,0.06)] flex items-center justify-center text-[rgba(36,27,20,0.3)] dark:text-[rgba(255,255,255,0.3)] mb-3">
-                <Users size={22} />
+            <div className="p-12 text-center flex flex-col items-center justify-center bg-[#FAF8F5]/40 dark:bg-[#2C2C2C]/40 rounded-[20px] border border-[rgba(36,27,20,0.08)] dark:border-[rgba(255,255,255,0.08)] py-16">
+              <div className="w-14 h-14 rounded-full bg-[#E8593C]/10 text-[#E8593C] flex items-center justify-center mb-3">
+                <Users size={24} />
               </div>
-              <p className="text-[13px] font-semibold text-[#241B14] dark:text-[#F4F4F5] mb-1">
-                {searchQuery ? "No matching contacts" : "No team members yet"}
+              <h3 className="text-[16px] font-bold text-[#241B14] dark:text-[#F4F4F5] mb-1">
+                {searchQuery ? "No matching team members" : "Directory Empty"}
+              </h3>
+              <p className="text-[12px] text-[rgba(36,27,20,0.45)] dark:text-[rgba(255,255,255,0.45)] max-w-[320px] leading-relaxed mb-4">
+                {searchQuery ? "Try refining your search keyword." : "Add contacts to use @mentions in AI commands."}
               </p>
-              <p className="text-[11px] text-[rgba(36,27,20,0.4)] dark:text-[rgba(255,255,255,0.4)] max-w-[200px] leading-relaxed">
-                {searchQuery ? "Try searching another name" : "Add contacts to use @mentions in AI commands"}
-              </p>
-              {!searchQuery && (
-                <button
-                  onClick={() => setShowAddForm(true)}
-                  className="mt-3 text-[12px] font-semibold text-[#E8593C] hover:underline flex items-center gap-1"
-                >
-                  <UserPlus size={13} /> Add first person
-                </button>
-              )}
+              <button
+                onClick={() => setShowAddModal(true)}
+                className="flex items-center gap-2 h-9 px-4 bg-[#E8593C] hover:bg-[#D4472B] text-white rounded-[9px] text-[12.5px] font-semibold transition-all shadow-sm"
+              >
+                <Plus size={14} /> Add First Contact
+              </button>
+            </div>
+          ) : viewMode === "grid" ? (
+            /* GRID VIEW */
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+              {filtered.map(contact => {
+                const palette = getAvatarPalette(contact.name);
+                const tag = `@${contact.name}`;
+
+                return (
+                  <motion.div
+                    key={contact.id}
+                    layout
+                    initial={{ opacity: 0, scale: 0.96 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    className="group p-5 rounded-[16px] border border-[rgba(36,27,20,0.08)] dark:border-[rgba(255,255,255,0.08)] bg-white dark:bg-[#2C2C2C] shadow-sm hover:shadow-md hover:border-[#E8593C]/40 transition-all flex flex-col justify-between relative overflow-hidden"
+                  >
+                    <div>
+                      {/* Top row: Avatar & Delete */}
+                      <div className="flex items-start justify-between mb-4">
+                        <div
+                          className="w-12 h-12 rounded-full flex items-center justify-center font-extrabold text-[15px] border-2 shrink-0"
+                          style={{
+                            backgroundColor: palette.lightBg,
+                            borderColor: palette.bg + "40",
+                            color: palette.text,
+                          }}
+                        >
+                          {getInitials(contact.name)}
+                        </div>
+
+                        <button
+                          onClick={e => handleDelete(contact, e)}
+                          className="opacity-0 group-hover:opacity-100 p-1.5 rounded-[6px] hover:bg-red-50 dark:hover:bg-red-950/40 text-[rgba(36,27,20,0.3)] hover:text-red-500 transition-all"
+                          title="Delete Member"
+                        >
+                          <Trash2 size={14} />
+                        </button>
+                      </div>
+
+                      {/* Name & Role */}
+                      <div className="space-y-1">
+                        <h3 className="text-[15px] font-bold text-[#241B14] dark:text-[#F4F4F5] truncate">
+                          {contact.name}
+                        </h3>
+                        <p className="text-[12px] text-[rgba(36,27,20,0.5)] dark:text-[rgba(255,255,255,0.5)] truncate flex items-center gap-1.5">
+                          <Mail size={12} className="shrink-0" />
+                          <span>{contact.email}</span>
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Footer: @Mention badge & AI Trigger button */}
+                    <div className="pt-4 mt-4 border-t border-[rgba(36,27,20,0.06)] dark:border-[rgba(255,255,255,0.06)] flex items-center justify-between gap-2">
+                      <button
+                        onClick={() => copyToClipboard(tag, `tag-${contact.id}`)}
+                        className="flex items-center gap-1 px-2 py-1 rounded-[6px] bg-[#E8593C]/10 hover:bg-[#E8593C]/20 text-[#E8593C] font-mono text-[11px] font-bold transition-colors shrink-0"
+                        title="Click to copy @mention"
+                      >
+                        <AtSign size={11} />
+                        <span>{contact.name.split(" ")[0]}</span>
+                        {copiedField === `tag-${contact.id}` ? <Check size={11} className="text-green-600" /> : <Copy size={10} />}
+                      </button>
+
+                      <button
+                        onClick={() => triggerAIChat(`Schedule a Google Meet with @${contact.name} tomorrow at 3 PM and email them the meeting link`)}
+                        className="flex items-center gap-1 text-[11px] font-semibold text-[rgba(36,27,20,0.5)] dark:text-[rgba(255,255,255,0.5)] hover:text-[#E8593C] transition-colors"
+                        title="AI Meet Request"
+                      >
+                        <span>Meet</span>
+                        <ExternalLink size={10} />
+                      </button>
+                    </div>
+                  </motion.div>
+                );
+              })}
             </div>
           ) : (
-            filtered.map(contact => {
-              const palette = getAvatarPalette(contact.name);
-              const isSelected = selectedContact?.id === contact.id;
+            /* LIST VIEW */
+            <div className="space-y-2">
+              {filtered.map(contact => {
+                const palette = getAvatarPalette(contact.name);
+                const tag = `@${contact.name}`;
 
-              return (
-                <div
-                  key={contact.id}
-                  onClick={() => setSelectedContact(contact)}
-                  className={`group relative flex items-center gap-3 p-2.5 rounded-[10px] cursor-pointer transition-all border ${
-                    isSelected
-                      ? "bg-white dark:bg-[#383838] border-[#E8593C]/40 shadow-sm"
-                      : "bg-transparent border-transparent hover:bg-white/60 dark:hover:bg-[#383838]/60"
-                  }`}
-                >
-                  {/* Avatar Circle */}
+                return (
                   <div
-                    className="w-9 h-9 rounded-full flex items-center justify-center font-bold text-[12px] shrink-0 border"
-                    style={{
-                      backgroundColor: palette.lightBg,
-                      borderColor: palette.bg + "30",
-                      color: palette.text,
-                    }}
+                    key={contact.id}
+                    className="group p-4 rounded-[12px] border border-[rgba(36,27,20,0.08)] dark:border-[rgba(255,255,255,0.08)] bg-white dark:bg-[#2C2C2C] flex items-center justify-between gap-4 hover:border-[#E8593C]/40 transition-all shadow-sm"
                   >
-                    {getInitials(contact.name)}
-                  </div>
+                    <div className="flex items-center gap-3.5 min-w-0">
+                      <div
+                        className="w-10 h-10 rounded-full flex items-center justify-center font-bold text-[13px] border-2 shrink-0"
+                        style={{
+                          backgroundColor: palette.lightBg,
+                          borderColor: palette.bg + "40",
+                          color: palette.text,
+                        }}
+                      >
+                        {getInitials(contact.name)}
+                      </div>
 
-                  {/* Contact Info */}
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-1.5">
-                      <span className="text-[12.5px] font-semibold text-[#241B14] dark:text-[#F4F4F5] truncate">
-                        {contact.name}
-                      </span>
-                      {contact.role && (
-                        <span className="px-1.5 py-[0.5px] rounded bg-[rgba(36,27,20,0.06)] dark:bg-[rgba(255,255,255,0.08)] text-[9.5px] font-medium text-[rgba(36,27,20,0.5)] dark:text-[rgba(255,255,255,0.5)] truncate">
-                          {contact.role}
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-2">
+                          <span className="text-[14px] font-bold text-[#241B14] dark:text-[#F4F4F5] truncate">
+                            {contact.name}
+                          </span>
+                          {contact.role && (
+                            <span className="px-2 py-[1px] rounded bg-[rgba(36,27,20,0.06)] dark:bg-[rgba(255,255,255,0.08)] text-[10px] font-semibold text-[rgba(36,27,20,0.5)] dark:text-[rgba(255,255,255,0.5)]">
+                              {contact.role}
+                            </span>
+                          )}
+                        </div>
+                        <span className="text-[12px] text-[rgba(36,27,20,0.45)] dark:text-[rgba(255,255,255,0.45)] truncate block">
+                          {contact.email}
                         </span>
-                      )}
+                      </div>
                     </div>
-                    <span className="text-[11px] text-[rgba(36,27,20,0.45)] dark:text-[rgba(255,255,255,0.45)] truncate block">
-                      {contact.email}
-                    </span>
-                  </div>
 
-                  {/* Delete Hover Action */}
-                  <button
-                    onClick={e => handleDelete(contact, e)}
-                    className="opacity-0 group-hover:opacity-100 p-1.5 rounded-[6px] hover:bg-red-50 dark:hover:bg-red-950/30 text-[rgba(36,27,20,0.3)] hover:text-red-500 transition-all shrink-0"
-                    title="Delete contact"
-                  >
-                    <Trash2 size={13} />
-                  </button>
-                </div>
-              );
-            })
+                    <div className="flex items-center gap-3 shrink-0">
+                      <button
+                        onClick={() => copyToClipboard(tag, `tag-${contact.id}`)}
+                        className="flex items-center gap-1 px-2.5 py-1 rounded-[6px] bg-[#E8593C]/10 text-[#E8593C] font-mono text-[11px] font-bold hover:bg-[#E8593C]/20 transition-colors"
+                      >
+                        <AtSign size={11} />
+                        <span>{contact.name.split(" ")[0]}</span>
+                      </button>
+
+                      <button
+                        onClick={e => handleDelete(contact, e)}
+                        className="opacity-0 group-hover:opacity-100 p-1.5 rounded-[6px] hover:bg-red-50 dark:hover:bg-red-950/40 text-[rgba(36,27,20,0.3)] hover:text-red-500 transition-all"
+                        title="Delete Member"
+                      >
+                        <Trash2 size={14} />
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
           )}
         </div>
       </div>
 
-      {/* RIGHT COLUMN: Contact Workspace Preview & AI @Mention Guide (flex-1) */}
-      <div className="flex-1 flex flex-col h-full bg-white dark:bg-[#383838] overflow-y-auto p-6 md:p-10">
-        {selectedContact ? (
-          <div className="max-w-[640px] w-full mx-auto space-y-8">
-            {/* Contact Header Card */}
-            <div className="p-6 rounded-[16px] border border-[rgba(36,27,20,0.08)] dark:border-[rgba(255,255,255,0.08)] bg-[#FAF8F5] dark:bg-[#2C2C2C] flex flex-col md:flex-row md:items-center justify-between gap-4 shadow-sm">
-              <div className="flex items-center gap-4">
-                {(() => {
-                  const palette = getAvatarPalette(selectedContact.name);
-                  return (
-                    <div
-                      className="w-14 h-14 rounded-full flex items-center justify-center font-bold text-[18px] shrink-0 border-2"
-                      style={{
-                        backgroundColor: palette.lightBg,
-                        borderColor: palette.bg + "40",
-                        color: palette.text,
-                      }}
-                    >
-                      {getInitials(selectedContact.name)}
-                    </div>
-                  );
-                })()}
-                <div>
-                  <h2 className="text-[20px] font-bold text-[#241B14] dark:text-[#F4F4F5] tracking-tight">
-                    {selectedContact.name}
-                  </h2>
-                  <p className="text-[13px] text-[rgba(36,27,20,0.5)] dark:text-[rgba(255,255,255,0.5)] flex items-center gap-2 mt-0.5">
-                    <Mail size={13} className="shrink-0" />
-                    <span>{selectedContact.email}</span>
-                  </p>
-                </div>
-              </div>
-
-              {selectedContact.role && (
-                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#E8593C]/10 text-[#E8593C] text-[12px] font-semibold self-start md:self-auto">
-                  <Briefcase size={12} />
-                  <span>{selectedContact.role}</span>
-                </div>
-              )}
-            </div>
-
-            {/* Quick Mention Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {/* @Mention Tag Card */}
-              <div className="p-5 rounded-[14px] border border-[rgba(36,27,20,0.08)] dark:border-[rgba(255,255,255,0.08)] bg-white dark:bg-[#2C2C2C] flex flex-col justify-between gap-3 shadow-sm">
-                <div>
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-[11px] font-bold text-[rgba(36,27,20,0.4)] dark:text-[rgba(255,255,255,0.4)] uppercase tracking-wider flex items-center gap-1">
-                      <AtSign size={12} className="text-[#E8593C]" /> AI @Mention Tag
-                    </span>
-                    <button
-                      onClick={() => copyToClipboard(`@${selectedContact.name}`, "tag")}
-                      className="p-1 rounded text-[rgba(36,27,20,0.4)] dark:text-[rgba(255,255,255,0.4)] hover:text-[#E8593C] transition-colors"
-                      title="Copy @tag"
-                    >
-                      {copiedField === "tag" ? <Check size={14} className="text-green-500" /> : <Copy size={14} />}
-                    </button>
-                  </div>
-                  <code className="text-[15px] font-bold font-mono text-[#E8593C] bg-[#E8593C]/10 px-2.5 py-1 rounded-[6px] inline-block">
-                    @{selectedContact.name}
-                  </code>
-                </div>
-                <p className="text-[11px] text-[rgba(36,27,20,0.45)] dark:text-[rgba(255,255,255,0.45)] leading-normal">
-                  Type this tag in Auren AI to automatically target {selectedContact.name.split(" ")[0]}.
-                </p>
-              </div>
-
-              {/* Resolved Email Card */}
-              <div className="p-5 rounded-[14px] border border-[rgba(36,27,20,0.08)] dark:border-[rgba(255,255,255,0.08)] bg-white dark:bg-[#2C2C2C] flex flex-col justify-between gap-3 shadow-sm">
-                <div>
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-[11px] font-bold text-[rgba(36,27,20,0.4)] dark:text-[rgba(255,255,255,0.4)] uppercase tracking-wider flex items-center gap-1">
-                      <ShieldCheck size={12} className="text-green-500" /> Target Email
-                    </span>
-                    <button
-                      onClick={() => copyToClipboard(selectedContact.email, "email")}
-                      className="p-1 rounded text-[rgba(36,27,20,0.4)] dark:text-[rgba(255,255,255,0.4)] hover:text-[#E8593C] transition-colors"
-                      title="Copy email"
-                    >
-                      {copiedField === "email" ? <Check size={14} className="text-green-500" /> : <Copy size={14} />}
-                    </button>
-                  </div>
-                  <span className="text-[13px] font-mono font-medium text-[#241B14] dark:text-[#F4F4F5] truncate block">
-                    {selectedContact.email}
-                  </span>
-                </div>
-                <p className="text-[11px] text-[rgba(36,27,20,0.45)] dark:text-[rgba(255,255,255,0.45)] leading-normal">
-                  Auren AI automatically resolves <span className="font-semibold text-[#E8593C]">@{selectedContact.name}</span> to this address.
-                </p>
-              </div>
-            </div>
-
-            {/* Prompt Template Examples */}
-            <div className="p-6 rounded-[16px] border border-[rgba(36,27,20,0.08)] dark:border-[rgba(255,255,255,0.08)] bg-[#FAF8F5] dark:bg-[#2C2C2C] space-y-4">
-              <div className="flex items-center gap-2">
-                <Sparkles size={16} className="text-[#E8593C]" />
-                <h3 className="text-[14px] font-bold text-[#241B14] dark:text-[#F4F4F5]">
-                  Example AI Commands with @{selectedContact.name.split(" ")[0]}
-                </h3>
-              </div>
-
-              <div className="space-y-2.5">
-                {[
-                  `Schedule a Google Meet with @${selectedContact.name} tomorrow at 3 PM and email them the meeting link`,
-                  `Send an email to @${selectedContact.name} with subject "Weekly Sync" saying hi`,
-                  `Book a 30-min call with @${selectedContact.name} on Friday at 11 AM`,
-                ].map((promptText, idx) => (
-                  <div
-                    key={idx}
-                    onClick={() => copyToClipboard(promptText, `prompt-${idx}`)}
-                    className="group p-3 rounded-[10px] bg-white dark:bg-[#383838] border border-[rgba(36,27,20,0.06)] dark:border-[rgba(255,255,255,0.06)] flex items-center justify-between cursor-pointer hover:border-[#E8593C]/40 transition-all"
-                  >
-                    <span className="text-[12px] font-sans text-[#241B14] dark:text-[#F4F4F5] group-hover:text-[#E8593C] transition-colors pr-2">
-                      "{promptText}"
-                    </span>
-                    <span className="text-[10px] font-semibold text-[#E8593C] shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
-                      Copy
-                    </span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        ) : (
-          /* Empty / Welcome State */
-          <div className="max-w-[560px] w-full mx-auto my-auto text-center space-y-6 py-12">
-            <div className="w-16 h-16 rounded-full bg-[#E8593C]/10 text-[#E8593C] flex items-center justify-center mx-auto">
-              <Sparkles size={28} />
-            </div>
-            <div>
-              <h2 className="text-[22px] font-bold text-[#241B14] dark:text-[#F4F4F5] tracking-tight">
-                Team & @Mention Directory
-              </h2>
-              <p className="text-[13px] text-[rgba(36,27,20,0.5)] dark:text-[rgba(255,255,255,0.5)] mt-1 max-w-[420px] mx-auto leading-relaxed">
-                Add your colleagues and contacts here to tag them easily in natural language AI commands.
-              </p>
-            </div>
-
-            <div className="p-6 rounded-[16px] border border-[rgba(36,27,20,0.08)] dark:border-[rgba(255,255,255,0.08)] bg-[#FAF8F5] dark:bg-[#2C2C2C] text-left space-y-3">
-              <span className="text-[11px] font-bold text-[#E8593C] uppercase tracking-wider block">How it works</span>
-              <ol className="text-[12.5px] text-[rgba(36,27,20,0.7)] dark:text-[rgba(255,255,255,0.7)] space-y-2 pl-4 list-decimal">
-                <li>Add a person with their name and email address.</li>
-                <li>Type <code className="bg-[#E8593C]/10 text-[#E8593C] px-1.5 py-0.5 rounded font-mono font-bold">@name</code> in the AI input box.</li>
-                <li>Auren AI maps the mention to their exact email and schedules meetings or sends emails automatically!</li>
-              </ol>
-            </div>
-
-            <button
-              onClick={() => setShowAddForm(true)}
-              className="inline-flex items-center gap-2 h-10 px-5 bg-[#E8593C] hover:bg-[#D4472B] text-white rounded-[10px] text-[13px] font-semibold transition-all shadow-md active:scale-95"
+      {/* Add Member Modal */}
+      <AnimatePresence>
+        {showAddModal && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4"
+          >
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              className="bg-white dark:bg-[#2C2C2C] border border-[rgba(36,27,20,0.12)] dark:border-[rgba(255,255,255,0.12)] rounded-[20px] p-6 max-w-[440px] w-full shadow-2xl space-y-4"
             >
-              <UserPlus size={16} />
-              <span>Add Your First Team Member</span>
-            </button>
-          </div>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <div className="w-7 h-7 rounded-[7px] bg-[#E8593C]/10 text-[#E8593C] flex items-center justify-center">
+                    <UserPlus size={15} />
+                  </div>
+                  <h3 className="text-[16px] font-bold text-[#241B14] dark:text-[#F4F4F5]">Add Team Member</h3>
+                </div>
+                <button
+                  onClick={() => setShowAddModal(false)}
+                  className="p-1 rounded-full text-[rgba(36,27,20,0.4)] dark:text-[rgba(255,255,255,0.4)] hover:text-[#241B14] dark:hover:text-[#F4F4F5]"
+                >
+                  <X size={16} />
+                </button>
+              </div>
+
+              <form onSubmit={handleAdd} className="space-y-3 pt-2">
+                <div>
+                  <label className="block text-[11px] font-bold text-[rgba(36,27,20,0.5)] dark:text-[rgba(255,255,255,0.5)] uppercase mb-1">
+                    Full Name *
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="e.g. Pranav Gawai"
+                    value={form.name}
+                    onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
+                    required
+                    className="w-full h-10 px-3.5 bg-[#FAF8F5] dark:bg-[#383838] border border-[rgba(36,27,20,0.10)] dark:border-[rgba(255,255,255,0.10)] rounded-[10px] text-[13px] text-[#241B14] dark:text-[#F4F4F5] outline-none focus:border-[#E8593C]"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-[11px] font-bold text-[rgba(36,27,20,0.5)] dark:text-[rgba(255,255,255,0.5)] uppercase mb-1">
+                    Email Address *
+                  </label>
+                  <input
+                    type="email"
+                    placeholder="e.g. pranavgawai1518@gmail.com"
+                    value={form.email}
+                    onChange={e => setForm(f => ({ ...f, email: e.target.value }))}
+                    required
+                    className="w-full h-10 px-3.5 bg-[#FAF8F5] dark:bg-[#383838] border border-[rgba(36,27,20,0.10)] dark:border-[rgba(255,255,255,0.10)] rounded-[10px] text-[13px] text-[#241B14] dark:text-[#F4F4F5] outline-none focus:border-[#E8593C]"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-[11px] font-bold text-[rgba(36,27,20,0.5)] dark:text-[rgba(255,255,255,0.5)] uppercase mb-1">
+                    Role (Optional)
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="e.g. Founder, Developer, Designer"
+                    value={form.role}
+                    onChange={e => setForm(f => ({ ...f, role: e.target.value }))}
+                    className="w-full h-10 px-3.5 bg-[#FAF8F5] dark:bg-[#383838] border border-[rgba(36,27,20,0.10)] dark:border-[rgba(255,255,255,0.10)] rounded-[10px] text-[13px] text-[#241B14] dark:text-[#F4F4F5] outline-none focus:border-[#E8593C]"
+                  />
+                </div>
+
+                {formError && <p className="text-[12px] text-red-500 font-medium">{formError}</p>}
+
+                <div className="flex gap-2 pt-2">
+                  <button
+                    type="submit"
+                    disabled={isPending}
+                    className="flex-1 h-10 bg-[#E8593C] hover:bg-[#D4472B] disabled:opacity-50 text-white rounded-[10px] text-[13px] font-bold transition-all shadow-sm"
+                  >
+                    {isPending ? "Adding..." : "Add to Team"}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setShowAddModal(false)}
+                    className="h-10 px-4 bg-[rgba(36,27,20,0.06)] dark:bg-[rgba(255,255,255,0.08)] text-[#241B14] dark:text-[#F4F4F5] rounded-[10px] text-[13px] font-semibold"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </form>
+            </motion.div>
+          </motion.div>
         )}
-      </div>
+      </AnimatePresence>
     </div>
   );
 }

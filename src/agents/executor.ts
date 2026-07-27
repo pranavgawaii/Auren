@@ -68,8 +68,48 @@ If returning a briefing, format it matching:
 
   try {
     const responseText = await reasonWithAI(systemPrompt, command);
-    const result = JSON.parse(responseText.trim()) as AgentReasoningResult;
-    return result;
+    const result = JSON.parse(responseText.trim()) as any;
+
+    // Normalize actions parameter format (LLMs like Llama often name it 'params', 'args', or 'input')
+    if (result && Array.isArray(result.actions)) {
+      result.actions = result.actions.map((act: any) => {
+        const rawParams = act.parameters || act.params || act.input || act.args || {};
+        const parameters: Record<string, unknown> = { ...rawParams };
+
+        // Normalize aliases for tools
+        if (act.tool === "gmail_send") {
+          if (!parameters.to && rawParams.recipient) parameters.to = rawParams.recipient;
+          if (!parameters.to && rawParams.email) parameters.to = rawParams.email;
+          if (!parameters.to && Array.isArray(rawParams.attendees) && rawParams.attendees.length > 0) {
+            parameters.to = rawParams.attendees[0];
+          }
+          if (!parameters.subject && rawParams.title) parameters.subject = rawParams.title;
+          if (!parameters.body && rawParams.content) parameters.body = rawParams.content;
+          if (!parameters.body && rawParams.text) parameters.body = rawParams.text;
+          if (!parameters.body && rawParams.message) parameters.body = rawParams.message;
+        }
+
+        if (act.tool === "calendar_create") {
+          if (!parameters.title && rawParams.summary) parameters.title = rawParams.summary;
+          if (!parameters.title && rawParams.name) parameters.title = rawParams.name;
+          if (!parameters.title && rawParams.subject) parameters.title = rawParams.subject;
+          if (!parameters.attendees && rawParams.to) {
+            parameters.attendees = Array.isArray(rawParams.to) ? rawParams.to : [String(rawParams.to)];
+          }
+          if (!parameters.attendees && rawParams.recipient) {
+            parameters.attendees = [String(rawParams.recipient)];
+          }
+        }
+
+        return {
+          tool: act.tool,
+          parameters,
+          description: act.description || act.summary || `${act.tool.replace(/_/g, " ")} action`,
+        };
+      });
+    }
+
+    return result as AgentReasoningResult;
   } catch (error) {
     console.error("Failed to parse agent reasoning result:", error);
     const errMsg = error instanceof Error ? error.message : "";
