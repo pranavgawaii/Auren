@@ -23,7 +23,7 @@ export async function reasonWithAI(
           "X-Title": "Auren",
         },
         body: JSON.stringify({
-          model: "openrouter/auto", // Free model routing on OpenRouter
+          model: "google/gemini-2.5-flash:free", // Free model — 1M context, best for JSON/agent tasks
           messages: [
             { role: "system", content: systemInstruction + "\nIMPORTANT: RETURN ONLY VALID JSON. Do not include markdown codeblocks." },
             { role: "user", content: userMessage }
