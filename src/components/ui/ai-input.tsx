@@ -197,9 +197,10 @@ interface MorphPanelProps {
   onExecute: (command: string, history?: any[]) => Promise<any>;
   isAgentLoading?: boolean;
   emails?: any[];
+  teamContacts?: { name: string; email: string; role?: string }[];
 }
 
-export function MorphPanel({ onExecute, isAgentLoading = false, emails = [] }: MorphPanelProps) {
+export function MorphPanel({ onExecute, isAgentLoading = false, emails = [], teamContacts = [] }: MorphPanelProps) {
   const wrapperRef = React.useRef<HTMLDivElement>(null)
   const textareaRef = React.useRef<HTMLTextAreaElement | null>(null)
   const dragControls = useDragControls()
@@ -308,7 +309,7 @@ export function MorphPanel({ onExecute, isAgentLoading = false, emails = [] }: M
       >
         <FormContext.Provider value={ctx}>
           <DockBar />
-          <InputForm inputRef={textareaRef} onSuccess={handleSuccess} onExecute={onExecute} emails={emails} />
+          <InputForm inputRef={textareaRef} onSuccess={handleSuccess} onExecute={onExecute} emails={emails} teamContacts={teamContacts} />
         </FormContext.Provider>
       </motion.div>
     </div>
@@ -377,7 +378,7 @@ import { Check } from "lucide-react"
 import { useUser } from "@clerk/nextjs"
 import Image from "next/image"
 
-function InputForm({ inputRef, onSuccess, onExecute, emails = [] }: { inputRef: React.RefObject<HTMLTextAreaElement>; onSuccess: () => void; onExecute: (cmd: string, history?: any[]) => Promise<any>; emails?: any[] }) {
+function InputForm({ inputRef, onSuccess, onExecute, emails = [], teamContacts = [] }: { inputRef: React.RefObject<HTMLTextAreaElement>; onSuccess: () => void; onExecute: (cmd: string, history?: any[]) => Promise<any>; emails?: any[]; teamContacts?: { name: string; email: string; role?: string }[] }) {
   const { triggerClose, showForm, isFullscreen, setIsFullscreen, isAgentLoading, startResize, dragControls } = useFormContext()
   const btnRef = React.useRef<HTMLButtonElement>(null)
   const { user } = useUser()
@@ -406,32 +407,50 @@ function InputForm({ inputRef, onSuccess, onExecute, emails = [] }: { inputRef: 
   }, [inputRef]);
   const recognitionRef = React.useRef<any>(null)
   
-  // Dynamic Mentions
+  // Dynamic Mentions — Team contacts first, then email-extracted contacts
   const dynamicMentions = React.useMemo(() => {
     const baseMentions = [
       { id: '3', trigger: '/', type: 'repo', label: 'Auren Frontend', value: 'github/Auren', displayValue: 'github.com/8TEEH/Auren', icon: '/' },
       { id: '4', trigger: '/', type: 'repo', label: 'skills-introduction-to-github', value: 'github/skills-introduction-to-github', displayValue: 'github.com/8TEEH/skills-intro...', icon: '/' },
     ]
-    if (!emails || emails.length === 0) {
-      baseMentions.push({ id: '1', trigger: '@', type: 'contact', label: 'Pranav Gawai', value: '@Pranav Gawai', displayValue: 'pranavgawai1518@gmail.com', icon: '@' })
-      return baseMentions
-    }
-    const contacts = new Map()
-    emails.forEach(e => {
-       if (e.from && e.fromName && !contacts.has(e.from)) {
+
+    // 1. Team contacts from DB (highest priority)
+    const teamMentions = teamContacts.map(c => ({
+      id: `team-${c.email}`,
+      trigger: '@' as const,
+      type: 'contact',
+      label: c.name,
+      value: `@${c.name}`,
+      displayValue: c.email,
+      icon: '@',
+    }));
+
+    // 2. Email-extracted contacts (fallback, dedup against team)
+    const teamEmails = new Set(teamContacts.map(c => c.email.toLowerCase()));
+    const emailMentions: typeof teamMentions = [];
+    if (emails && emails.length > 0) {
+      const contacts = new Map();
+      emails.forEach(e => {
+        if (e.from && e.fromName && !contacts.has(e.from) && !teamEmails.has(e.from.toLowerCase())) {
           contacts.set(e.from, {
-             id: `contact-${e.from}`,
-             trigger: '@',
-             type: 'contact',
-             label: e.fromName,
-             value: `@${e.fromName}`,
-             displayValue: e.from,
-             icon: '@'
-          })
-       }
-    })
-    return [...Array.from(contacts.values()), ...baseMentions]
-  }, [emails])
+            id: `contact-${e.from}`,
+            trigger: '@' as const,
+            type: 'contact',
+            label: e.fromName,
+            value: `@${e.fromName}`,
+            displayValue: e.from,
+            icon: '@',
+          });
+        }
+      });
+      emailMentions.push(...Array.from(contacts.values()));
+    } else if (teamContacts.length === 0) {
+      // Hardcoded fallback only when no team contacts AND no emails
+      teamMentions.push({ id: '1', trigger: '@', type: 'contact', label: 'Pranav Gawai', value: '@Pranav Gawai', displayValue: 'pranavgawai1518@gmail.com', icon: '@' });
+    }
+
+    return [...teamMentions, ...emailMentions, ...baseMentions];
+  }, [emails, teamContacts])
   
   // Real Chat State
   const [chatHistory, setChatHistory] = React.useState<{role: "user" | "agent", content?: string, isTyping?: boolean, plan?: any}[]>([])

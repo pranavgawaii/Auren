@@ -4,30 +4,30 @@ export async function reasonWithAI(
   _responseMimeType: "application/json" | "text/plain" = "application/json",
   maxRetries = 3
 ): Promise<string> {
-  const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY;
+  const GROQ_API_KEY = process.env.GROQ_API_KEY;
   
-  if (!OPENROUTER_API_KEY) {
-    throw new Error("OPENROUTER_API_KEY environment variable is missing.");
+  if (!GROQ_API_KEY) {
+    throw new Error("GROQ_API_KEY environment variable is missing.");
   }
 
   let lastError: Error | null = null;
 
   for (let attempt = 1; attempt <= maxRetries; attempt++) {
     try {
-      const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+      const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
         method: "POST",
         headers: {
-          "Authorization": `Bearer ${OPENROUTER_API_KEY}`,
+          "Authorization": `Bearer ${GROQ_API_KEY}`,
           "Content-Type": "application/json",
-          "HTTP-Referer": "https://tryauren.in",
-          "X-Title": "Auren",
         },
         body: JSON.stringify({
-          model: "google/gemini-2.5-flash:free", // Free model — 1M context, best for JSON/agent tasks
+          model: "llama-3.3-70b-versatile", // Groq free tier — 14,400 req/day, 128k context, fastest inference
           messages: [
             { role: "system", content: systemInstruction + "\nIMPORTANT: RETURN ONLY VALID JSON. Do not include markdown codeblocks." },
             { role: "user", content: userMessage }
-          ]
+          ],
+          temperature: 0.2,
+          response_format: { type: "json_object" }, // Enforce JSON output natively
         })
       });
 
@@ -59,7 +59,7 @@ export async function reasonWithAI(
 
       if (isRateLimit && attempt < maxRetries) {
         const delay = Math.pow(2, attempt) * 1000;
-        console.warn(`[OpenRouter] Rate limited. Retry ${attempt}/${maxRetries} in ${delay}ms`);
+        console.warn(`[Groq] Rate limited. Retry ${attempt}/${maxRetries} in ${delay}ms`);
         await new Promise(resolve => setTimeout(resolve, delay));
       } else {
         break;
@@ -67,7 +67,7 @@ export async function reasonWithAI(
     }
   }
 
-  console.error("OpenRouter API Error after retries:", lastError);
+  console.error("Groq API Error after retries:", lastError);
   throw new Error(
     `AI error: ${lastError instanceof Error ? lastError.message : String(lastError)}`
   );

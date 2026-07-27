@@ -6,7 +6,8 @@ export async function analyzeCommand(
   emailContext: GmailMessage | null,
   userName: string = "User",
   userEmail: string = "Unknown",
-  history?: { role: string, content: string }[]
+  history?: { role: string, content: string }[],
+  teamContacts: { name: string; email: string; role?: string }[] = []
 ): Promise<AgentReasoningResult> {
   const systemPrompt = `You are Auren, an AI execution agent for the Corsair App SDK.
 Your job is to read the user's natural language command, consider the context of the currently selected email (if any), and determine the sequence of tools to call.
@@ -31,8 +32,9 @@ User Name: ${userName}
 User Email: ${userEmail}
 
 RESOLVED MENTIONS MAP (Use these to resolve clean mentions in the prompt to their actual values):
-- @Pranav Gawai -> pranavgawai1518@gmail.com
-- @Product Team -> product@example.com
+${teamContacts.length > 0
+  ? teamContacts.map(c => `- @${c.name} -> ${c.email}${c.role ? ` (${c.role})` : ""}`).join("\n")
+  : "- @Pranav Gawai -> pranavgawai1518@gmail.com"}
 - github/Auren -> https://github.com/8TEEH/Auren
 - github/skills-introduction-to-github -> https://github.com/8TEEH/skills-introduction-to-github
 
@@ -40,11 +42,12 @@ PREVIOUS CHAT HISTORY:
 ${history && history.length > 0 ? history.map((h) => `[${h.role.toUpperCase()}] ${h.content || (h as any).plan?.explanation || 'System Plan/Action generated'}`).join('\n') : "None"}
 
 IMPORTANT RULES FOR PARAMETERS & MISSING CONTEXT:
-1. AVOID FOLLOW-UP QUESTIONS IF POSSIBLE: Do not bombard the user with questions for every missing detail (like email body, subject, or meeting time).
-2. USE PLACEHOLDERS: If the user provides partial information, generate the action cards immediately. Use reasonable defaults or placeholders (e.g., "Discuss login bug" for a subject, or tomorrow at 10:00 AM for a meeting) for any missing fields.
-3. If the user provides a name for an email recipient (e.g. "to Pranav Gawai"), try to deduce their email if obvious or format it as "Name <email@example.com>".
-4. For email body signatures, always use the User Name provided above (e.g., "Best regards, ${userName}"). DO NOT use placeholders like "[Your Name]".
-5. Only use 'followUpQuestion' if a TRULY CRITICAL piece of information is missing (like the repository URL) AND you absolutely cannot guess a placeholder. Otherwise, output the actions.
+1. NEVER LEAVE PARAMETERS EMPTY: Every action in the 'actions' array MUST have filled-in, meaningful parameters. NEVER output empty strings ("") or empty arrays ([]) for 'to', 'subject', 'body', 'title', or 'attendees'.
+2. GMAIL_SEND PARAMETERS: Must always include 'to' (single resolved email string like "pranavgawai1518@gmail.com"), 'subject' (descriptive subject like "Google Meet Link / Meeting Sync"), and 'body' (full friendly email message text signed by ${userName}).
+3. CALENDAR_CREATE PARAMETERS: Must always include 'title' (event summary string like "Google Meet Sync with Pranav Gawai"), 'startAt' (ISO 8601 string), 'endAt' (ISO 8601 string), 'attendees' (array of emails), and 'withMeetLink' (boolean).
+4. RESOLVING MENTIONS: If the user types a mention like "@Pranav Gawai", look up their email from RESOLVED MENTIONS MAP above and use their exact email address (e.g. "pranavgawai1518@gmail.com") in both 'to' and 'attendees'.
+5. USE PLACEHOLDERS FOR MISSING DETAILS: If the user didn't specify an email body or subject, write a clear professional default body and subject instead of leaving them empty.
+6. For email body signatures, always use the User Name provided above ("Best regards, ${userName}"). DO NOT use placeholders like "[Your Name]".
 
 Return a valid JSON object matching this TypeScript interface exactly:
 {

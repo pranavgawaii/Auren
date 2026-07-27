@@ -14,12 +14,14 @@ import { ActionConfirmation } from "./action-confirmation";
 import { FullCalendarView } from "./full-calendar-view";
 import { SettingsView } from "./settings-view";
 import { HistoryPanel } from "./history-panel";
+import { TeamView } from "./team-view";
 import { CommandMenu } from "./command-menu";
 import { TerminalDrawer } from "./terminal-drawer";
 import { getInboxEmails } from "@/app/actions/inbox";
 import { processCommand } from "@/app/actions/agent";
 import { executePlan } from "@/app/actions/execute";
 import { checkConnectionStatus } from "@/app/actions/connect";
+import { getTeamContacts } from "@/app/actions/team";
 import type { GmailMessage, AgentReasoningResult } from "@/types";
 import { MorphPanel } from "@/components/ui/ai-input";
 import { motion, AnimatePresence } from "framer-motion";
@@ -84,9 +86,18 @@ export function DashboardClient() {
     : pathname.startsWith("/calendar") ? "calendar" 
     : pathname.startsWith("/search") ? "search"
     : pathname.startsWith("/github") ? "github"
+    : pathname.startsWith("/team") ? "team"
     : "inbox";
 
-  const [view, setViewInternal] = useState<"search" | "github" | "calendar" | "inbox" | "settings" | "history">(initialView as any);
+  const [view, setViewInternal] = useState<"search" | "github" | "calendar" | "inbox" | "settings" | "history" | "team">(initialView as any);
+
+  // Team contacts for @ mentions
+  const [teamContacts, setTeamContacts] = useState<{name: string; email: string}[]>([]);
+  useEffect(() => {
+    getTeamContacts().then(res => {
+      if (res.success && res.data) setTeamContacts(res.data);
+    });
+  }, []);
 
   useEffect(() => {
     setViewInternal(initialView as any);
@@ -97,6 +108,11 @@ export function DashboardClient() {
       setIsZenMode(false);
       router.push("/app", { scroll: false });
       setViewInternal("inbox");
+    } else if (newView === "team") {
+      // Refresh contacts when navigating to Team
+      getTeamContacts().then(res => { if (res.success && res.data) setTeamContacts(res.data); });
+      router.push("/team", { scroll: false });
+      setViewInternal("team");
     } else {
       router.push(`/${newView}`, { scroll: false });
       setViewInternal(newView as any);
@@ -368,6 +384,8 @@ export function DashboardClient() {
         <FullCalendarView />
       ) : view === "github" ? (
         <GitHubIntegrationView />
+      ) : view === "team" ? (
+        <TeamView />
       ) : view === "settings" ? (
         <SettingsView />
       ) : view === "history" ? (
@@ -434,7 +452,7 @@ export function DashboardClient() {
         isAgentLoading={isAgentLoading} 
       />
       <div className="fixed bottom-12 right-12 z-[60]">
-        <MorphPanel onExecute={handleAction} isAgentLoading={isAgentLoading} emails={emails} />
+        <MorphPanel onExecute={handleAction} isAgentLoading={isAgentLoading} emails={emails} teamContacts={teamContacts} />
       </div>
     </AppShell>
   );

@@ -2,6 +2,7 @@
 
 import { analyzeCommand } from "@/agents/executor";
 import { checkCommandRateLimit } from "@/lib/rate-limit";
+import { getTeamContacts } from "@/app/actions/team";
 import type { AgentReasoningResult, GmailMessage } from "@/types";
 import { currentUser } from "@clerk/nextjs/server";
 
@@ -20,7 +21,11 @@ export async function processCommand(
     const userName = user ? (user.fullName || user.firstName || "User") : "User";
     const userEmail = user?.emailAddresses?.[0]?.emailAddress || "Unknown";
 
-    const result = await analyzeCommand(command, emailContext, userName, userEmail, history);
+    // Load team contacts to inject into AI context
+    const teamRes = await getTeamContacts();
+    const teamContacts = teamRes.success ? (teamRes.data || []) : [];
+
+    const result = await analyzeCommand(command, emailContext, userName, userEmail, history, teamContacts);
     return { success: true, data: result };
   } catch (error: unknown) {
     console.error("Agent process error:", error);

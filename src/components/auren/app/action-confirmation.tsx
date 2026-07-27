@@ -17,6 +17,18 @@ interface ActionConfirmationProps {
   onClarify?: (text: string) => void;
 }
 
+function getParamString(params: Record<string, unknown> | undefined, keys: string[]): string {
+  if (!params) return "";
+  for (const k of keys) {
+    const val = params[k];
+    if (val !== undefined && val !== null && val !== "") {
+      if (Array.isArray(val)) return val.join(", ");
+      return String(val);
+    }
+  }
+  return "";
+}
+
 export function ActionConfirmation({
   isOpen,
   plan,
@@ -255,7 +267,7 @@ export function ActionConfirmation({
                               <input 
                                 type="text"
                                 className="border border-[rgba(36,27,20,0.08)] dark:border-[rgba(255,255,255,0.08)] bg-[#FAF8F5] dark:bg-[#2C2C2C] rounded-[6px] px-2.5 py-1 text-[12px] font-sans text-[#241B14] dark:text-[#F4F4F5] focus:outline-[#E8593C]"
-                                value={String(action.parameters.to || "")}
+                                value={getParamString(action.parameters, ["to", "recipient", "email", "attendees"])}
                                 onChange={(e) => updateParam(i, "to", e.target.value)}
                               />
                             </div>
@@ -264,7 +276,7 @@ export function ActionConfirmation({
                               <input 
                                 type="text"
                                 className="border border-[rgba(36,27,20,0.08)] dark:border-[rgba(255,255,255,0.08)] bg-[#FAF8F5] dark:bg-[#2C2C2C] rounded-[6px] px-2.5 py-1 text-[12px] font-sans text-[#241B14] dark:text-[#F4F4F5] focus:outline-[#E8593C]"
-                                value={String(action.parameters.subject || "")}
+                                value={getParamString(action.parameters, ["subject", "title", "name"])}
                                 onChange={(e) => updateParam(i, "subject", e.target.value)}
                               />
                             </div>
@@ -273,7 +285,7 @@ export function ActionConfirmation({
                               <textarea 
                                 rows={3}
                                 className="border border-[rgba(36,27,20,0.08)] dark:border-[rgba(255,255,255,0.08)] bg-[#FAF8F5] dark:bg-[#2C2C2C] rounded-[6px] px-2.5 py-1 text-[12px] font-sans text-[#241B14] dark:text-[#F4F4F5] focus:outline-[#E8593C] resize-none"
-                                value={String(action.parameters.body || "")}
+                                value={getParamString(action.parameters, ["body", "content", "text", "description"])}
                                 onChange={(e) => updateParam(i, "body", e.target.value)}
                               />
                             </div>
@@ -287,7 +299,7 @@ export function ActionConfirmation({
                               <input 
                                 type="text"
                                 className="border border-[rgba(36,27,20,0.08)] dark:border-[rgba(255,255,255,0.08)] bg-[#FAF8F5] dark:bg-[#2C2C2C] rounded-[6px] px-2.5 py-1 text-[12px] font-sans text-[#241B14] dark:text-[#F4F4F5] focus:outline-[#E8593C]"
-                                value={String(action.parameters.title || "")}
+                                value={getParamString(action.parameters, ["title", "summary", "name", "subject"])}
                                 onChange={(e) => updateParam(i, "title", e.target.value)}
                               />
                             </div>
