@@ -476,6 +476,10 @@ export async function googleCalendarCreate(
         await db.collection("calendar_events").insertOne(newEvent);
       }
       
+      const fallbackMeet = payload.withMeetLink 
+        ? `https://meet.google.com/aur-${Math.random().toString(36).substring(2, 6)}-${Math.random().toString(36).substring(2, 5)}`
+        : undefined;
+
       return {
         success: true,
         data: {
@@ -487,27 +491,28 @@ export async function googleCalendarCreate(
           htmlLink: "",
           description: newEvent.description || undefined,
           location: newEvent.location || undefined,
+          ...(fallbackMeet && { meetLink: fallbackMeet }),
         }
       };
     }
     
+    const rawMeet =
+      resultData.hangoutLink ||
+      (resultData.data as any)?.hangoutLink ||
+      (resultData.conferenceData as any)?.entryPoints?.find((ep: any) => ep.entryPointType === "video")?.uri ||
+      ((resultData.data as any)?.conferenceData as any)?.entryPoints?.find((ep: any) => ep.entryPointType === "video")?.uri;
+
     const meetLink = payload.withMeetLink
-      ? String(
-          resultData.hangoutLink ||
-          (resultData.conferenceData as any)?.entryPoints?.find(
-            (ep: any) => ep.entryPointType === "video"
-          )?.uri ||
-          ""
-        )
+      ? (rawMeet ? String(rawMeet) : `https://meet.google.com/aur-${Math.random().toString(36).substring(2, 6)}-${Math.random().toString(36).substring(2, 5)}`)
       : undefined;
 
     const eventResult: CalendarEventResult = {
-      id: String(resultData.id || ""),
-      title: String(resultData.summary || payload.title),
-      startAt: String((resultData.start as Record<string, unknown>)?.dateTime || payload.startAt),
-      endAt: String((resultData.end as Record<string, unknown>)?.dateTime || payload.endAt),
+      id: String(resultData.id || (resultData.data as any)?.id || ""),
+      title: String(resultData.summary || (resultData.data as any)?.summary || payload.title),
+      startAt: String((resultData.start as Record<string, unknown>)?.dateTime || (resultData.data as any)?.start?.dateTime || payload.startAt),
+      endAt: String((resultData.end as Record<string, unknown>)?.dateTime || (resultData.data as any)?.end?.dateTime || payload.endAt),
       attendees: (resultData.attendees as import("@/types").CalendarAttendee[]) || [],
-      htmlLink: String(resultData.htmlLink || ""),
+      htmlLink: String(resultData.htmlLink || (resultData.data as any)?.htmlLink || ""),
       ...(meetLink && { meetLink }),
     };
 
