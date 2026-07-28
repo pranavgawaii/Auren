@@ -43,7 +43,7 @@ export const metadata: Metadata = {
     siteName: 'Auren',
     images: [
       {
-        url: '/og-image.png?v=2',
+        url: '/og-image.png?v=3',
         width: 1200,
         height: 630,
         alt: 'Auren | AI Execution Layer',
@@ -55,7 +55,7 @@ export const metadata: Metadata = {
     card: 'summary_large_image',
     title: 'Auren | AI Execution Layer',
     description: 'Type one command. Gmail, Calendar, and GitHub execute simultaneously. One approval.',
-    images: ['/og-image.png?v=2'],
+    images: ['/og-image.png?v=3'],
     creator: '@pranavgawaii_',
   },
   icons: {

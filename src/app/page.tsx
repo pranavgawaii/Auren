@@ -9,10 +9,7 @@ import { IntegrationsStrip, TheGapSection, HowItWorksSection, BuiltForBuildersSe
 import { Features } from "@/components/blocks/features-10";
 import { WatchDemoModal } from "@/components/auren/watch-demo-modal";
 
-export const metadata = {
-  title: "Auren | AI Execution Layer",
-  description: "Your inbox, calendar, and GitHub. Executed in one line.",
-};
+
 
 /* ── Font assignments ── */
 const FONT_BODY = "var(--font-sans)";
@@ -28,7 +25,7 @@ export default async function LandingPage() {
   }
 
   if (userId) {
-    redirect("/app");
+    redirect("/dashboard");
   }
 
 
