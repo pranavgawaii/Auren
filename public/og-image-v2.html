@@ -7,7 +7,7 @@
   
   @font-face {
     font-family: 'Civane';
-    src: url('../src/app/fonts/Civane-Norm-Regular.otf') format('opentype');
+    src: url('/fonts/Civane-Norm-Regular.otf') format('opentype');
     font-weight: normal;
     font-style: normal;
   }
@@ -18,21 +18,36 @@
     box-sizing: border-box; 
   }
   
-  body { 
+  /* Outer layout to center the banner perfectly on any screen */
+  body {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: #E5E7EB; /* Light gray background around the banner */
+    padding: 40px;
+  }
+
+  /* The actual 1200x630 banner */
+  .banner-container { 
     width: 1200px; 
-    height: 630px; 
+    height: 630px;
+    flex-shrink: 0;
     overflow: hidden;
-    background: #FBF3EC;
+    background-color: #FBF3EC;
+    background-image: url("data:image/svg+xml,%3Csvg width='1200' height='630' viewBox='0 0 1200 630' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' stroke='rgba(36,27,20,0.05)' stroke-width='2'%3E%3Cpath d='M-100 100 Q 200 300, 600 150 T 1300 200'/%3E%3Cpath d='M-100 200 Q 300 400, 700 250 T 1300 300'/%3E%3Cpath d='M-100 300 Q 400 500, 800 350 T 1300 400'/%3E%3Cpath d='M-100 400 Q 500 600, 900 450 T 1300 500'/%3E%3Cpath d='M-100 500 Q 600 700, 1000 550 T 1300 600'/%3E%3Cpath d='M-100 -100 Q 100 100, 500 -50 T 1300 0'/%3E%3Cpath d='M-100 0 Q 150 200, 550 50 T 1300 100'/%3E%3Cpath d='M-100 600 Q 700 800, 1100 650 T 1300 700'/%3E%3C/g%3E%3C/svg%3E");
+    background-size: 1200px 630px;
     font-family: 'Plus Jakarta Sans', sans-serif;
     display: flex; 
     align-items: center; 
     justify-content: space-between;
     padding: 90px 110px;
     position: relative;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.08);
   }
 
   .left { 
-    max-width: 530px; 
+    max-width: 540px; 
     display: flex;
     flex-direction: column;
     z-index: 5;
@@ -53,15 +68,45 @@
   }
   
   .logo-text { 
-    font-family: 'Civane', 'Plus Jakarta Sans', sans-serif;
+    font-family: 'Civane', 'Plus Jakarta Sans', Georgia, serif;
     font-size: 28px; 
     font-weight: normal; 
     color: #241B14; 
     letter-spacing: -0.02em;
   }
+
+  /* Top Right Metadata Header */
+  .top-right-badge {
+    position: absolute;
+    top: 98px;
+    right: 110px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    z-index: 10;
+  }
   
-  .logo-text span { 
-    color: #E8593C; 
+  .badge-tag {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    color: rgba(36, 27, 20, 0.45);
+    text-transform: uppercase;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    background: rgba(255, 255, 255, 0.4);
+    padding: 6px 16px;
+    border-radius: 30px;
+    border: 1px solid rgba(36, 27, 20, 0.06);
+    backdrop-filter: blur(4px);
+  }
+  
+  .badge-tag span.divider {
+    width: 1px;
+    height: 12px;
+    background: rgba(36, 27, 20, 0.15);
   }
   
   .main-text {
@@ -70,7 +115,7 @@
   }
   
   h1 { 
-    font-family: 'Civane', 'Plus Jakarta Sans', sans-serif;
+    font-family: 'Civane', 'Plus Jakarta Sans', Georgia, serif;
     font-size: 56px; 
     font-weight: normal; 
     color: #1C1513; 
@@ -90,33 +135,79 @@
     font-weight: 500;
   }
 
-  .url { 
-    font-size: 15px; 
+  /* Bottom bar styling with perfectly aligned matching pills */
+  .bottom-bar {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-top: auto;
+    z-index: 10;
+  }
+
+  .url-pill { 
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-size: 14px; 
     color: #E8593C; 
-    font-weight: 700; 
-    letter-spacing: 0.02em;
+    font-weight: 600; 
+    letter-spacing: 0.01em;
     display: flex;
     align-items: center;
     gap: 8px;
-    margin-top: auto;
+    height: 42px;
+    padding: 0 18px;
+    background: rgba(232, 89, 60, 0.08);
+    border: 1px solid rgba(232, 89, 60, 0.2);
+    border-radius: 9999px;
+    box-shadow: 0 2px 8px rgba(232, 89, 60, 0.05);
   }
   
-  .url::before {
-    content: '';
-    display: inline-block;
+  .url-dot {
     width: 6px;
     height: 6px;
     border-radius: 50%;
     background: #E8593C;
+    box-shadow: 0 0 8px rgba(232, 89, 60, 0.6);
   }
 
-  /* Mascot scaled to 560x560px and shifted slightly upward (bottom: 10px) */
+  .profile-pill {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    height: 42px;
+    padding: 0 18px 0 5px;
+    background: rgba(255, 255, 255, 0.85);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-radius: 9999px;
+    box-shadow: 0 4px 14px rgba(36, 27, 20, 0.05);
+    border: 1px solid rgba(232, 89, 60, 0.2);
+  }
+
+  .profile-pill img {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 1.5px solid #E8593C;
+    flex-shrink: 0;
+  }
+
+  .profile-pill .profile-name {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+    color: #241B14;
+    letter-spacing: -0.01em;
+    line-height: 1;
+  }
+
+  /* Right-side mascot */
   .illustration-container { 
     position: absolute;
-    right: -70px;
-    bottom: 10px;
-    width: 560px;
-    height: 560px;
+    right: 20px;
+    bottom: 20px;
+    width: 500px;
+    height: 500px;
     z-index: 2;
     pointer-events: none;
     display: flex;
@@ -132,25 +223,53 @@
     mix-blend-mode: multiply;
     transform: scaleX(-1);
   }
+
 </style>
 </head>
 <body>
-  <div class="left">
-    <div class="brand-header">
-      <img class="logo-img" src="auren_logo.webp" alt="Auren Logo">
-      <div class="logo-text">Auren<span>.</span></div>
+
+  <!-- The exactly scaled 1200x630 banner -->
+  <div class="banner-container">
+    
+    <!-- Top Right Metadata Badge -->
+    <div class="top-right-badge">
+      <div class="badge-tag">
+        <span>AI EXECUTION LAYER</span>
+        <span class="divider"></span>
+        <span style="color: #E8593C;">2026</span>
+      </div>
+    </div>
+
+    <div class="left">
+      <div class="brand-header">
+        <img class="logo-img" src="auren_logo.webp" alt="Auren Logo">
+        <div class="logo-text">Auren</div>
+      </div>
+      
+      <div class="main-text">
+        <h1>The execution layer<br>between thinking<br>and <span>doing.</span></h1>
+        <p>A single text command to execute actions across GitHub, Calendar, and Gmail.</p>
+      </div>
+      
+      <div class="bottom-bar">
+        <!-- Sleek URL Badge -->
+        <div class="url-pill">
+          <span class="url-dot"></span>
+          tryauren.in
+        </div>
+        
+        <!-- High Contrast Dark Profile Tag -->
+        <div class="profile-pill">
+          <img src="avatar.jpg" alt="Pranav Gawai" onerror="this.style.display='none'">
+          <span class="profile-name">@pranavgawai</span>
+        </div>
+      </div>
     </div>
     
-    <div class="main-text">
-      <h1>The execution layer<br>between thinking<br>and <span>doing.</span></h1>
-      <p>A single text command to execute actions across GitHub, Calendar, and Gmail.</p>
+    <div class="illustration-container">
+      <img class="hero-illustration" src="auren_hero.webp" alt="Auren Mascot">
     </div>
-    
-    <div class="url">tryauren.in</div>
   </div>
-  
-  <div class="illustration-container">
-    <img class="hero-illustration" src="auren_hero.webp" alt="Auren Mascot">
-  </div>
+
 </body>
 </html>
