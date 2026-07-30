@@ -77,7 +77,7 @@ export default function SignUpPage() {
       >
         <div className="w-full max-w-[420px]">
           <SignUp
-            fallbackRedirectUrl="/app"
+            fallbackRedirectUrl="/dashboard"
             signInUrl="/sign-in"
             appearance={{
               elements: {

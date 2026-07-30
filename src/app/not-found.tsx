@@ -18,7 +18,7 @@ export default function NotFound() {
       }}>
         <Link href="/" style={{ display: "flex", alignItems: "center", gap: "10px", textDecoration: "none" }}>
           <div style={{ width: "24px", height: "24px", borderRadius: "6px", overflow: "hidden", position: "relative" }}>
-            <Image src="/auren_logo.webp" alt="Auren" fill style={{ objectFit: "cover" }} />
+            <Image src="/auren_logo.webp" alt="Auren" fill sizes="64px" style={{ objectFit: "cover" }} />
           </div>
           <span style={{ fontFamily: "var(--font-civane, Georgia, serif)", fontWeight: 400, fontSize: "18px", color: "#241B14" }}>
             Auren
@@ -48,7 +48,8 @@ export default function NotFound() {
               <Image 
                 src="/confused_lost.webp" 
                 alt="Page Not Found Mascot" 
-                fill 
+                fill
+                sizes="180px"
                 priority
                 style={{ objectFit: "contain" }}
               />

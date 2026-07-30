@@ -159,7 +159,7 @@ export default function OnboardingPage() {
     if (user) {
       localStorage.setItem(`auren_${user.id}_sync_limit`, String(syncLimit));
     }
-    router.push("/app");
+    router.push("/dashboard");
   };
 
   return (
@@ -194,8 +194,9 @@ export default function OnboardingPage() {
           <div className="relative w-12 h-12 mb-4">
             <Image 
               src="/auren_logo.webp" 
-              alt="Auren Logo" 
-              fill 
+              alt="Auren Logo"
+              fill
+              sizes="64px"
               style={{ objectFit: "contain" }}
             />
           </div>

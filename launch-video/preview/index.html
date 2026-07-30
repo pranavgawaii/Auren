@@ -1,0 +1,417 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Auren — Launch film animatic</title>
+<style>
+/* ── The product's own fonts. Civane ships with the repo; Inter, Plus Jakarta and
+   JetBrains Mono come from Google exactly as layout.tsx loads them.
+   @import must precede every other rule or the browser drops it. ── */
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Plus+Jakarta+Sans:wght@500;600;700&family=JetBrains+Mono:wght@400;500&display=swap");
+@font-face{font-family:"Civane";src:url("../assets/fonts/Civane-Norm-Regular.otf") format("opentype");font-weight:400;font-display:block}
+
+:root{
+  /* Straight from globals.css */
+  --bg:#FBF3EC; --text:#241B14; --accent:#E8593C; --accent-dark:#C44730;
+  --card:#FFFFFF; --muted:rgba(36,27,20,.50); --faint:rgba(36,27,20,.40);
+  --border:rgba(36,27,20,.08); --border-md:rgba(36,27,20,.15);
+  --mascot:#F5845E;
+  --serif:"Civane",Georgia,serif;
+  --sans:"Inter",system-ui,sans-serif;
+  --disp:"Plus Jakarta Sans","Inter",sans-serif;
+  --mono:"JetBrains Mono",ui-monospace,monospace;
+  --ease:cubic-bezier(.22,1,.36,1);
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{height:100%;background:#0d0d0e;color:#fff;font-family:var(--sans);overflow:hidden}
+
+#wrap{position:absolute;inset:0 0 88px 0;overflow:hidden}
+#stage{position:absolute;top:50%;left:50%;width:1920px;height:1080px;
+       transform-origin:center;overflow:hidden;background:var(--bg);border-radius:4px}
+
+/* Background now lives once, under every shot, instead of being redrawn per
+   section — so it never jumps or resets on a cut, only the foreground content
+   does. Shots are transparent and stack on top of it. */
+.shot{position:absolute;inset:0;opacity:0;visibility:hidden;background:transparent;
+      color:var(--text);display:flex;flex-direction:column;align-items:center;
+      justify-content:center;text-align:center;padding:0 170px;
+      transition:opacity .5s linear}
+.shot.live{opacity:1;visibility:visible}
+
+/* ── Background system ──────────────────────────────────────────────────
+   Deliberately restrained. The previous version stacked three orbiting
+   colour blobs, which turned most of the frame pink/peach and read as a
+   generic AI mesh gradient — muddy, and it polluted the cream that is the
+   brand's most recognisable asset.
+
+   What premium SaaS surfaces (Linear, Vercel, Stripe) actually do: keep the
+   field almost flat, imply ONE light source, and carry structure through
+   crisp low-opacity geometry rather than colour. So:
+     1. the cream stays cream across ~80% of the frame
+     2. a single soft key light from top-right, warm but very low alpha
+     3. the product's own plus-grid restored as real structure, radially
+        feathered so it has no hard cutoff
+     4. a hairline horizon rule for architectural anchoring
+     5. fine grain so large flat cream doesn't band on camera
+     6. a restrained vignette
+   Colour is an accent here, never a wash. */
+.bg{position:absolute;inset:0;z-index:0;pointer-events:none;overflow:hidden;background:var(--bg)}
+
+/* One key light. Two stops only — layering more is what created the mud. */
+.bg .key{position:absolute;inset:-20% -10% auto -10%;height:85%;
+  background:radial-gradient(58% 100% at 78% 0%, rgba(232,89,60,.085) 0%, rgba(232,89,60,0) 70%);
+  animation:breathe 26s ease-in-out infinite}
+@keyframes breathe{0%,100%{opacity:.85;transform:translateY(0)}50%{opacity:1;transform:translateY(14px)}}
+
+/* Cool counter-shadow bottom-left, so the frame has direction, not just glow.
+   Neutral ink rather than a second hue — two competing hues is what muddied it. */
+.bg .fill{position:absolute;inset:auto -10% -18% -10%;height:62%;
+  background:radial-gradient(64% 100% at 14% 100%, rgba(36,27,20,.045) 0%, rgba(36,27,20,0) 68%)}
+
+/* The product's own plus-grid — restored to real structural presence. */
+.bg .gridwrap{position:absolute;inset:0;width:100%;height:100%;
+  animation:driftgrid 64s linear infinite}
+@keyframes driftgrid{from{transform:translate(0,0)}to{transform:translate(-26px,-26px)}}
+
+/* Hairline horizon — a single architectural rule. Sits below the type block
+   so it reads as a floor line rather than crossing the message. */
+.bg .horizon{position:absolute;left:0;right:0;top:76%;height:1px;
+  background:linear-gradient(90deg,
+    rgba(36,27,20,0) 0%, rgba(36,27,20,.07) 18%,
+    rgba(36,27,20,.07) 74%, rgba(36,27,20,0) 100%)}
+
+.bg .grain{position:absolute;inset:-2%;opacity:.05;mix-blend-mode:multiply;
+  background-image:url("data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='matrix' values='0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 0.5 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-size:200px 200px}
+
+.bg .vign{position:absolute;inset:0;
+  background:radial-gradient(125% 105% at 50% 42%, transparent 58%, rgba(36,27,20,.05) 100%)}
+
+/* ── Type ───────────────────────────────────────────────────────────── */
+.serif{font-family:var(--serif);font-weight:400;letter-spacing:-.028em;
+       line-height:1.1;position:relative;z-index:2}
+.s-xl{font-size:132px}
+.s-lg{font-size:104px}
+.s-md{font-size:76px}
+.accent{color:var(--accent)}
+.w{display:inline-block;opacity:0;transform:translateY(26px)}
+.live .w{animation:up .8s var(--ease) forwards}
+@keyframes up{to{opacity:1;transform:translateY(0)}}
+
+.eyebrow{font-family:var(--sans);font-size:17px;font-weight:600;letter-spacing:.16em;
+         text-transform:uppercase;color:var(--accent);margin-bottom:36px;opacity:0;
+         transform:translateY(10px);position:relative;z-index:2}
+.live .eyebrow{animation:up .7s var(--ease) forwards}
+.sub{font-family:var(--sans);font-size:25px;line-height:1.6;color:var(--muted);
+     margin-top:34px;max-width:900px;opacity:0;transform:translateY(12px);
+     position:relative;z-index:2}
+.live .sub{animation:up .7s var(--ease) .45s forwards}
+
+/* ── Mascot ─────────────────────────────────────────────────────────── */
+.m{opacity:0;transform:translateY(24px) scale(.95);position:relative;z-index:2;
+   filter:drop-shadow(0 30px 44px rgba(36,27,20,.16))}
+.live .m{animation:pop .9s var(--ease) forwards, float 4.2s 1.1s ease-in-out infinite}
+@keyframes pop{55%{opacity:1;transform:translateY(-7px) scale(1.02)}
+               100%{opacity:1;transform:translateY(0) scale(1)}}
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-13px)}}
+
+.blink{width:104px;opacity:0;position:relative;z-index:2;margin-bottom:52px}
+.live .blink{animation:up .9s var(--ease) forwards}
+.eye{animation:blk 2.2s infinite ease-in-out;transform-box:fill-box;transform-origin:center}
+@keyframes blk{0%,92%,100%{transform:scaleY(1)}96%{transform:scaleY(.08)}}
+
+/* ── Product frames ─────────────────────────────────────────────────── */
+.frame{position:relative;z-index:2;width:1420px;border-radius:14px;overflow:hidden;
+       background:var(--card);border:1px solid var(--border);
+       box-shadow:0 40px 90px rgba(36,27,20,.13);opacity:0;transform:translateY(30px) scale(.985)}
+.live .frame{animation:up 1s var(--ease) forwards}
+.frame img{display:block;width:100%}
+.live .frame img{animation:drift 8s linear forwards}
+@keyframes drift{to{transform:scale(1.05)}}
+/* Hold on the hero, then ease down just far enough to reveal the agent panel
+   executing. Duration matches the shot length so the move finishes on the cut. */
+.frame.tall{height:840px}
+.frame.tall img{transform:translateY(0)}
+.live .frame.tall img{animation:scrolldn 6s var(--ease) forwards}
+@keyframes scrolldn{0%,18%{transform:translateY(0)}100%{transform:translateY(-150px)}}
+
+/* ── Command bar (inside the app, not floating) ─────────────────────── */
+.appwin{position:relative;z-index:2;width:1420px;border-radius:14px;overflow:hidden;
+        background:var(--card);border:1px solid var(--border);
+        box-shadow:0 40px 90px rgba(36,27,20,.13);opacity:0;transform:translateY(28px)}
+.live .appwin{animation:up .9s var(--ease) forwards}
+.appwin>img{display:block;width:100%;filter:blur(0)}
+.cmdover{position:absolute;left:50%;bottom:54px;transform:translateX(-50%);
+         width:1080px;background:#fff;border:1.5px solid var(--accent);border-radius:14px;
+         padding:26px 30px;display:flex;align-items:center;gap:20px;text-align:left;
+         box-shadow:0 22px 50px rgba(36,27,20,.16);opacity:0}
+.live .cmdover{animation:up .6s var(--ease) .5s forwards}
+.orb{width:34px;height:34px;border-radius:50%;flex:0 0 auto;
+     background:conic-gradient(from 0deg,var(--accent),#F5A623,var(--mascot),var(--accent));
+     animation:spin 3.4s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.cmdtxt{font-family:var(--sans);font-size:24px;color:var(--text);white-space:nowrap;overflow:hidden}
+.live .cmdtxt{animation:type 3.4s steps(52) .9s forwards;width:0}
+@keyframes type{to{width:100%}}
+.chip{background:rgba(232,89,60,.11);color:var(--accent);padding:2px 11px;border-radius:8px;font-weight:600}
+
+/* ── Plan ───────────────────────────────────────────────────────────── */
+.plan{position:relative;z-index:2;width:1080px;background:var(--card);
+      border:1px solid var(--border);border-radius:16px;overflow:hidden;text-align:left;
+      box-shadow:0 42px 92px rgba(36,27,20,.16);opacity:0;transform:translateY(28px) scale(.985)}
+.live .plan{animation:up .8s var(--ease) forwards}
+.plan .hd{padding:30px 38px;border-bottom:1px solid var(--border)}
+.plan .hd b{font-family:var(--serif);font-weight:400;font-size:34px;letter-spacing:-.02em;display:block}
+.plan .hd span{font-family:var(--sans);font-size:17px;color:var(--muted);margin-top:7px;display:block}
+.act{display:flex;gap:20px;align-items:flex-start;padding:24px 38px;
+     border-bottom:1px solid rgba(36,27,20,.05);opacity:0;transform:translateY(12px)}
+.live .act{animation:up .55s var(--ease) forwards}
+.live .act:nth-of-type(1){animation-delay:.55s}
+.live .act:nth-of-type(2){animation-delay:.85s}
+.act i{width:38px;height:38px;border-radius:10px;background:rgba(232,89,60,.10);
+       flex:0 0 auto;display:grid;place-items:center;font-style:normal;
+       font-family:var(--mono);font-size:16px;font-weight:500;color:var(--accent)}
+.act b{font-family:var(--mono);font-size:19px;font-weight:500;display:block}
+.act em{font-family:var(--sans);font-style:normal;font-size:16px;color:var(--muted);
+        display:block;margin-top:5px}
+.plan .ft{display:flex;justify-content:flex-end;gap:12px;padding:24px 38px;background:var(--bg)}
+.btn{font-family:var(--sans);padding:13px 28px;border-radius:10px;font-weight:600;font-size:16px}
+.btn.g{background:var(--accent);color:#fff}
+.btn.n{color:var(--muted)}
+
+/* ── Proof ──────────────────────────────────────────────────────────── */
+.proof{position:relative;z-index:2;display:flex;gap:34px}
+.pane{width:600px;background:var(--card);border:1px solid var(--border);border-radius:14px;
+      padding:30px 32px;text-align:left;box-shadow:0 26px 56px rgba(36,27,20,.11);
+      opacity:0;transform:translateY(22px)}
+.live .pane{animation:up .65s var(--ease) .2s forwards}
+.live .pane:nth-child(2){animation-delay:.5s}
+.pane h4{font-family:var(--sans);font-size:13px;font-weight:700;letter-spacing:.15em;
+         text-transform:uppercase;color:var(--faint);margin-bottom:22px}
+.prow{display:flex;gap:16px;align-items:center}
+.prow .bar{width:4px;height:46px;border-radius:2px;background:var(--accent)}
+.prow b{font-family:var(--sans);font-size:20px;font-weight:600}
+.prow em{font-family:var(--sans);font-style:normal;font-size:16px;color:var(--muted);
+         display:block;margin-top:4px}
+.prow .tick{margin-left:auto;width:30px;height:30px;border-radius:50%;background:#16A34A;
+            color:#fff;display:grid;place-items:center;font-size:16px;font-weight:700;
+            opacity:0;transform:scale(.5)}
+.live .prow .tick{animation:tick .5s var(--ease) 1.1s forwards}
+.live .pane:nth-child(2) .tick{animation-delay:1.4s}
+@keyframes tick{to{opacity:1;transform:scale(1)}}
+
+/* ── Controls ───────────────────────────────────────────────────────── */
+#bar{position:absolute;left:0;right:0;bottom:0;height:88px;background:#141416;
+     border-top:1px solid #262629;display:flex;align-items:center;gap:16px;padding:0 20px}
+button{background:#232326;color:#fff;border:1px solid #33333a;border-radius:8px;
+       padding:9px 16px;font:600 13px var(--sans);cursor:pointer}
+button.pri{background:var(--accent);border-color:var(--accent)}
+#track{flex:1;height:7px;background:#2a2a2f;border-radius:4px;position:relative;cursor:pointer}
+#fill{position:absolute;inset:0 auto 0 0;width:0;background:var(--accent);border-radius:4px}
+#marks{position:absolute;inset:0}
+#marks i{position:absolute;top:-4px;width:2px;height:15px;background:#45454d}
+#tc{font:500 13px var(--mono);color:#8f8f99;min-width:96px;text-align:right}
+#label{font:500 12px var(--sans);color:#83838d;min-width:210px}
+#label b{color:#fff;display:block;font-size:14px;font-weight:600}
+</style>
+</head>
+<body>
+
+<div id="wrap"><div id="stage">
+
+  <!-- Background — one shared layer under every shot. Never redrawn on a cut. -->
+  <div class="bg">
+    <div class="key"></div>
+    <div class="fill"></div>
+
+    <div class="gridwrap">
+      <svg width="100%" height="100%" aria-hidden="true">
+        <defs>
+          <pattern id="pg" x="0" y="0" width="26" height="26" patternUnits="userSpaceOnUse">
+            <line x1="13" y1="7" x2="13" y2="19" stroke="rgba(36,27,20,0.13)" stroke-width="1.4" stroke-linecap="round"/>
+            <line x1="7" y1="13" x2="19" y2="13" stroke="rgba(36,27,20,0.13)" stroke-width="1.4" stroke-linecap="round"/>
+          </pattern>
+          <!-- Radial feather centred off-frame right: the grid emerges from the
+               corner and dissolves before it reaches the type. No hard cutoff
+               anywhere, which is what made the old vertical band look pasted on. -->
+          <radialGradient id="pgfade" cx="1.0" cy="0.22" r="0.52">
+            <stop offset="0" stop-color="#fff" stop-opacity="1"/>
+            <stop offset="0.5" stop-color="#fff" stop-opacity="0.5"/>
+            <stop offset="1" stop-color="#fff" stop-opacity="0"/>
+          </radialGradient>
+          <mask id="pgmask"><rect x="0" y="0" width="100%" height="100%" fill="url(#pgfade)"/></mask>
+        </defs>
+        <rect x="0" y="0" width="100%" height="100%" fill="url(#pg)" mask="url(#pgmask)"/>
+      </svg>
+    </div>
+
+    <!-- Concentric arcs from the bottom-right corner: the product's own motif,
+         kept as depth cues but pulled well back so they never compete. -->
+    <svg class="tex" width="100%" height="100%" aria-hidden="true">
+      <circle cx="100%" cy="100%" r="260" fill="none" stroke="rgba(36,27,20,0.045)" stroke-width="1.5"/>
+      <circle cx="100%" cy="100%" r="390" fill="none" stroke="rgba(36,27,20,0.032)" stroke-width="1.5"/>
+      <circle cx="100%" cy="100%" r="530" fill="none" stroke="rgba(36,27,20,0.022)" stroke-width="1.5"/>
+    </svg>
+
+    <div class="horizon"></div>
+    <div class="grain"></div>
+    <div class="vign"></div>
+  </div>
+
+  <!-- 1 · Cold open -->
+  <section class="shot" data-in="0" data-out="4" data-name="1 · Cold open">
+    <svg class="blink" viewBox="0 0 100 100">
+      <rect x="36" y="84" width="28" height="6" rx="3" fill="#E8593C"/>
+      <path d="M 50,15 C 58,15 65,19 69,25 C 76,24 83,29 84,36 C 89,41 89,49 86,55 C 88,62 82,70 75,71 C 68,75 60,78 50,78 C 40,78 32,75 25,71 C 18,70 12,62 14,55 C 11,49 11,41 16,36 C 17,29 24,24 31,25 C 35,19 42,15 50,15 Z" fill="#E8593C"/>
+      <rect class="eye" x="37" y="38" width="6" height="18" rx="3" fill="#FBF3EC"/>
+      <rect class="eye" x="57" y="38" width="6" height="18" rx="3" fill="#FBF3EC"/>
+    </svg>
+    <div class="serif s-md" data-split>Four tabs. Three tools. One task.</div>
+  </section>
+
+  <!-- 2 · The line -->
+  <section class="shot" data-in="4" data-out="11" data-name="2 · The line">
+    <div class="serif s-lg" data-split>The execution layer</div>
+    <div class="serif s-lg" data-split data-delay="3">between thinking and <b class="accent">doing.</b></div>
+  </section>
+
+  <!-- 3 · Website -->
+  <section class="shot" data-in="11" data-out="17" data-name="3 · The website">
+    <div class="frame tall"><img src="../assets/screens/landing-real.png" alt=""></div>
+  </section>
+
+  <!-- 4 · Dashboard -->
+  <section class="shot" data-in="17" data-out="24" data-name="4 · The product">
+    <div class="frame"><img src="../assets/screens/dashboard.svg" alt=""></div>
+  </section>
+
+  <!-- 5 · Command, inside the app -->
+  <section class="shot" data-in="24" data-out="32" data-name="5 · One command">
+    <div class="appwin">
+      <img src="../assets/screens/dashboard.svg" alt="">
+      <div class="cmdover">
+        <span class="orb"></span>
+        <span class="cmdtxt">Schedule a 30-min sync with <span class="chip">@Sarah</span> Thursday 2pm</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- 6 · ★ The plan -->
+  <section class="shot" data-in="32" data-out="42" data-name="6 · ★ The plan">
+    <div class="plan">
+      <div class="hd"><b>Auren will run 2 actions</b><span>Review and edit before anything happens</span></div>
+      <div class="act"><i>1</i><div><b>calendar_create</b><em>30-min Google Meet with Sarah · Thursday 2:00 PM</em></div></div>
+      <div class="act"><i>2</i><div><b>gmail_send</b><em>Email sarah@example.com the agenda and meeting link</em></div></div>
+      <div class="ft"><span class="btn n">Cancel</span><span class="btn g">Confirm</span></div>
+    </div>
+  </section>
+
+  <!-- 7 · One approval -->
+  <section class="shot" data-in="42" data-out="47" data-name="7 · One approval">
+    <div class="eyebrow">nothing happens until you say so</div>
+    <div class="serif s-xl" data-split>One approval.</div>
+  </section>
+
+  <!-- 8 · Proof -->
+  <section class="shot" data-in="47" data-out="53" data-name="8 · The proof">
+    <div class="proof">
+      <div class="pane"><h4>Calendar</h4>
+        <div class="prow"><span class="bar"></span><div><b>Design sync with Sarah</b><em>Thu 2:00 – 2:30 PM · Google Meet</em></div><span class="tick">✓</span></div>
+      </div>
+      <div class="pane"><h4>Sent</h4>
+        <div class="prow"><span class="bar"></span><div><b>sarah@example.com</b><em>Agenda + meeting link</em></div><span class="tick">✓</span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 9 · End card -->
+  <section class="shot" data-in="53" data-out="61" data-name="9 · End card">
+    <img class="m" src="../assets/mascot-png/auren_hero.png" alt="" style="height:250px;margin-bottom:38px">
+    <div class="serif s-xl">Auren</div>
+    <div class="sub" style="font-size:22px;margin-top:22px">tryauren.in &nbsp;·&nbsp; <span class="accent" style="font-weight:600">Now in beta</span></div>
+  </section>
+
+</div></div>
+
+<div id="bar">
+  <button id="play" class="pri">▶ Play</button>
+  <button id="restart">↺</button>
+  <div id="track"><div id="fill"></div><div id="marks"></div></div>
+  <div id="tc">0:00 / 1:01</div>
+  <div id="label"><b>—</b>press play</div>
+</div>
+
+<script>
+const DUR = 61;
+const shots = [...document.querySelectorAll('.shot')];
+const stage = document.getElementById('stage');
+
+// Split headlines into per-word spans so each word rises separately.
+document.querySelectorAll('[data-split]').forEach(el => {
+  const base = Number(el.dataset.delay || 0);
+  const tmp = document.createElement('div');
+  tmp.innerHTML = el.innerHTML;
+  let out = '', i = base;
+  tmp.childNodes.forEach(node => {
+    const accent = node.nodeType === 1 && node.classList.contains('accent');
+    node.textContent.split(/(\s+)/).forEach(tok => {
+      if (!tok.trim()) { out += tok; return; }
+      out += `<span class="w${accent ? ' accent' : ''}" style="animation-delay:${(i*0.085).toFixed(3)}s">${tok}</span>`;
+      i++;
+    });
+  });
+  el.innerHTML = out;
+});
+
+function fit(){
+  const w = innerWidth - 32, h = innerHeight - 88 - 32;
+  stage.style.transform = `translate(-50%,-50%) scale(${Math.min(w/1920, h/1080)})`;
+}
+addEventListener('resize', fit); fit();
+
+const marks = document.getElementById('marks');
+shots.forEach(s => {
+  const i = document.createElement('i');
+  i.style.left = (Number(s.dataset.in)/DUR*100) + '%';
+  marks.appendChild(i);
+});
+
+let t = 0, playing = false, last = 0;
+const fill = document.getElementById('fill'), tc = document.getElementById('tc');
+const label = document.getElementById('label'), playBtn = document.getElementById('play');
+const fmt = s => `${Math.floor(s/60)}:${String(Math.floor(s%60)).padStart(2,'0')}`;
+
+function render(){
+  let active = null;
+  shots.forEach(s => {
+    const on = t >= +s.dataset.in && t < +s.dataset.out;
+    if (on) active = s;
+    s.classList.toggle('live', on);
+  });
+  fill.style.width = (t/DUR*100) + '%';
+  tc.textContent = `${fmt(t)} / ${fmt(DUR)}`;
+  if (active) label.innerHTML = `<b>${active.dataset.name}</b>${+active.dataset.out - +active.dataset.in}s`;
+}
+function loop(ts){
+  if (!playing) return;
+  if (!last) last = ts;
+  t += (ts - last)/1000; last = ts;
+  if (t >= DUR) { t = DUR; pause(); }
+  render(); requestAnimationFrame(loop);
+}
+function play(){ if (t >= DUR) t = 0; playing = true; last = 0; playBtn.textContent = '❚❚ Pause'; requestAnimationFrame(loop); }
+function pause(){ playing = false; playBtn.textContent = '▶ Play'; }
+
+playBtn.onclick = () => playing ? pause() : play();
+document.getElementById('restart').onclick = () => { t = 0; render(); play(); };
+document.getElementById('track').onclick = e => {
+  const r = e.currentTarget.getBoundingClientRect();
+  t = Math.max(0, Math.min(DUR, (e.clientX - r.left)/r.width * DUR));
+  shots.forEach(s => s.classList.remove('live'));
+  void stage.offsetWidth; last = 0; render();
+};
+addEventListener('keydown', e => { if (e.code === 'Space'){ e.preventDefault(); playing ? pause() : play(); } });
+render();
+</script>
+</body>
+</html>

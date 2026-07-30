@@ -110,11 +110,23 @@ const config = {
   				to: {
   					height: '0'
   				}
+  			},
+  			/* Mascot eye blink — open hold, then one quick squash (see AurenMascot).
+  			   Over a 2.2s cycle the closed phase is ~90ms, which is roughly the speed
+  			   of a real blink. */
+  			'eye-blink': {
+  				'0%, 92%, 100%': {
+  					transform: 'scaleY(1)'
+  				},
+  				'96%': {
+  					transform: 'scaleY(0.08)'
+  				}
   			}
   		},
   		animation: {
   			'accordion-down': 'accordion-down 0.2s ease-out',
-  			'accordion-up': 'accordion-up 0.2s ease-out'
+  			'accordion-up': 'accordion-up 0.2s ease-out',
+  			'eye-blink': 'eye-blink 2.2s infinite ease-in-out'
   		}
   	}
   },

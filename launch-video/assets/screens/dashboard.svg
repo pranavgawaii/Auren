@@ -1,0 +1,141 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 900" width="1440" height="900" font-family="Satoshi, Inter, system-ui, sans-serif">
+  <!-- Auren dashboard — layout-accurate reconstruction for After Effects.
+       Every group is id-tagged so it arrives in AE as a named layer.
+       Import via Illustrator > Composition - Retain Layer Sizes. -->
+
+  <defs>
+    <filter id="cardShadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="1" stdDeviation="1.5" flood-color="#241B14" flood-opacity="0.05"/>
+    </filter>
+  </defs>
+
+  <g id="canvas">
+    <rect width="1440" height="900" fill="#FAF8F5"/>
+  </g>
+
+  <g id="topbar">
+    <rect x="0" y="0" width="1440" height="60" fill="#FFFFFF"/>
+    <rect x="0" y="59" width="1440" height="1" fill="#241B14" opacity="0.08"/>
+    <g id="topbar-logo">
+      <circle cx="34" cy="30" r="13" fill="#F5845E"/>
+      <text x="56" y="37" font-size="21" fill="#241B14" font-family="Cabinet Grotesk, Georgia, serif">Auren</text>
+    </g>
+    <g id="topbar-actions">
+      <rect x="1286" y="16" width="60" height="28" rx="8" fill="#241B14" opacity="0.04"/>
+      <circle cx="1382" cy="30" r="14" fill="#E8593C" opacity="0.12"/>
+      <text x="1382" y="35" font-size="11" font-weight="700" fill="#E8593C" text-anchor="middle">PG</text>
+    </g>
+  </g>
+
+  <g id="sidebar">
+    <rect x="0" y="60" width="72" height="840" fill="#FFFFFF"/>
+    <rect x="71" y="60" width="1" height="840" fill="#241B14" opacity="0.08"/>
+    <g id="nav-home">
+      <rect x="16" y="88" width="40" height="40" rx="11" fill="#E8593C" opacity="0.12"/>
+      <rect x="28" y="102" width="16" height="12" rx="2.5" fill="none" stroke="#E8593C" stroke-width="2"/>
+    </g>
+    <g id="nav-inbox"><rect x="28" y="154" width="16" height="12" rx="2.5" fill="none" stroke="#241B14" stroke-opacity="0.4" stroke-width="2"/></g>
+    <g id="nav-calendar"><rect x="28" y="206" width="16" height="14" rx="2.5" fill="none" stroke="#241B14" stroke-opacity="0.4" stroke-width="2"/></g>
+    <g id="nav-github"><circle cx="36" cy="264" r="7.5" fill="none" stroke="#241B14" stroke-opacity="0.4" stroke-width="2"/></g>
+    <g id="nav-team"><circle cx="36" cy="316" r="7.5" fill="none" stroke="#241B14" stroke-opacity="0.4" stroke-width="2"/></g>
+  </g>
+
+  <g id="greeting">
+    <text x="112" y="128" font-size="34" fill="#241B14" font-family="Cabinet Grotesk, Georgia, serif">Good morning, Pranav</text>
+    <text x="112" y="158" font-size="14" fill="#241B14" opacity="0.5">Wednesday, 29 July · 3 meetings, 2 need you</text>
+  </g>
+
+  <g id="quick-actions">
+    <g id="qa-1"><rect x="112" y="182" width="126" height="32" rx="8" fill="#FFFFFF" filter="url(#cardShadow)"/><text x="132" y="203" font-size="12" font-weight="500" fill="#241B14">Brief me</text></g>
+    <g id="qa-2"><rect x="248" y="182" width="146" height="32" rx="8" fill="#FFFFFF" filter="url(#cardShadow)"/><text x="268" y="203" font-size="12" font-weight="500" fill="#241B14">Open inbox</text></g>
+    <g id="qa-3"><rect x="404" y="182" width="160" height="32" rx="8" fill="#FFFFFF" filter="url(#cardShadow)"/><text x="424" y="203" font-size="12" font-weight="500" fill="#241B14">Schedule a meet</text></g>
+  </g>
+
+  <!-- Four stat tiles. Colours match the live Stat components exactly. -->
+  <g id="stats">
+    <g id="stat-inbox">
+      <rect x="112" y="242" width="296" height="112" rx="16" fill="#FFFFFF" stroke="#241B14" stroke-opacity="0.08" filter="url(#cardShadow)"/>
+      <circle cx="140" cy="270" r="4" fill="#E8593C"/>
+      <text x="154" y="274" font-size="10.5" font-weight="700" letter-spacing="1.2" fill="#241B14" opacity="0.4">INBOX</text>
+      <text x="136" y="322" font-size="38" fill="#241B14" font-family="Cabinet Grotesk, Georgia, serif">12</text>
+      <text x="136" y="342" font-size="12" fill="#E8593C" font-weight="600">2 urgent</text>
+    </g>
+    <g id="stat-schedule">
+      <rect x="424" y="242" width="296" height="112" rx="16" fill="#FFFFFF" stroke="#241B14" stroke-opacity="0.08" filter="url(#cardShadow)"/>
+      <circle cx="452" cy="270" r="4" fill="#0EA5E9"/>
+      <text x="466" y="274" font-size="10.5" font-weight="700" letter-spacing="1.2" fill="#241B14" opacity="0.4">SCHEDULE</text>
+      <text x="448" y="322" font-size="38" fill="#241B14" font-family="Cabinet Grotesk, Georgia, serif">3</text>
+      <text x="448" y="342" font-size="12" fill="#241B14" opacity="0.5">Next at 14:00</text>
+    </g>
+    <g id="stat-github">
+      <rect x="736" y="242" width="296" height="112" rx="16" fill="#FFFFFF" stroke="#241B14" stroke-opacity="0.08" filter="url(#cardShadow)"/>
+      <circle cx="764" cy="270" r="4" fill="#8B5CF6"/>
+      <text x="778" y="274" font-size="10.5" font-weight="700" letter-spacing="1.2" fill="#241B14" opacity="0.4">GITHUB</text>
+      <text x="760" y="322" font-size="30" fill="#241B14" font-family="Cabinet Grotesk, Georgia, serif">Active</text>
+      <text x="760" y="342" font-size="12" fill="#241B14" opacity="0.5">Repository linked</text>
+    </g>
+    <g id="stat-runs">
+      <rect x="1048" y="242" width="296" height="112" rx="16" fill="#FFFFFF" stroke="#241B14" stroke-opacity="0.08" filter="url(#cardShadow)"/>
+      <circle cx="1076" cy="270" r="4" fill="#10B981"/>
+      <text x="1090" y="274" font-size="10.5" font-weight="700" letter-spacing="1.2" fill="#241B14" opacity="0.4">RUNS</text>
+      <text x="1072" y="322" font-size="38" fill="#241B14" font-family="Cabinet Grotesk, Georgia, serif">47</text>
+      <text x="1072" y="342" font-size="12" fill="#241B14" opacity="0.5">Completed executions</text>
+    </g>
+  </g>
+
+  <g id="today-card">
+    <rect x="112" y="382" width="720" height="308" rx="16" fill="#FFFFFF" stroke="#241B14" stroke-opacity="0.08" filter="url(#cardShadow)"/>
+    <text x="136" y="414" font-size="17" fill="#241B14" font-family="Cabinet Grotesk, Georgia, serif">Today</text>
+    <text x="770" y="414" font-size="12" fill="#241B14" opacity="0.4" text-anchor="end">Full calendar</text>
+    <rect x="112" y="430" width="720" height="1" fill="#241B14" opacity="0.06"/>
+
+    <g id="event-next">
+      <rect x="136" y="450" width="4" height="40" rx="2" fill="#E8593C"/>
+      <rect x="154" y="452" width="42" height="16" rx="5" fill="#E8593C" opacity="0.1"/>
+      <text x="175" y="464" font-size="9.5" font-weight="700" fill="#E8593C" text-anchor="middle">NEXT</text>
+      <text x="208" y="465" font-size="14" font-weight="600" fill="#241B14">Design sync with Sarah</text>
+      <text x="154" y="484" font-size="12" fill="#241B14" opacity="0.5">14:00 – 14:30 · Google Meet</text>
+    </g>
+    <rect x="112" y="510" width="720" height="1" fill="#241B14" opacity="0.06"/>
+    <g id="event-2">
+      <text x="154" y="542" font-size="12" font-weight="500" fill="#241B14" opacity="0.5">16:00</text>
+      <text x="220" y="542" font-size="13.5" fill="#241B14">Sprint review</text>
+    </g>
+    <rect x="112" y="566" width="720" height="1" fill="#241B14" opacity="0.06"/>
+    <g id="event-3">
+      <text x="154" y="598" font-size="12" font-weight="500" fill="#241B14" opacity="0.5">17:30</text>
+      <text x="220" y="598" font-size="13.5" fill="#241B14">1:1 with Arjun</text>
+    </g>
+  </g>
+
+  <g id="needs-you-card">
+    <rect x="856" y="382" width="488" height="308" rx="16" fill="#FFFFFF" stroke="#241B14" stroke-opacity="0.08" filter="url(#cardShadow)"/>
+    <text x="880" y="414" font-size="17" fill="#241B14" font-family="Cabinet Grotesk, Georgia, serif">Needs you</text>
+    <rect x="856" y="430" width="488" height="1" fill="#241B14" opacity="0.06"/>
+    <g id="mail-1">
+      <rect x="880" y="450" width="3" height="34" rx="1.5" fill="#E8593C"/>
+      <text x="898" y="464" font-size="13" font-weight="600" fill="#241B14">Sarah Chen</text>
+      <rect x="1000" y="452" width="50" height="16" rx="8" fill="#E8593C" opacity="0.1"/>
+      <text x="1025" y="464" font-size="9.5" font-weight="700" fill="#E8593C" text-anchor="middle">URGENT</text>
+      <text x="898" y="482" font-size="12.5" fill="#241B14" opacity="0.5">Re: Q3 roadmap review</text>
+    </g>
+    <g id="mail-2">
+      <rect x="880" y="508" width="3" height="34" rx="1.5" fill="#241B14" opacity="0.1"/>
+      <text x="898" y="522" font-size="13" font-weight="600" fill="#241B14">Arjun Mehta</text>
+      <text x="898" y="540" font-size="12.5" fill="#241B14" opacity="0.5">PR #482 ready for review</text>
+    </g>
+    <g id="mail-3">
+      <rect x="880" y="566" width="3" height="34" rx="1.5" fill="#241B14" opacity="0.1"/>
+      <text x="898" y="580" font-size="13" font-weight="600" fill="#241B14">Notion</text>
+      <text x="898" y="598" font-size="12.5" fill="#241B14" opacity="0.5">Weekly digest</text>
+    </g>
+  </g>
+
+  <!-- Command bar — the film's most-used element. Keep as its own layer. -->
+  <g id="command-bar">
+    <rect x="360" y="782" width="720" height="56" rx="15" fill="#FFFFFF" stroke="#241B14" stroke-opacity="0.12" filter="url(#cardShadow)"/>
+    <circle cx="394" cy="810" r="10" fill="#F5845E"/>
+    <text x="422" y="816" font-size="14" fill="#241B14" opacity="0.35">Type a command, or @mention someone.</text>
+    <rect x="1020" y="796" width="40" height="28" rx="8" fill="#E8593C"/>
+  </g>
+</svg>

@@ -42,3 +42,8 @@ PitchDeck/
 project-docs/
 
 
+
+# Launch video reference footage — large, keep local only
+launch-video/*.mp4
+
+.claude/

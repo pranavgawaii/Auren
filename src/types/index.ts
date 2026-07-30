@@ -199,19 +199,26 @@ export interface ClassificationResult {
   reasoning: string;
 }
 
+export interface AgentReasoningResult {
+  actions: PlannedAction[];
+  // Legacy field: earlier versions had the LLM fabricate a mock "daily briefing" here.
+  // Home now shows a real, live summary instead, so this is kept only so old cached
+  // agent_actions rows and any still-returned "briefing" value are ignored safely.
+  briefing?: unknown;
+  // NOTE: the day-summary card is assembled on the client from live Gmail/Calendar
+  // data (see HomeView) — never from the model — so this shape is only a view model.
+  explanation: string;
+  followUpQuestion?: string;
+  requiresConfirmation: boolean;
+}
+
+/** View model for the day-summary card. Built client-side from real Gmail/Calendar
+ *  results; `summaryText` is the only field the model contributes. */
 export interface DailyBriefingData {
   schedule: { time: string; title: string; type: "meeting" | "focus" | "reminder" }[];
   emails: { sender: string; subject: string; isUrgent: boolean }[];
   github: { repo: string; prsToReview: number; issuesAssigned: number }[];
   summaryText: string;
-}
-
-export interface AgentReasoningResult {
-  actions: PlannedAction[];
-  briefing?: DailyBriefingData;
-  explanation: string;
-  followUpQuestion?: string;
-  requiresConfirmation: boolean;
 }
 
 export interface PlannedAction {

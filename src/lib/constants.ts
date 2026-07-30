@@ -78,9 +78,9 @@ export const ROUTES = {
   HOME: "/",
   DEMO: "/demo",
   ONBOARDING: "/onboarding",
-  APP: "/app",
-  APP_SEARCH: "/app/search",
-  APP_COMPOSE: "/app/compose",
+  APP: "/dashboard",
+  APP_SEARCH: "/search",
+  APP_COMPOSE: "/mail",
   SETTINGS: "/settings",
   DOCS: "/docs",
 } as const;

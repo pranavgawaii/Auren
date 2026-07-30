@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Auren - Banner Preview</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            background-color: #FBF3EC;
+            /* Subtle baby curve / wave pattern in the background */
+            background-image: url("data:image/svg+xml,%3Csvg width='60' height='20' viewBox='0 0 60 20' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M0 10 Q 15 20 30 10 T 60 10' fill='none' stroke='rgba(232,89,60,0.12)' stroke-width='1.5' stroke-linecap='round'/%3E%3C/svg%3E");
+            background-size: 60px 20px;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            color: #241B14;
+        }
+    </style>
+</head>
+<body class="p-8 md:p-16 flex flex-col items-center justify-center min-h-screen">
+
+    <div class="max-w-4xl w-full flex flex-col items-center">
+        
+        <div class="text-center mb-10 bg-white/80 backdrop-blur-sm p-6 rounded-2xl border border-[rgba(36,27,20,0.08)] shadow-sm">
+            <h1 class="text-3xl font-semibold mb-2 tracking-tight">Project Banner</h1>
+            <p class="text-[rgba(36,27,20,0.6)]">The preview that appears when you drop your link anywhere.</p>
+        </div>
+
+        <!-- Single Generic Banner View -->
+        <div class="w-full max-w-[800px] border border-[rgba(36,27,20,0.12)] rounded-3xl overflow-hidden bg-white shadow-[0_24px_60px_rgba(36,27,20,0.08)] transform hover:scale-[1.01] transition-transform duration-300">
+            
+            <!-- Standard Banner Ratio (1.91:1) -->
+            <div class="w-full aspect-[1.91/1] bg-gray-100 overflow-hidden relative border-b border-[rgba(36,27,20,0.08)]">
+                <img src="/og-image.png" alt="Auren Open Graph Banner" class="w-full h-full object-cover">
+            </div>
+            
+            <!-- Extracted Metadata Display -->
+            <div class="p-6 md:p-8 bg-white flex flex-col gap-2">
+                <div class="text-[13px] font-semibold text-[#E8593C] uppercase tracking-widest">tryauren.in</div>
+                <div class="text-[22px] md:text-[26px] font-bold text-[#1C1513] leading-tight mt-1">Auren | AI Execution Layer</div>
+                <div class="text-[16px] text-[rgba(36,27,20,0.6)] leading-relaxed mt-2 line-clamp-2">
+                    Type one command. Gmail, Calendar, and GitHub execute simultaneously. One approval.
+                </div>
+            </div>
+
+        </div>
+
+    </div>
+
+</body>
+</html>
