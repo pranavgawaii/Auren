@@ -47,21 +47,32 @@ export async function getConnectUrl(service: "google" | "github"): Promise<{ suc
 export async function checkConnectionStatus(): Promise<{ google: boolean; github: boolean }> {
   noStore();
   try {
+    const started = Date.now();
     const userId = await getUserId();
     const inst = getCorsairInstance();
-    
-    // Query Corsair to see if credentials exist for this tenant
-    const gmailCredentials = await inst.plugins.credentials.list("gmail", userId);
-    const githubCredentials = await inst.plugins.credentials.list("github", userId);
-    const calendarCredentials = await inst.plugins.credentials.list("googlecalendar", userId);
-    
-    console.log("[DEBUG] checkConnectionStatus gmailCredentials:", JSON.stringify(gmailCredentials));
-    console.log("[DEBUG] checkConnectionStatus githubCredentials:", JSON.stringify(githubCredentials));
-    console.log("[DEBUG] checkConnectionStatus calendarCredentials:", JSON.stringify(calendarCredentials));
-    
-    const googleConnected = (gmailCredentials.fields.find((f: any) => f.field === "access_token")?.set || false) || 
-                            (calendarCredentials.fields.find((f: any) => f.field === "access_token")?.set || false);
-    const githubConnected = githubCredentials.fields.find((f: any) => f.field === "access_token")?.set || false;
+
+    // Query Corsair to see if credentials exist for this tenant. These three are
+    // independent lookups — running them in parallel keeps the boot overlay
+    // ("Preparing your workspace…") at one round trip instead of three.
+    const [gmailCredentials, githubCredentials, calendarCredentials] = await Promise.all([
+      inst.plugins.credentials.list("gmail", userId),
+      inst.plugins.credentials.list("github", userId),
+      inst.plugins.credentials.list("googlecalendar", userId),
+    ]);
+
+    console.log(`[checkConnectionStatus] credential lookup took ${Date.now() - started}ms`);
+
+    // Use refresh_token, not access_token, as the "is this actually connected" signal.
+    // access_token is short-lived and legitimately cycles/expires between checks even while
+    // fully connected — refresh_token is the durable proof an OAuth grant actually happened.
+    const hasRefreshToken = (cred: { fields: { field: string; set?: boolean }[] }) =>
+      cred.fields.find((f) => f.field === "refresh_token")?.set || false;
+
+    // Both Gmail AND Calendar must actually be authorized — showing "connected" when only one
+    // has a token (e.g. Gmail granted, Calendar scope skipped/denied on Google's consent screen)
+    // hides a real problem: calendar_create silently fails with no way for the user to see why.
+    const googleConnected = hasRefreshToken(gmailCredentials) && hasRefreshToken(calendarCredentials);
+    const githubConnected = hasRefreshToken(githubCredentials);
     
     return { google: googleConnected, github: githubConnected };
   } catch (error) {

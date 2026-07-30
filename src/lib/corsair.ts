@@ -1,6 +1,7 @@
 import { createClient as createApp } from "@corsair-dev/app";
 import { getDb } from "@/lib/db";
 import { getUserId } from "@/lib/user";
+import { isDirectCalendarConnected, createEventDirect } from "@/lib/google-direct";
 import type {
   GmailMessage,
   GmailSendPayload,
@@ -237,6 +238,7 @@ export async function gmailSend(
       `To: ${payload.to}`,
       `Subject: ${payload.subject}`,
       "Content-Type: text/plain; charset=utf-8",
+      "Content-Transfer-Encoding: 8bit",
       "",
       payload.body,
     ];
@@ -291,6 +293,7 @@ export async function gmailCreateDraft(
       `To: ${payload.to}`,
       `Subject: ${payload.subject}`,
       "Content-Type: text/plain; charset=utf-8",
+      "Content-Transfer-Encoding: 8bit",
       "",
       payload.body,
     ];
@@ -406,7 +409,7 @@ export async function googleCalendarCreate(
     // Server-side default for missing dates
     let startIso = payload.startAt;
     let endIso = payload.endAt;
-    
+
     if (!startIso) {
       const now = new Date();
       now.setMinutes(Math.ceil(now.getMinutes() / 30) * 30);
@@ -418,6 +421,45 @@ export async function googleCalendarCreate(
       endIso = end.toISOString();
     }
 
+    // Prefer the direct Google grant when the user has connected it: it is the only path
+    // that can pass conferenceDataVersion=1 and therefore the only way to get a real,
+    // joinable Google Meet link. Falls through to Corsair when not connected.
+    if (await isDirectCalendarConnected()) {
+      const direct = await createEventDirect({
+        title: payload.title,
+        description,
+        startIso,
+        endIso,
+        attendees: payload.attendees,
+        withMeetLink: payload.withMeetLink,
+      });
+
+      if (direct.success) {
+        return {
+          success: true,
+          data: {
+            id: direct.data.id,
+            title: payload.title,
+            startAt: direct.data.start || startIso,
+            endAt: direct.data.end || endIso,
+            attendees: attendees || [],
+            htmlLink: direct.data.htmlLink,
+            ...(direct.data.meetLink && { meetLink: direct.data.meetLink }),
+          },
+        };
+      }
+
+      console.warn("[GoogleDirect] create failed, falling back to Corsair:", direct.error);
+    }
+
+    // NOTE: Corsair's googlecalendar proxy expects the event payload under `event`.
+    // Other shapes (`requestBody`, `resource`, flat) are rejected with "Bad Request",
+    // which silently drops us into the DB-only fallback below — verified empirically.
+    //
+    // Also verified: this endpoint does NOT honour `conferenceDataVersion`, so a
+    // `conferenceData.createRequest` is accepted but silently ignored and Google returns
+    // no `hangoutLink`. We still send it (harmless, and it starts working for free if
+    // Corsair adds support), but callers must not assume a Meet URL comes back.
     const runParams: Record<string, unknown> = {
       calendarId: "primary",
       ...(payload.withMeetLink && { conferenceDataVersion: 1 }),
@@ -437,11 +479,10 @@ export async function googleCalendarCreate(
         }),
       },
     };
-    
+
     let resultData: Record<string, unknown> = {};
-    
+
     try {
-      console.log("[Corsair] Creating event...");
       const result = await tenant.run("googlecalendar.api.events.create", runParams);
       resultData = result as unknown as Record<string, unknown>;
     } catch (err: any) {
@@ -453,8 +494,13 @@ export async function googleCalendarCreate(
       // Fall through to DB insert
     }
       
-    if (!resultData || (!resultData.id && !resultData.htmlLink)) {
-      console.warn("[Corsair] All Calendar API Create attempts failed. Falling back to DB insert.");
+    // Corsair wraps the Google response as { success, data: <event> }, so the real event
+    // fields live under `data` — check both shapes or a successful create is mistaken for
+    // a failure and silently downgraded to a local-only stub.
+    const created = ((resultData?.data as Record<string, unknown>) || resultData) ?? {};
+
+    if (!created.id && !created.htmlLink) {
+      console.warn("[Corsair] Calendar API create failed. Falling back to DB insert.");
       const db = await getDb();
       const userId = await getUserId();
       
@@ -476,10 +522,9 @@ export async function googleCalendarCreate(
         await db.collection("calendar_events").insertOne(newEvent);
       }
       
-      const fallbackMeet = payload.withMeetLink 
-        ? `https://meet.google.com/aur-${Math.random().toString(36).substring(2, 6)}-${Math.random().toString(36).substring(2, 5)}`
-        : undefined;
-
+      // No real Google Calendar event was created here (API call failed entirely),
+      // so there is no real Meet link to offer — a fabricated meet.google.com URL
+      // would never resolve to an actual meeting and is worse than omitting it.
       return {
         success: true,
         data: {
@@ -491,28 +536,25 @@ export async function googleCalendarCreate(
           htmlLink: "",
           description: newEvent.description || undefined,
           location: newEvent.location || undefined,
-          ...(fallbackMeet && { meetLink: fallbackMeet }),
         }
       };
     }
-    
-    const rawMeet =
-      resultData.hangoutLink ||
-      (resultData.data as any)?.hangoutLink ||
-      (resultData.conferenceData as any)?.entryPoints?.find((ep: any) => ep.entryPointType === "video")?.uri ||
-      ((resultData.data as any)?.conferenceData as any)?.entryPoints?.find((ep: any) => ep.entryPointType === "video")?.uri;
 
-    const meetLink = payload.withMeetLink
-      ? (rawMeet ? String(rawMeet) : `https://meet.google.com/aur-${Math.random().toString(36).substring(2, 6)}-${Math.random().toString(36).substring(2, 5)}`)
-      : undefined;
+    const rawMeet =
+      created.hangoutLink ||
+      (created.conferenceData as any)?.entryPoints?.find((ep: any) => ep.entryPointType === "video")?.uri;
+
+    // Only surface a Meet link if Google actually returned one for this real event —
+    // never fabricate a URL, since a made-up meeting code will always fail to join.
+    const meetLink = rawMeet ? String(rawMeet) : undefined;
 
     const eventResult: CalendarEventResult = {
-      id: String(resultData.id || (resultData.data as any)?.id || ""),
-      title: String(resultData.summary || (resultData.data as any)?.summary || payload.title),
-      startAt: String((resultData.start as Record<string, unknown>)?.dateTime || (resultData.data as any)?.start?.dateTime || payload.startAt),
-      endAt: String((resultData.end as Record<string, unknown>)?.dateTime || (resultData.data as any)?.end?.dateTime || payload.endAt),
-      attendees: (resultData.attendees as import("@/types").CalendarAttendee[]) || [],
-      htmlLink: String(resultData.htmlLink || (resultData.data as any)?.htmlLink || ""),
+      id: String(created.id || ""),
+      title: String(created.summary || payload.title),
+      startAt: String((created.start as Record<string, unknown>)?.dateTime || payload.startAt),
+      endAt: String((created.end as Record<string, unknown>)?.dateTime || payload.endAt),
+      attendees: (created.attendees as import("@/types").CalendarAttendee[]) || [],
+      htmlLink: String(created.htmlLink || ""),
       ...(meetLink && { meetLink }),
     };
 

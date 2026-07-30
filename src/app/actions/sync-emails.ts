@@ -3,29 +3,8 @@
 import { gmailRead } from "@/lib/corsair";
 import { updateContacts } from "@/app/actions/update-contacts";
 import { getDb } from "@/lib/db";
-import { EMAIL_PRIORITY, type EmailPriority } from "@/lib/constants";
+import { classifyEmailPriority } from "@/lib/email-priority";
 import { getUserId } from "@/lib/user";
-
-const FYI_KEYWORDS = [
-  "newsletter", "unsubscribe", "promotion", "sale", "offer", "no-reply",
-  "noreply", "notification", "digest", "weekly", "monthly", "coupon",
-  "discount", "deals", "updates from", "you're subscribed",
-];
-const URGENT_KEYWORDS = [
-  "urgent", "asap", "immediately", "critical", "deadline", "emergency",
-  "action required", "time sensitive", "overdue", "payment due", "invoice due",
-];
-
-function classifyPriorityLocal(subject: string, snippet: string): EmailPriority {
-  const text = `${subject} ${snippet}`.toLowerCase();
-  for (const kw of FYI_KEYWORDS) {
-    if (text.includes(kw)) return EMAIL_PRIORITY.FYI;
-  }
-  for (const kw of URGENT_KEYWORDS) {
-    if (text.includes(kw)) return EMAIL_PRIORITY.URGENT;
-  }
-  return EMAIL_PRIORITY.NORMAL;
-}
 
 export async function syncInboxEmails(maxResults: number = 20, folderType?: "INBOX" | "SENT" | "DRAFT"): Promise<{ success: boolean; count?: number; error?: string }> {
   try {
@@ -58,7 +37,12 @@ export async function syncInboxEmails(maxResults: number = 20, folderType?: "INB
           continue;
         }
 
-        const priority = classifyPriorityLocal(email.subject || "", email.snippet || "");
+        const priority = classifyEmailPriority({
+          subject: email.subject,
+          snippet: email.snippet,
+          fromEmail: email.from,
+          labels: email.labels,
+        });
 
         await collection.updateOne(
           { gmail_id: email.id },

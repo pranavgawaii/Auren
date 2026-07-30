@@ -33,7 +33,14 @@ export async function reasonWithAI(
 
       if (!response.ok) {
         const errorText = await response.text();
-        throw new Error(`OpenRouter HTTP ${response.status}: ${errorText}`);
+        // 413 means the prompt itself is over the per-minute token cap — retrying the
+        // same payload can only fail again, so say what's actually wrong.
+        if (response.status === 413) {
+          throw new Error(
+            `Groq HTTP 413: prompt exceeds the token-per-minute limit. Trim the context being sent (email body / chat history). ${errorText}`
+          );
+        }
+        throw new Error(`Groq HTTP ${response.status}: ${errorText}`);
       }
 
       const data = await response.json();
