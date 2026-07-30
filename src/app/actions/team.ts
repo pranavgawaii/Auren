@@ -18,13 +18,7 @@ export async function getTeamContacts(): Promise<{ success: boolean; data?: Team
     const userId = await getUserId();
     const db = await getDb();
     if (!db) {
-      return {
-        success: true,
-        data: [
-          { id: "default-1", name: "Pranav Gawai", email: "pranavgawai1518@gmail.com", role: "Founder & Lead", addedAt: new Date().toISOString() },
-          { id: "default-2", name: "Product Team", email: "product@example.com", role: "Product", addedAt: new Date().toISOString() }
-        ]
-      };
+      return { success: true, data: [] };
     }
 
     let docs = await db.collection("team_contacts")
@@ -32,14 +26,8 @@ export async function getTeamContacts(): Promise<{ success: boolean; data?: Team
       .sort({ name: 1 })
       .toArray();
 
-    // Auto-seed if empty
+    // Auto-seed from the user's own Gmail contacts if empty — never from hardcoded people.
     if (!docs || docs.length === 0) {
-      const defaultContacts = [
-        { user_id: userId, name: "Pranav Gawai", email: "pranavgawai1518@gmail.com", role: "Founder & Lead", added_at: new Date().toISOString() },
-        { user_id: userId, name: "Product Team", email: "product@example.com", role: "Product", added_at: new Date().toISOString() }
-      ];
-
-      // Extract unique email contacts from emails collection if present
       const emailsData = await db.collection("emails").find({ user_id: userId }).limit(50).toArray();
       const extractedMap = new Map<string, string>();
       (emailsData || []).forEach(e => {
@@ -49,23 +37,21 @@ export async function getTeamContacts(): Promise<{ success: boolean; data?: Team
         }
       });
 
-      extractedMap.forEach((name, email) => {
-        if (!defaultContacts.some(c => c.email.toLowerCase() === email)) {
-          defaultContacts.push({
-            user_id: userId,
-            name: name,
-            email: email,
-            role: "Synced Contact",
-            added_at: new Date().toISOString()
-          });
-        }
-      });
+      const extractedContacts = Array.from(extractedMap.entries()).map(([email, name]) => ({
+        user_id: userId,
+        name,
+        email,
+        role: "Synced Contact",
+        added_at: new Date().toISOString(),
+      }));
 
-      try {
-        await db.collection("team_contacts").insertMany(defaultContacts);
-        docs = await db.collection("team_contacts").find({ user_id: userId }).sort({ name: 1 }).toArray();
-      } catch (err) {
-        console.warn("[Team] Auto-seed warning:", err);
+      if (extractedContacts.length > 0) {
+        try {
+          await db.collection("team_contacts").insertMany(extractedContacts);
+          docs = await db.collection("team_contacts").find({ user_id: userId }).sort({ name: 1 }).toArray();
+        } catch (err) {
+          console.warn("[Team] Auto-seed warning:", err);
+        }
       }
     }
 
@@ -110,7 +96,49 @@ export async function addTeamContact(
       added_at: new Date().toISOString(),
     });
 
-    revalidatePath("/app");
+    revalidatePath("/team");
+    revalidatePath("/dashboard");
+    return { success: true };
+  } catch (error: any) {
+    return { success: false, error: error.message };
+  }
+}
+
+export async function updateTeamContact(
+  contactId: string,
+  name: string,
+  email: string,
+  role?: string
+): Promise<{ success: boolean; error?: string }> {
+  try {
+    if (!name || !email) return { success: false, error: "Name and email are required" };
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) return { success: false, error: "Invalid email address" };
+
+    const userId = await getUserId();
+    const db = await getDb();
+    if (!db) return { success: false, error: "Database unavailable" };
+
+    const { ObjectId } = await import("mongodb");
+    const normalizedEmail = email.toLowerCase().trim();
+
+    // Another contact (not this one) must not already own the new address.
+    const clash = await db.collection("team_contacts").findOne({
+      user_id: userId,
+      email: normalizedEmail,
+      _id: { $ne: new ObjectId(contactId) },
+    });
+    if (clash) return { success: false, error: "Another contact already uses this email" };
+
+    const res = await db.collection("team_contacts").updateOne(
+      { _id: new ObjectId(contactId), user_id: userId },
+      { $set: { name: name.trim(), email: normalizedEmail, role: role?.trim() || "" } }
+    );
+
+    if (res.matchedCount === 0) return { success: false, error: "Contact not found" };
+
+    revalidatePath("/team");
+    revalidatePath("/dashboard");
     return { success: true };
   } catch (error: any) {
     return { success: false, error: error.message };
@@ -126,7 +154,8 @@ export async function deleteTeamContact(contactId: string): Promise<{ success: b
     const { ObjectId } = await import("mongodb");
     await db.collection("team_contacts").deleteOne({ _id: new ObjectId(contactId), user_id: userId });
 
-    revalidatePath("/app");
+    revalidatePath("/team");
+    revalidatePath("/dashboard");
     return { success: true };
   } catch (error: any) {
     return { success: false, error: error.message };

@@ -29,7 +29,7 @@ export function Footer() {
         <div style={{ maxWidth: "320px" }}>
           <Link href="/" style={{ display: "flex", alignItems: "center", gap: "10px", textDecoration: "none", marginBottom: "20px" }}>
             <div style={{ width: "28px", height: "28px", borderRadius: "5px", overflow: "hidden", position: "relative", flexShrink: 0 }}>
-              <Image src="/auren_logo.webp" alt="Auren Logo" fill style={{ objectFit: "cover" }} />
+              <Image src="/auren_logo.webp" alt="Auren Logo" fill sizes="64px" style={{ objectFit: "cover" }} />
             </div>
             <span style={{ fontFamily: "var(--font-civane, Georgia, serif)", fontWeight: 400, fontSize: "20px", color: "#241B14" }}>Auren</span>
           </Link>

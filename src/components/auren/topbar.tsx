@@ -47,7 +47,7 @@ export function Topbar() {
               position: "relative", flexShrink: 0,
             }}
           >
-            <Image src="/auren_logo.webp" alt="Auren Logo" fill style={{ objectFit: "cover" }} />
+            <Image src="/auren_logo.webp" alt="Auren Logo" fill sizes="64px" style={{ objectFit: "cover" }} />
           </motion.div>
           <span style={{ fontFamily: "var(--font-civane, Georgia, serif)", fontWeight: 400, fontSize: "22px", letterSpacing: "-0.02em", color: "#241B14" }}>
             Auren

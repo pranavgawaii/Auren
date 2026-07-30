@@ -70,6 +70,9 @@ export function ActionConfirmation({
 
       setEditedPlan(clonedPlan);
       setEnabledActions(clonedPlan.actions.map(() => true));
+      // Expand every action by default so the user sees the actual email/event
+      // content (recipient, subject, body, Meet link) without an extra click.
+      setExpandedActions(Object.fromEntries(clonedPlan.actions.map((_: unknown, i: number) => [i, true])));
       setClarificationText("");
       setIsSubmittingClarification(false);
     } else {
@@ -311,26 +314,40 @@ export function ActionConfirmation({
                                 onChange={(e) => updateParam(i, "title", e.target.value)}
                               />
                             </div>
-                            {/* Google Meet Toggle */}
-                            <div className="flex items-center justify-between px-3 py-2.5 rounded-[10px] border border-[rgba(36,27,20,0.08)] dark:border-[rgba(255,255,255,0.08)] bg-[#F0FDF4] dark:bg-[#166534]/10">
-                              <div className="flex items-center gap-2">
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" className="text-[#16A34A] shrink-0">
-                                  <path d="M15 10L20.5 7.5V16.5L15 14M4 8H14C14.5523 8 15 8.44772 15 9V15C15 15.5523 14.5523 16 14 16H4C3.44772 16 3 15.5523 3 15V9C3 8.44772 3.44772 8 4 8Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                                </svg>
-                                <div className="flex flex-col">
-                                  <span className="font-sans font-semibold text-[12px] text-[#16A34A]">Add Google Meet link</span>
-                                  <span className="font-sans text-[10px] text-[rgba(36,27,20,0.4)] dark:text-[rgba(255,255,255,0.4)]">Auto-generates a meet.google.com link</span>
+                            {/* Video meeting toggle — plain form row using the app's standard
+                                switch styling (brand orange on, neutral off) so it reads the
+                                same as every other toggle in the product. */}
+                            {(() => {
+                              const meetOn = Boolean(action.parameters.withMeetLink);
+                              return (
+                                <div className="flex items-center justify-between gap-3 pt-1">
+                                  <div className="flex flex-col">
+                                    <span className="font-sans text-[11px] font-semibold text-[rgba(36,27,20,0.6)] dark:text-[rgba(255,255,255,0.6)]">
+                                      Video meeting
+                                    </span>
+                                    <span className="font-sans text-[10.5px] text-[rgba(36,27,20,0.4)] dark:text-[rgba(255,255,255,0.4)]">
+                                      Include the meeting link in the email
+                                    </span>
+                                  </div>
+                                  <button
+                                    type="button"
+                                    role="switch"
+                                    aria-checked={meetOn}
+                                    aria-label="Include video meeting link"
+                                    onClick={() => updateParam(i, "withMeetLink", !meetOn)}
+                                    className={`w-9 h-5 flex items-center rounded-full p-0.5 shrink-0 transition-all duration-300 ease-in-out focus:outline-none cursor-pointer active:scale-95 ${
+                                      meetOn ? "bg-[#E8593C]" : "bg-[rgba(36,27,20,0.15)] dark:bg-[rgba(255,255,255,0.18)]"
+                                    }`}
+                                  >
+                                    <div
+                                      className={`bg-white w-4 h-4 rounded-full shadow-sm transform transition-transform duration-300 ease-in-out ${
+                                        meetOn ? "translate-x-4" : "translate-x-0"
+                                      }`}
+                                    />
+                                  </button>
                                 </div>
-                              </div>
-                              <button
-                                type="button"
-                                onClick={() => updateParam(i, "withMeetLink", !action.parameters.withMeetLink)}
-                                className={`relative w-10 h-5 rounded-full transition-colors shrink-0 ${action.parameters.withMeetLink ? "bg-[#16A34A]" : "bg-[rgba(36,27,20,0.12)] dark:bg-[rgba(255,255,255,0.12)]"}`}
-                                aria-label="Toggle Google Meet link"
-                              >
-                                <span className={`absolute top-0.5 w-4 h-4 rounded-full bg-white shadow transition-transform ${action.parameters.withMeetLink ? "translate-x-5" : "translate-x-0.5"}`} />
-                              </button>
-                            </div>
+                              );
+                            })()}
                             <div className="flex flex-col gap-3">
                               <label className="font-sans text-[11px] font-semibold text-[rgba(36,27,20,0.6)] dark:text-[rgba(255,255,255,0.6)] uppercase tracking-wider">Date &amp; Time Range</label>
                               

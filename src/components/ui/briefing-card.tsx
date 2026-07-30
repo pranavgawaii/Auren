@@ -1,135 +1,350 @@
-import React from "react"
-import { motion } from "framer-motion"
-import { Calendar, Mail, GitBranch, AlertCircle, GitPullRequest } from "lucide-react"
-import type { DailyBriefingData } from "@/types"
+"use client";
 
-export function BriefingCard({ data, onClose }: { data: DailyBriefingData, onClose?: () => void }) {
+import React from "react";
+import { motion } from "framer-motion";
+import { Calendar, Mail, GitBranch, X, ArrowUpRight, Clock, Inbox as InboxIcon } from "lucide-react";
+import { AurenMascotBadge } from "@/components/ui/auren-mascot";
+import type { DailyBriefingData } from "@/types";
+
+/* Same tokens as History / Team / Home so the card reads as part of the product. */
+const SERIF = { fontFamily: "var(--font-civane, Georgia, serif)" };
+const RULE = "border-[rgba(36,27,20,0.08)] dark:border-[rgba(255,255,255,0.08)]";
+const MUTED = "text-[rgba(36,27,20,0.5)] dark:text-[rgba(255,255,255,0.5)]";
+const FAINT = "text-[rgba(36,27,20,0.4)] dark:text-[rgba(255,255,255,0.4)]";
+const INK = "text-[#241B14] dark:text-[#F4F4F5]";
+const HOVER = "hover:bg-[rgba(36,27,20,0.03)] dark:hover:bg-[rgba(255,255,255,0.04)]";
+const ACCENT = "#E8593C";
+
+/** Rows cascade in rather than snapping — the card should feel composed, not dumped. */
+const rise = {
+  hidden: { opacity: 0, y: 8 },
+  show: (i: number) => ({
+    opacity: 1,
+    y: 0,
+    transition: { delay: 0.05 + i * 0.035, duration: 0.32, ease: [0.22, 1, 0.36, 1] as const },
+  }),
+};
+
+function greeting(d: Date) {
+  const h = d.getHours();
+  if (h < 5) return "Still up";
+  if (h < 12) return "Good morning";
+  if (h < 17) return "Good afternoon";
+  return "Good evening";
+}
+
+/** Big number + label. The three of these are the whole day in one glance. */
+function Stat({ value, label, accent }: { value: number; label: string; accent?: boolean }) {
+  const isHot = accent && value > 0;
+  return (
+    <div className="flex flex-col gap-0.5">
+      <span
+        className="text-[27px] leading-none tabular-nums"
+        style={{ ...SERIF, color: isHot ? ACCENT : "inherit" }}
+      >
+        {value}
+      </span>
+      <span className={`font-sans text-[10.5px] font-semibold uppercase tracking-wider ${FAINT}`}>{label}</span>
+    </div>
+  );
+}
+
+function SectionLabel({
+  icon,
+  count,
+  children,
+}: {
+  icon: React.ReactNode;
+  count?: number;
+  children: string;
+}) {
+  return (
+    <div className="flex items-center justify-between px-7 pt-6 pb-3">
+      <span className="inline-flex items-center gap-2 font-sans text-[11px] font-bold uppercase tracking-wider">
+        <span className={FAINT}>{icon}</span>
+        <span className={INK}>{children}</span>
+      </span>
+      {typeof count === "number" && count > 0 && (
+        <span className={`font-sans text-[11px] font-semibold tabular-nums ${FAINT}`}>{count}</span>
+      )}
+    </div>
+  );
+}
+
+function EmptyRow({ children }: { children: React.ReactNode }) {
+  return <p className={`px-7 pb-6 text-[13px] ${MUTED}`}>{children}</p>;
+}
+
+export function BriefingCard({
+  data,
+  onClose,
+  onOpenInbox,
+  onOpenCalendar,
+  onOpenGithub,
+}: {
+  data: DailyBriefingData;
+  onClose?: () => void;
+  /** Rows are live: clicking one takes you to the thing rather than just describing it. */
+  onOpenInbox?: () => void;
+  onOpenCalendar?: () => void;
+  onOpenGithub?: () => void;
+}) {
+  const now = new Date();
+
+  const parseTime = (isoString: string) => {
+    const d = new Date(isoString);
+    return isNaN(d.getTime()) ? null : d;
+  };
+
   const formatTime = (isoString: string) => {
-    try {
-      const d = new Date(isoString);
-      if (isNaN(d.getTime())) return isoString;
-      return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-    } catch {
-      return isoString;
-    }
-  }
+    const d = parseTime(isoString);
+    if (!d) return isoString;
+    // Locale pinned to en-US: an unspecified locale falls back to the runtime's
+    // default, which can differ between the server (Node) and the browser
+    // rendering it — that mismatch is a real hydration error, not a fluke.
+    return d.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" });
+  };
 
-  const formatRepoName = (urlOrName: string) => {
-    if (urlOrName.includes('github.com/')) {
-      const parts = urlOrName.split('github.com/');
-      return parts[1] || urlOrName;
-    }
-    return urlOrName;
-  }
+  const formatRepoName = (urlOrName: string) =>
+    urlOrName.includes("github.com/") ? urlOrName.split("github.com/")[1] || urlOrName : urlOrName;
+
+  const today = now.toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" });
+
+  // "Next up" is the first event still ahead of us — the single most useful fact on the card,
+  // so it gets called out instead of being one indistinguishable row among many.
+  const nextIndex = data.schedule.findIndex((item) => {
+    const d = parseTime(item.time);
+    return d !== null && d.getTime() > now.getTime();
+  });
+
+  const urgentCount = data.emails.filter((e) => e.isUrgent).length;
+  const prCount = data.github.reduce((sum, r) => sum + r.prsToReview, 0);
+  const sortedEmails = [...data.emails].sort((a, b) => Number(b.isUrgent) - Number(a.isUrgent));
 
   return (
-    <motion.div 
-      initial={{ opacity: 0, y: 15, scale: 0.98 }}
+    <motion.div
+      initial={{ opacity: 0, y: 14, scale: 0.985 }}
       animate={{ opacity: 1, y: 0, scale: 1 }}
-      className="bg-white dark:bg-[#383838] border border-[rgba(36,27,20,0.03)] rounded-3xl p-10 shadow-[0_12px_40px_rgb(0,0,0,0.06)] max-w-[850px] w-full flex flex-col gap-10 font-sans relative"
+      exit={{ opacity: 0, y: 8, scale: 0.985 }}
+      transition={{ type: "spring", stiffness: 380, damping: 32 }}
+      className={`relative bg-white dark:bg-[#383838] rounded-[18px] border ${RULE} shadow-[0_28px_70px_rgba(36,27,20,0.16)] w-full max-h-[86vh] overflow-y-auto scrollbar-hide font-sans`}
     >
-      {onClose && (
-        <button onClick={onClose} className="absolute top-6 right-6 text-[rgba(36,27,20,0.4)] dark:text-[rgba(255,255,255,0.4)] hover:text-[#241B14] dark:text-[#F4F4F5] transition-colors p-2 rounded-full hover:bg-[rgba(36,27,20,0.03)] dark:bg-[rgba(255,255,255,0.03)]">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
-        </button>
+      {/* ── Hero ───────────────────────────────────────────────────────────── */}
+      <div className="relative overflow-hidden">
+        {/* Warm wash behind the header so the card opens on something, not a white slab. */}
+        <div
+          aria-hidden
+          className="absolute inset-0 pointer-events-none"
+          style={{
+            background:
+              "radial-gradient(120% 140% at 0% 0%, rgba(232,89,60,0.10) 0%, rgba(232,89,60,0.03) 38%, transparent 68%)",
+          }}
+        />
+
+        <div className={`relative px-7 pt-7 pb-6 border-b ${RULE}`}>
+          <div className="flex items-start gap-4">
+            <AurenMascotBadge size={40} className="mt-1 shadow-sm shrink-0" />
+
+            <div className="min-w-0 flex-1">
+              <div className="flex items-baseline gap-2.5 flex-wrap">
+                <h2 className={`text-[25px] tracking-tight ${INK}`} style={SERIF}>
+                  {greeting(now)}
+                </h2>
+                <span className={`font-sans text-[12px] ${FAINT}`}>{today}</span>
+              </div>
+              <p className={`text-[14px] leading-relaxed ${MUTED} mt-2 max-w-[620px]`}>{data.summaryText}</p>
+            </div>
+
+            {onClose && (
+              <button
+                onClick={onClose}
+                aria-label="Close"
+                className={`shrink-0 p-1.5 rounded-[8px] ${FAINT} hover:text-[#241B14] dark:hover:text-[#F4F4F5] hover:bg-[rgba(36,27,20,0.05)] dark:hover:bg-[rgba(255,255,255,0.07)] transition-colors`}
+              >
+                <X size={16} />
+              </button>
+            )}
+          </div>
+
+          {/* The day in three numbers. */}
+          <div className="flex items-start gap-10 mt-6 pl-[56px]">
+            <Stat value={data.schedule.length} label="Meetings" />
+            <Stat value={urgentCount} label="Urgent" accent />
+            <Stat value={prCount} label="PRs to review" />
+          </div>
+        </div>
+      </div>
+
+      {/* ── Schedule ───────────────────────────────────────────────────────── */}
+      <SectionLabel icon={<Calendar size={12} />} count={data.schedule.length}>
+        Schedule
+      </SectionLabel>
+
+      {data.schedule.length === 0 ? (
+        <EmptyRow>Nothing scheduled today. Enjoy it.</EmptyRow>
+      ) : (
+        <div className="px-4 pb-2">
+          {/* Grid layout, not absolute positioning: [time | rail+node | title | badge].
+              The rail is one continuous element spanning the middle column so it reads
+              as a single line through every row instead of being redrawn per row. */}
+          <div className="relative grid grid-cols-[52px_20px_1fr_auto] gap-x-3">
+            <span
+              aria-hidden
+              className="absolute top-1 bottom-1 w-px bg-[rgba(36,27,20,0.10)] dark:bg-[rgba(255,255,255,0.12)]"
+              style={{ left: "52px", marginLeft: "9px" }}
+            />
+
+            {data.schedule.map((item, i) => {
+              const isNext = i === nextIndex;
+              const isPast = nextIndex === -1 ? true : i < nextIndex;
+
+              return (
+                <motion.button
+                  key={i}
+                  custom={i}
+                  variants={rise}
+                  initial="hidden"
+                  animate="show"
+                  onClick={onOpenCalendar}
+                  className={`group col-span-4 grid grid-cols-subgrid items-center py-2.5 px-3 rounded-[10px] text-left transition-colors ${
+                    onOpenCalendar ? `${HOVER} cursor-pointer` : "cursor-default"
+                  }`}
+                >
+                  <span
+                    className={`font-sans text-[12px] tabular-nums text-right pr-1 ${
+                      isNext ? "font-semibold" : "font-medium"
+                    } ${isPast ? FAINT : isNext ? "" : MUTED}`}
+                    style={isNext ? { color: ACCENT } : undefined}
+                  >
+                    {formatTime(item.time)}
+                  </span>
+
+                  <span className="relative flex justify-center">
+                    <span
+                      aria-hidden
+                      className={`w-[7px] h-[7px] rounded-full ring-4 ring-white dark:ring-[#383838] ${
+                        isPast ? "bg-[rgba(36,27,20,0.22)] dark:bg-[rgba(255,255,255,0.25)]" : ""
+                      }`}
+                      style={
+                        isPast
+                          ? undefined
+                          : { backgroundColor: ACCENT, boxShadow: isNext ? `0 0 0 4px ${ACCENT}22` : undefined }
+                      }
+                    />
+                  </span>
+
+                  <span className={`text-[13.5px] truncate min-w-0 ${isPast ? MUTED : INK} ${isNext ? "font-semibold" : ""}`}>
+                    {item.title}
+                  </span>
+
+                  {isNext ? (
+                    <span
+                      className="shrink-0 inline-flex items-center gap-1 px-2 py-0.5 rounded-full font-sans text-[10px] font-bold uppercase tracking-wider"
+                      style={{ backgroundColor: `${ACCENT}1A`, color: ACCENT }}
+                    >
+                      <Clock size={9} />
+                      Next
+                    </span>
+                  ) : (
+                    <span />
+                  )}
+                </motion.button>
+              );
+            })}
+          </div>
+        </div>
       )}
 
-      {/* Ultra-Premium Header */}
-      <div className="flex gap-5 border-b border-[rgba(36,27,20,0.04)] dark:border-[rgba(255,255,255,0.04)] pb-8">
-        <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-[#FAF8F5] to-white border border-[rgba(36,27,20,0.05)] flex items-center justify-center shrink-0 shadow-sm mt-1">
-          <span className="text-[24px]">🌅</span>
-        </div>
-        <div className="flex flex-col gap-1.5">
-          <h3 className="text-[#241B14] dark:text-[#F4F4F5] font-semibold text-[18px]">Morning Briefing</h3>
-          <p className="text-[rgba(36,27,20,0.65)] dark:text-[rgba(255,255,255,0.65)] text-[15px] leading-relaxed max-w-[650px]">{data.summaryText}</p>
-        </div>
+      {/* ── Inbox ──────────────────────────────────────────────────────────── */}
+      <div className={`border-t ${RULE} mt-4`}>
+        <SectionLabel icon={<Mail size={12} />} count={sortedEmails.length}>
+          Needs you
+        </SectionLabel>
+
+        {sortedEmails.length === 0 ? (
+          <div className="px-7 pb-6 flex items-center gap-2.5">
+            <InboxIcon size={14} className={FAINT} />
+            <span className={`text-[13px] ${MUTED}`}>Inbox is clear.</span>
+          </div>
+        ) : (
+          <div className="px-4 pb-2">
+            {sortedEmails.map((email, i) => (
+              <motion.button
+                key={i}
+                custom={i}
+                variants={rise}
+                initial="hidden"
+                animate="show"
+                onClick={onOpenInbox}
+                className={`group w-full text-left flex items-start gap-3 py-2.5 px-3 rounded-[10px] transition-colors ${
+                  onOpenInbox ? `${HOVER} cursor-pointer` : "cursor-default"
+                }`}
+              >
+                {/* Urgency as a spine, not a badge — scannable down the left edge. */}
+                <span
+                  aria-hidden
+                  className={`w-[3px] self-stretch rounded-full shrink-0 ${
+                    email.isUrgent ? "" : "bg-[rgba(36,27,20,0.10)] dark:bg-[rgba(255,255,255,0.12)]"
+                  }`}
+                  style={email.isUrgent ? { backgroundColor: ACCENT } : undefined}
+                />
+
+                <span className="min-w-0 flex-1">
+                  <span className="flex items-center gap-2">
+                    <span className={`font-semibold text-[13px] truncate ${INK}`}>{email.sender}</span>
+                    {email.isUrgent && (
+                      <span
+                        className="shrink-0 px-2 py-0.5 rounded-full font-sans text-[10px] font-bold uppercase tracking-wider"
+                        style={{ backgroundColor: `${ACCENT}1A`, color: ACCENT }}
+                      >
+                        Urgent
+                      </span>
+                    )}
+                  </span>
+                  <span className={`block text-[12.5px] ${MUTED} truncate mt-0.5`}>{email.subject}</span>
+                </span>
+
+                {onOpenInbox && (
+                  <ArrowUpRight size={14} className={`shrink-0 mt-0.5 opacity-0 group-hover:opacity-100 transition-opacity ${FAINT}`} />
+                )}
+              </motion.button>
+            ))}
+          </div>
+        )}
       </div>
 
-      <div className="grid grid-cols-2 gap-12">
-        {/* Left Column: Schedule (Vertical Timeline) */}
-        <div className="flex flex-col gap-6">
-          {data.schedule && data.schedule.length > 0 && (
-            <div className="flex flex-col gap-5">
-              <div className="flex items-center gap-2 text-[rgba(36,27,20,0.5)] dark:text-[rgba(255,255,255,0.5)] font-semibold text-[11px] uppercase tracking-widest pl-1">
-                <Calendar size={14} />
-                <span>Today&apos;s Schedule</span>
-              </div>
-              
-              <div className="relative pl-[26px]">
-                {/* Vertical Line */}
-                <div className="absolute top-3 bottom-3 left-[9px] w-[1px] bg-gradient-to-b from-[rgba(36,27,20,0.15)] via-[rgba(36,27,20,0.1)] to-transparent border-dashed" />
-                
-                <div className="flex flex-col gap-5">
-                  {data.schedule.map((item, i) => (
-                    <div key={i} className="relative flex flex-col group cursor-default">
-                      {/* Timeline Dot */}
-                      <div className={`absolute -left-[26px] top-1.5 w-[11px] h-[11px] rounded-full border-2 border-white ring-1 ring-[rgba(36,27,20,0.1)] transition-colors ${item.type === 'meeting' ? 'bg-blue-400' : 'bg-emerald-400'}`} />
-                      
-                      <div className="flex items-start gap-4">
-                        <span className="text-[rgba(36,27,20,0.55)] dark:text-[rgba(255,255,255,0.55)] font-medium text-[12.5px] min-w-[65px] shrink-0 mt-0.5">{formatTime(item.time)}</span>
-                        <span className="text-[#241B14] dark:text-[#F4F4F5] text-[14px] leading-snug group-hover:text-[#E8593C] transition-colors">{item.title}</span>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          )}
+      {/* ── Repositories — only when there's something to show. ─────────────── */}
+      {data.github.length > 0 && (
+        <div className={`border-t ${RULE} mt-4`}>
+          <SectionLabel icon={<GitBranch size={12} />} count={data.github.length}>
+            Repositories
+          </SectionLabel>
+          <div className="px-4 pb-6">
+            {data.github.map((repo, i) => (
+              <motion.button
+                key={i}
+                custom={i}
+                variants={rise}
+                initial="hidden"
+                animate="show"
+                onClick={onOpenGithub}
+                className={`group w-full text-left flex items-center justify-between gap-3 py-2.5 px-3 rounded-[10px] transition-colors ${
+                  onOpenGithub ? `${HOVER} cursor-pointer` : "cursor-default"
+                }`}
+              >
+                <span className={`text-[13px] truncate ${INK}`} title={repo.repo}>
+                  {formatRepoName(repo.repo)}
+                </span>
+                <span className={`font-sans text-[11.5px] ${MUTED} shrink-0 tabular-nums`}>
+                  {repo.prsToReview} PR · {repo.issuesAssigned} issues
+                </span>
+              </motion.button>
+            ))}
+          </div>
         </div>
+      )}
 
-        {/* Right Column: Inbox & GitHub */}
-        <div className="flex flex-col gap-8">
-          {/* Inbox Triage */}
-          {data.emails && data.emails.length > 0 && (
-            <div className="flex flex-col gap-4">
-              <div className="flex items-center gap-2 text-[rgba(36,27,20,0.5)] dark:text-[rgba(255,255,255,0.5)] font-semibold text-[11px] uppercase tracking-widest pl-2">
-                <Mail size={14} />
-                <span>Inbox Triage</span>
-              </div>
-              <div className="flex flex-col">
-                {data.emails.map((email, i) => (
-                  <div key={i} className="flex flex-col px-3 py-2.5 rounded-xl hover:bg-[#FAF8F5] dark:hover:bg-[rgba(255,255,255,0.04)] transition-colors cursor-pointer group">
-                    <div className="flex items-center justify-between mb-0.5">
-                      <span className="text-[#241B14] dark:text-[#F4F4F5] font-medium text-[13.5px] group-hover:text-[#E8593C] transition-colors">{email.sender}</span>
-                      {email.isUrgent && <span className="bg-[#E8593C]/10 text-[#E8593C] text-[10px] font-bold px-2 py-0.5 rounded-full tracking-wide">URGENT</span>}
-                    </div>
-                    <span className="text-[rgba(36,27,20,0.6)] dark:text-[rgba(255,255,255,0.6)] text-[13px] truncate">{email.subject}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* GitHub Status */}
-          {data.github && data.github.length > 0 && (
-            <div className="flex flex-col gap-4">
-              <div className="flex items-center gap-2 text-[rgba(36,27,20,0.5)] dark:text-[rgba(255,255,255,0.5)] font-semibold text-[11px] uppercase tracking-widest pl-2">
-                <GitBranch size={14} />
-                <span>GitHub Action Items</span>
-              </div>
-              <div className="flex flex-col gap-2">
-                {data.github.map((repo, i) => (
-                  <div key={i} className="flex items-center justify-between px-3 py-2.5 rounded-xl hover:bg-[#FAF8F5] dark:hover:bg-[rgba(255,255,255,0.04)] transition-colors cursor-pointer group">
-                    <span className="text-[#241B14] dark:text-[#F4F4F5] font-medium text-[13.5px] truncate max-w-[160px] group-hover:text-[#E8593C] transition-colors" title={repo.repo}>
-                      {formatRepoName(repo.repo)}
-                    </span>
-                    <div className="flex items-center gap-2 shrink-0">
-                      <div className="flex items-center gap-1.5 bg-[#FAF8F5] dark:bg-[rgba(255,255,255,0.02)] group-hover:bg-white dark:group-hover:bg-[rgba(255,255,255,0.06)] border border-[rgba(36,27,20,0.04)] dark:border-[rgba(255,255,255,0.04)] px-2 py-1 rounded-lg text-[rgba(36,27,20,0.65)] dark:text-[rgba(255,255,255,0.65)] text-[12px] transition-colors" title="PRs to review">
-                        <GitPullRequest size={12} />
-                        <span className="font-medium">{repo.prsToReview}</span>
-                      </div>
-                      <div className="flex items-center gap-1.5 bg-[#FAF8F5] dark:bg-[rgba(255,255,255,0.02)] group-hover:bg-white dark:group-hover:bg-[rgba(255,255,255,0.06)] border border-[rgba(36,27,20,0.04)] dark:border-[rgba(255,255,255,0.04)] px-2 py-1 rounded-lg text-[rgba(36,27,20,0.65)] dark:text-[rgba(255,255,255,0.65)] text-[12px] transition-colors" title="Issues assigned">
-                        <AlertCircle size={12} />
-                        <span className="font-medium">{repo.issuesAssigned}</span>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-        </div>
-      </div>
+      {data.github.length === 0 && <div className="h-4" />}
     </motion.div>
-  )
+  );
 }

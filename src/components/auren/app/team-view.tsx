@@ -1,41 +1,44 @@
 "use client";
 
 import React, { useState, useEffect, useTransition } from "react";
-import { getTeamContacts, addTeamContact, deleteTeamContact, type TeamContact } from "@/app/actions/team";
+import Image from "next/image";
+import {
+  getTeamContacts,
+  addTeamContact,
+  updateTeamContact,
+  deleteTeamContact,
+  type TeamContact,
+} from "@/app/actions/team";
 import { showToast } from "@/components/ui/premium-toast";
+import { AurenLoading } from "@/components/ui/auren-loading";
 import { motion, AnimatePresence } from "framer-motion";
-import { 
-  Users, 
-  UserPlus, 
-  Search, 
-  Trash2, 
-  Mail, 
-  Briefcase, 
-  AtSign, 
-  Sparkles, 
-  Copy, 
-  Check, 
-  ShieldCheck, 
-  Calendar,
-  Grid,
-  List as ListIcon,
-  X,
-  ExternalLink,
-  Plus
-} from "lucide-react";
+import { Search, Trash2, Check, X, Plus, Pencil, Copy, Grid, List as ListIcon, Mail, CalendarPlus } from "lucide-react";
+import { ScheduleMeetPopover } from "@/components/auren/app/schedule-meet-popover";
+
+/* Shared editorial tokens — matches the dashboard: no card chrome, hairline
+   rules, serif headings, mono micro-labels. */
+const RULE = "border-[rgba(36,27,20,0.08)] dark:border-[rgba(255,255,255,0.08)]";
+const MUTED = "text-[rgba(36,27,20,0.5)] dark:text-[rgba(255,255,255,0.5)]";
+const FAINT = "text-[rgba(36,27,20,0.4)] dark:text-[rgba(255,255,255,0.4)]";
+const CARD =
+  "bg-white dark:bg-[#383838] rounded-[16px] border border-[rgba(36,27,20,0.08)] dark:border-[rgba(255,255,255,0.08)] shadow-sm";
+const DIVIDE = "divide-[rgba(36,27,20,0.06)] dark:divide-[rgba(255,255,255,0.06)]";
+const SERIF = { fontFamily: "var(--font-civane, Georgia, serif)" };
+const FIELD =
+  "w-full h-10 px-3.5 bg-transparent border rounded-[10px] text-[13px] text-[#241B14] dark:text-[#F4F4F5] outline-none focus:border-[#E8593C] transition-colors";
 
 function getInitials(name: string) {
   if (!name) return "??";
-  return name.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2);
+  return name.split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2);
 }
 
 const AVATAR_PALETTES = [
-  { bg: "#E8593C", lightBg: "rgba(232, 89, 60, 0.12)", text: "#E8593C" },
-  { bg: "#8B5CF6", lightBg: "rgba(139, 92, 246, 0.12)", text: "#8B5CF6" },
-  { bg: "#0284C7", lightBg: "rgba(2, 132, 199, 0.12)", text: "#0284C7" },
-  { bg: "#16A34A", lightBg: "rgba(22, 163, 74, 0.12)", text: "#16A34A" },
-  { bg: "#D97706", lightBg: "rgba(217, 119, 6, 0.12)", text: "#D97706" },
-  { bg: "#EC4899", lightBg: "rgba(236, 72, 153, 0.12)", text: "#EC4899" },
+  { lightBg: "rgba(232, 89, 60, 0.12)", text: "#E8593C" },
+  { lightBg: "rgba(139, 92, 246, 0.12)", text: "#8B5CF6" },
+  { lightBg: "rgba(2, 132, 199, 0.12)", text: "#0284C7" },
+  { lightBg: "rgba(22, 163, 74, 0.12)", text: "#16A34A" },
+  { lightBg: "rgba(217, 119, 6, 0.12)", text: "#D97706" },
+  { lightBg: "rgba(236, 72, 153, 0.12)", text: "#EC4899" },
 ];
 
 function getAvatarPalette(name: string) {
@@ -47,39 +50,71 @@ function getAvatarPalette(name: string) {
 export function TeamView() {
   const [contacts, setContacts] = useState<TeamContact[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [showAddModal, setShowAddModal] = useState(false);
-  const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
+  const [showModal, setShowModal] = useState(false);
   const [activeTab, setActiveTab] = useState<"all" | "core" | "synced">("all");
+  const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [searchQuery, setSearchQuery] = useState("");
   const [copiedField, setCopiedField] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
 
+  /** Contact id whose scheduler popover is open — only ever one at a time. */
+  const [schedulingId, setSchedulingId] = useState<string | null>(null);
+
+  const sendMeetCommand = (text: string) => {
+    document.dispatchEvent(new CustomEvent("open-ai-chat", { detail: { text } }));
+  };
+
   const [form, setForm] = useState({ name: "", email: "", role: "" });
   const [formError, setFormError] = useState("");
+  // null = adding a new contact; otherwise editing this one.
+  const [editingContact, setEditingContact] = useState<TeamContact | null>(null);
 
   const load = async () => {
     setIsLoading(true);
     const res = await getTeamContacts();
-    if (res.success) {
-      setContacts(res.data || []);
-    }
+    if (res.success) setContacts(res.data || []);
     setIsLoading(false);
   };
 
-  useEffect(() => { load(); }, []);
+  useEffect(() => {
+    load();
+  }, []);
 
-  const handleAdd = async (e: React.FormEvent) => {
+  const openAddModal = () => {
+    setEditingContact(null);
+    setForm({ name: "", email: "", role: "" });
+    setFormError("");
+    setShowModal(true);
+  };
+
+  const openEditModal = (contact: TeamContact, e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    setEditingContact(contact);
+    setForm({
+      name: contact.name,
+      email: contact.email,
+      role: contact.role && contact.role !== "Team Member" ? contact.role : "",
+    });
+    setFormError("");
+    setShowModal(true);
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setFormError("");
     startTransition(async () => {
-      const res = await addTeamContact(form.name, form.email, form.role);
+      const res = editingContact
+        ? await updateTeamContact(editingContact.id, form.name, form.email, form.role)
+        : await addTeamContact(form.name, form.email, form.role);
+
       if (res.success) {
-        showToast.success(`${form.name} added to your team!`);
+        showToast.success(editingContact ? `${form.name} updated` : `${form.name} added to your team`);
         setForm({ name: "", email: "", role: "" });
-        setShowAddModal(false);
+        setEditingContact(null);
+        setShowModal(false);
         load();
       } else {
-        setFormError(res.error || "Failed to add contact");
+        setFormError(res.error || (editingContact ? "Failed to update contact" : "Failed to add contact"));
       }
     });
   };
@@ -97,23 +132,19 @@ export function TeamView() {
     });
   };
 
-  const copyToClipboard = (text: string, fieldKey: string) => {
-    navigator.clipboard.writeText(text);
-    setCopiedField(fieldKey);
-    showToast.success(`Copied "${text}"`);
+  const copyTag = (tag: string, key: string) => {
+    navigator.clipboard.writeText(tag);
+    setCopiedField(key);
+    showToast.success(`Copied "${tag}"`);
     setTimeout(() => setCopiedField(null), 2000);
   };
 
-  const triggerAIChat = (promptText: string) => {
-    document.dispatchEvent(new CustomEvent("open-ai-chat", { detail: { text: promptText } }));
-  };
-
-  const filtered = contacts.filter(c => {
+  const filtered = contacts.filter((c) => {
+    const q = searchQuery.toLowerCase();
     const matchesSearch =
-      c.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      c.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (c.role || "").toLowerCase().includes(searchQuery.toLowerCase());
-
+      c.name.toLowerCase().includes(q) ||
+      c.email.toLowerCase().includes(q) ||
+      (c.role || "").toLowerCase().includes(q);
     if (!matchesSearch) return false;
     if (activeTab === "core") return c.role && c.role.toLowerCase() !== "synced contact";
     if (activeTab === "synced") return c.role && c.role.toLowerCase() === "synced contact";
@@ -121,392 +152,402 @@ export function TeamView() {
   });
 
   return (
-    <div className="flex-1 w-full h-full min-h-screen bg-white dark:bg-[#383838] overflow-y-auto flex flex-col relative">
-      
-      {/* Top Banner / Stats Header */}
-      <div className="p-6 md:p-10 border-b border-[rgba(36,27,20,0.08)] dark:border-[rgba(255,255,255,0.08)] bg-[#FAF8F5]/60 dark:bg-[#2C2C2C]/60 shrink-0">
-        <div className="max-w-[1200px] mx-auto space-y-6">
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-            <div>
-              <div className="flex items-center gap-2 mb-1">
-                <span className="px-2.5 py-0.5 rounded-full bg-[#E8593C]/10 text-[#E8593C] font-mono text-[10.5px] font-bold tracking-wide uppercase">
-                  Auren Network Hub
-                </span>
-              </div>
-              <h1 className="text-[26px] font-extrabold text-[#241B14] dark:text-[#F4F4F5] tracking-tight">
-                Team & People Directory
-              </h1>
-              <p className="text-[13px] text-[rgba(36,27,20,0.5)] dark:text-[rgba(255,255,255,0.5)] mt-1 max-w-[600px]">
-                Manage team members, contacts, and custom email mappings for instant AI <span className="font-semibold text-[#E8593C]">@mentions</span>.
-              </p>
-            </div>
+    <div className="flex-1 flex flex-col bg-[#FAF8F5] dark:bg-[#2C2C2C] overflow-y-auto min-w-0">
 
-            <div className="flex items-center gap-3">
-              <button
-                onClick={() => { setShowAddModal(true); setFormError(""); }}
-                className="flex items-center gap-2 h-10 px-4 bg-[#E8593C] hover:bg-[#D4472B] text-white rounded-[10px] text-[13px] font-semibold transition-all shadow-md active:scale-95 shrink-0"
-              >
-                <UserPlus size={16} />
-                <span>Add Team Member</span>
-              </button>
-            </div>
-          </div>
-
-          {/* Stats Grid */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-2">
-            <div className="p-4 rounded-[14px] bg-white dark:bg-[#383838] border border-[rgba(36,27,20,0.08)] dark:border-[rgba(255,255,255,0.08)] flex items-center justify-between shadow-sm">
-              <div>
-                <span className="text-[11px] font-bold text-[rgba(36,27,20,0.4)] dark:text-[rgba(255,255,255,0.4)] uppercase tracking-wider">
-                  Total Contacts
-                </span>
-                <p className="text-[24px] font-extrabold text-[#241B14] dark:text-[#F4F4F5] mt-0.5">
-                  {contacts.length}
-                </p>
-              </div>
-              <div className="w-10 h-10 rounded-[10px] bg-[#E8593C]/10 text-[#E8593C] flex items-center justify-center font-bold">
-                <Users size={20} />
-              </div>
-            </div>
-
-            <div className="p-4 rounded-[14px] bg-white dark:bg-[#383838] border border-[rgba(36,27,20,0.08)] dark:border-[rgba(255,255,255,0.08)] flex items-center justify-between shadow-sm">
-              <div>
-                <span className="text-[11px] font-bold text-[rgba(36,27,20,0.4)] dark:text-[rgba(255,255,255,0.4)] uppercase tracking-wider">
-                  AI @Mentions
-                </span>
-                <p className="text-[24px] font-extrabold text-[#E8593C] mt-0.5">
-                  100% Ready
-                </p>
-              </div>
-              <div className="w-10 h-10 rounded-[10px] bg-purple-500/10 text-purple-500 flex items-center justify-center font-bold">
-                <AtSign size={20} />
-              </div>
-            </div>
-
-            <div className="p-4 rounded-[14px] bg-white dark:bg-[#383838] border border-[rgba(36,27,20,0.08)] dark:border-[rgba(255,255,255,0.08)] flex items-center justify-between shadow-sm">
-              <div>
-                <span className="text-[11px] font-bold text-[rgba(36,27,20,0.4)] dark:text-[rgba(255,255,255,0.4)] uppercase tracking-wider">
-                  Email Resolution
-                </span>
-                <p className="text-[24px] font-extrabold text-green-600 dark:text-green-400 mt-0.5 flex items-center gap-1.5">
-                  <ShieldCheck size={20} /> Auto-Mapped
-                </p>
-              </div>
-              <div className="w-10 h-10 rounded-[10px] bg-green-500/10 text-green-500 flex items-center justify-center font-bold">
-                <Sparkles size={20} />
-              </div>
-            </div>
-          </div>
+      {/* ── Full-width header bar ────────────────────────────────────────── */}
+      <div className="min-h-[80px] bg-white dark:bg-[#383838] border-b border-[rgba(36,27,20,0.08)] dark:border-[rgba(255,255,255,0.08)] flex items-center justify-between gap-6 px-8 py-4 shrink-0">
+        <div className="min-w-0">
+          <h1 className="text-[22px] tracking-tight text-[#241B14] dark:text-[#F4F4F5]" style={SERIF}>
+            Team &amp; People
+          </h1>
+          <p className={`font-sans text-[12.5px] ${MUTED} mt-0.5`}>
+            Everyone here becomes an <span className="text-[#E8593C] font-medium">@mention</span> Auren can resolve to a real email.
+          </p>
         </div>
+        <button
+          onClick={openAddModal}
+          className="shrink-0 h-9 px-4 inline-flex items-center gap-1.5 bg-[#E8593C] hover:bg-[#D4472B] text-white rounded-[10px] font-sans text-[12.5px] font-semibold transition-colors shadow-sm"
+        >
+          <Plus size={14} />
+          Add contact
+        </button>
       </div>
 
-      {/* Main Workspace Area */}
-      <div className="p-6 md:p-10 flex-1">
-        <div className="max-w-[1200px] mx-auto space-y-6">
-          
-          {/* Controls Bar: Search, Tabs, View Toggle */}
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pb-2">
-            
-            {/* Tabs */}
-            <div className="flex items-center gap-1 bg-[#FAF8F5] dark:bg-[#2C2C2C] p-1 rounded-[10px] border border-[rgba(36,27,20,0.06)] dark:border-[rgba(255,255,255,0.06)] w-full sm:w-auto">
-              {(["all", "core", "synced"] as const).map(tab => (
-                <button
-                  key={tab}
-                  onClick={() => setActiveTab(tab)}
-                  className={`px-3 py-1.5 rounded-[7px] text-[12px] font-semibold transition-colors capitalize ${
-                    activeTab === tab
-                      ? "bg-white dark:bg-[#383838] text-[#E8593C] shadow-sm"
-                      : "text-[rgba(36,27,20,0.5)] dark:text-[rgba(255,255,255,0.5)] hover:text-[#241B14] dark:hover:text-[#F4F4F5]"
-                  }`}
-                >
-                  {tab === "all" ? `All Members (${contacts.length})` : tab === "core" ? "Core Team" : "Synced"}
-                </button>
-              ))}
-            </div>
+      {/* ── Full-width content ───────────────────────────────────────────── */}
+      <div className="flex-1 p-8 flex flex-col gap-6 animate-in fade-in slide-in-from-bottom-2 duration-500">
 
-            {/* Search & Layout Toggle */}
-            <div className="flex items-center gap-3 w-full sm:w-auto">
-              <div className="relative flex-1 sm:w-[280px]">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-[rgba(36,27,20,0.35)] dark:text-[rgba(255,255,255,0.35)]" size={14} />
-                <input
-                  type="text"
-                  placeholder="Search by name, email, or role..."
-                  value={searchQuery}
-                  onChange={e => setSearchQuery(e.target.value)}
-                  className="w-full h-9 pl-9 pr-3 bg-[#FAF8F5] dark:bg-[#2C2C2C] border border-[rgba(36,27,20,0.08)] dark:border-[rgba(255,255,255,0.08)] rounded-[9px] text-[12px] text-[#241B14] dark:text-[#F4F4F5] placeholder:text-[rgba(36,27,20,0.35)] dark:placeholder:text-[rgba(255,255,255,0.35)] outline-none focus:border-[#E8593C]/50 transition-colors"
-                />
-              </div>
-
-              <div className="flex items-center gap-1 bg-[#FAF8F5] dark:bg-[#2C2C2C] p-1 rounded-[9px] border border-[rgba(36,27,20,0.06)] dark:border-[rgba(255,255,255,0.06)] shrink-0">
-                <button
-                  onClick={() => setViewMode("grid")}
-                  className={`p-1.5 rounded-[6px] transition-colors ${viewMode === "grid" ? "bg-white dark:bg-[#383838] text-[#E8593C] shadow-sm" : "text-[rgba(36,27,20,0.4)] dark:text-[rgba(255,255,255,0.4)]"}`}
-                  title="Grid View"
-                >
-                  <Grid size={15} />
-                </button>
-                <button
-                  onClick={() => setViewMode("list")}
-                  className={`p-1.5 rounded-[6px] transition-colors ${viewMode === "list" ? "bg-white dark:bg-[#383838] text-[#E8593C] shadow-sm" : "text-[rgba(36,27,20,0.4)] dark:text-[rgba(255,255,255,0.4)]"}`}
-                  title="List View"
-                >
-                  <ListIcon size={15} />
-                </button>
-              </div>
-            </div>
+        {/* ── Filters + search ───────────────────────────────────────────── */}
+        <div className="flex items-center justify-between gap-3 flex-wrap">
+          <div className="flex items-center gap-1 bg-[rgba(36,27,20,0.04)] dark:bg-[rgba(255,255,255,0.06)] p-1 rounded-[10px]">
+            {(["all", "core", "synced"] as const).map((tab) => (
+              <button
+                key={tab}
+                onClick={() => setActiveTab(tab)}
+                className={`px-3 py-1.5 rounded-[8px] font-sans text-[12px] font-medium capitalize transition-colors ${
+                  activeTab === tab
+                    ? "bg-white dark:bg-[#383838] shadow-sm text-[#241B14] dark:text-[#F4F4F5]"
+                    : `${MUTED} hover:text-[#241B14] dark:hover:text-[#F4F4F5]`
+                }`}
+              >
+                {tab === "all" ? `All ${contacts.length}` : tab}
+              </button>
+            ))}
           </div>
 
-          {/* Directory Content */}
+          <div className={`h-[34px] w-[200px] ${CARD} flex items-center gap-2 px-3 focus-within:border-[#E8593C]/40 transition-colors`}>
+            <Search size={13} className={`${FAINT} shrink-0`} />
+            <input
+              type="text"
+              placeholder="Search contacts..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="bg-transparent border-none outline-none font-sans text-[12px] text-[#241B14] dark:text-[#F4F4F5] placeholder:text-[rgba(36,27,20,0.35)] dark:placeholder:text-[rgba(255,255,255,0.35)] w-full"
+            />
+          </div>
+
+          <div className="flex items-center gap-1 bg-[rgba(36,27,20,0.04)] dark:bg-[rgba(255,255,255,0.06)] p-1 rounded-[10px] shrink-0">
+            <button
+              onClick={() => setViewMode("grid")}
+              title="Grid view"
+              className={`p-1.5 rounded-[8px] transition-colors ${
+                viewMode === "grid"
+                  ? "bg-white dark:bg-[#383838] shadow-sm text-[#E8593C]"
+                  : FAINT
+              }`}
+            >
+              <Grid size={14} />
+            </button>
+            <button
+              onClick={() => setViewMode("list")}
+              title="List view"
+              className={`p-1.5 rounded-[8px] transition-colors ${
+                viewMode === "list"
+                  ? "bg-white dark:bg-[#383838] shadow-sm text-[#E8593C]"
+                  : FAINT
+              }`}
+            >
+              <ListIcon size={14} />
+            </button>
+          </div>
+        </div>
+
+        {/* ── Directory list ─────────────────────────────────────────────── */}
+        <section>
           {isLoading ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {[1, 2, 3, 4, 5, 6].map(i => (
-                <div key={i} className="h-44 bg-[#FAF8F5] dark:bg-[#2C2C2C] rounded-[16px] animate-pulse" />
-              ))}
+            <div className={`${CARD} p-12`}>
+              <AurenLoading text="Loading your team…" size="sm" />
             </div>
           ) : filtered.length === 0 ? (
-            <div className="p-12 text-center flex flex-col items-center justify-center bg-[#FAF8F5]/40 dark:bg-[#2C2C2C]/40 rounded-[20px] border border-[rgba(36,27,20,0.08)] dark:border-[rgba(255,255,255,0.08)] py-16">
-              <div className="w-14 h-14 rounded-full bg-[#E8593C]/10 text-[#E8593C] flex items-center justify-center mb-3">
-                <Users size={24} />
-              </div>
-              <h3 className="text-[16px] font-bold text-[#241B14] dark:text-[#F4F4F5] mb-1">
-                {searchQuery ? "No matching team members" : "Directory Empty"}
-              </h3>
-              <p className="text-[12px] text-[rgba(36,27,20,0.45)] dark:text-[rgba(255,255,255,0.45)] max-w-[320px] leading-relaxed mb-4">
-                {searchQuery ? "Try refining your search keyword." : "Add contacts to use @mentions in AI commands."}
+            <div className={`${CARD} py-10 flex flex-col items-center text-center`}>
+              {!searchQuery && (
+                <div className="relative w-[120px] h-[120px] mb-2 opacity-90">
+                  <Image
+                    src="/mascot-create.webp"
+                    alt=""
+                    width={512}
+                    height={512}
+                    style={{ width: "100%", height: "100%", objectFit: "contain" }}
+                  />
+                </div>
+              )}
+              <p className="text-[20px] text-[#241B14] dark:text-[#F4F4F5] mb-1.5" style={SERIF}>
+                {searchQuery ? "No matching contacts" : "Nobody here yet"}
               </p>
-              <button
-                onClick={() => setShowAddModal(true)}
-                className="flex items-center gap-2 h-9 px-4 bg-[#E8593C] hover:bg-[#D4472B] text-white rounded-[9px] text-[12.5px] font-semibold transition-all shadow-sm"
-              >
-                <Plus size={14} /> Add First Contact
-              </button>
+              <p className={`font-sans text-[13.5px] ${MUTED} max-w-[320px] leading-relaxed mb-5`}>
+                {searchQuery
+                  ? "Try a different name, email, or role."
+                  : "Add a contact so Auren can turn an @mention into a real email address."}
+              </p>
+              {!searchQuery && (
+                <button
+                  onClick={openAddModal}
+                  className="h-9 px-4 inline-flex items-center gap-1.5 bg-[#E8593C] hover:bg-[#D4472B] text-white rounded-[10px] font-sans text-[12.5px] font-semibold transition-colors shadow-sm"
+                >
+                  <Plus size={14} />
+                  Add your first contact
+                </button>
+              )}
             </div>
-          ) : viewMode === "grid" ? (
-            /* GRID VIEW */
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-              {filtered.map(contact => {
+          ) : (
+            viewMode === "grid" ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-5">
+              {filtered.map((contact) => {
                 const palette = getAvatarPalette(contact.name);
                 const tag = `@${contact.name}`;
-
+                const role = contact.role && contact.role !== "Team Member" ? contact.role : null;
                 return (
-                  <motion.div
+                  <div
                     key={contact.id}
-                    layout
-                    initial={{ opacity: 0, scale: 0.96 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    className="group p-5 rounded-[16px] border border-[rgba(36,27,20,0.08)] dark:border-[rgba(255,255,255,0.08)] bg-white dark:bg-[#2C2C2C] shadow-sm hover:shadow-md hover:border-[#E8593C]/40 transition-all flex flex-col justify-between relative overflow-hidden"
+                    className={`group ${CARD} p-5 flex flex-col hover:border-[rgba(36,27,20,0.16)] dark:hover:border-[rgba(255,255,255,0.16)] transition-colors`}
                   >
-                    <div>
-                      {/* Top row: Avatar & Delete */}
-                      <div className="flex items-start justify-between mb-4">
-                        <div
-                          className="w-12 h-12 rounded-full flex items-center justify-center font-extrabold text-[15px] border-2 shrink-0"
-                          style={{
-                            backgroundColor: palette.lightBg,
-                            borderColor: palette.bg + "40",
-                            color: palette.text,
-                          }}
-                        >
-                          {getInitials(contact.name)}
-                        </div>
-
+                    <div className="flex items-start justify-between mb-4">
+                      <span
+                        className="w-11 h-11 rounded-full flex items-center justify-center font-sans font-semibold text-[14px] shrink-0"
+                        style={{ backgroundColor: palette.lightBg, color: palette.text }}
+                      >
+                        {getInitials(contact.name)}
+                      </span>
+                      <span className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
                         <button
-                          onClick={e => handleDelete(contact, e)}
-                          className="opacity-0 group-hover:opacity-100 p-1.5 rounded-[6px] hover:bg-red-50 dark:hover:bg-red-950/40 text-[rgba(36,27,20,0.3)] hover:text-red-500 transition-all"
-                          title="Delete Member"
+                          onClick={(e) => openEditModal(contact, e)}
+                          title="Edit contact"
+                          className={`p-1.5 rounded-[6px] ${FAINT} hover:text-[#E8593C] hover:bg-[rgba(36,27,20,0.04)] dark:hover:bg-[rgba(255,255,255,0.06)] transition-colors`}
                         >
-                          <Trash2 size={14} />
+                          <Pencil size={13} />
                         </button>
-                      </div>
-
-                      {/* Name & Role */}
-                      <div className="space-y-1">
-                        <h3 className="text-[15px] font-bold text-[#241B14] dark:text-[#F4F4F5] truncate">
-                          {contact.name}
-                        </h3>
-                        <p className="text-[12px] text-[rgba(36,27,20,0.5)] dark:text-[rgba(255,255,255,0.5)] truncate flex items-center gap-1.5">
-                          <Mail size={12} className="shrink-0" />
-                          <span>{contact.email}</span>
-                        </p>
-                      </div>
+                        <button
+                          onClick={(e) => handleDelete(contact, e)}
+                          title="Remove contact"
+                          className={`p-1.5 rounded-[6px] ${FAINT} hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/40 transition-colors`}
+                        >
+                          <Trash2 size={13} />
+                        </button>
+                      </span>
                     </div>
 
-                    {/* Footer: @Mention badge & AI Trigger button */}
-                    <div className="pt-4 mt-4 border-t border-[rgba(36,27,20,0.06)] dark:border-[rgba(255,255,255,0.06)] flex items-center justify-between gap-2">
-                      <button
-                        onClick={() => copyToClipboard(tag, `tag-${contact.id}`)}
-                        className="flex items-center gap-1 px-2 py-1 rounded-[6px] bg-[#E8593C]/10 hover:bg-[#E8593C]/20 text-[#E8593C] font-mono text-[11px] font-bold transition-colors shrink-0"
-                        title="Click to copy @mention"
-                      >
-                        <AtSign size={11} />
-                        <span>{contact.name.split(" ")[0]}</span>
-                        {copiedField === `tag-${contact.id}` ? <Check size={11} className="text-green-600" /> : <Copy size={10} />}
-                      </button>
+                    <p className="font-sans font-semibold text-[14.5px] text-[#241B14] dark:text-[#F4F4F5] truncate">
+                      {contact.name}
+                    </p>
+                    <p className={`font-sans text-[12.5px] ${MUTED} truncate mt-0.5 flex items-center gap-1.5`}>
+                      <Mail size={12} className="shrink-0" />
+                      {contact.email}
+                    </p>
+                    {role && (
+                      <span className="inline-block mt-2.5 w-max px-2 py-0.5 rounded-full bg-[rgba(36,27,20,0.05)] dark:bg-[rgba(255,255,255,0.07)] font-sans text-[10.5px] font-medium text-[rgba(36,27,20,0.55)] dark:text-[rgba(255,255,255,0.55)]">
+                        {role}
+                      </span>
+                    )}
 
+                    <div className="mt-4 pt-3.5 border-t border-[rgba(36,27,20,0.06)] dark:border-[rgba(255,255,255,0.06)] flex items-center justify-between gap-2">
                       <button
-                        onClick={() => triggerAIChat(`Schedule a Google Meet with @${contact.name} tomorrow at 3 PM and email them the meeting link`)}
-                        className="flex items-center gap-1 text-[11px] font-semibold text-[rgba(36,27,20,0.5)] dark:text-[rgba(255,255,255,0.5)] hover:text-[#E8593C] transition-colors"
-                        title="AI Meet Request"
+                        onClick={() => copyTag(tag, contact.id)}
+                        title="Copy @mention"
+                        className="flex items-center gap-1 px-2 py-1 rounded-[6px] bg-[#E8593C]/10 hover:bg-[#E8593C]/20 text-[#E8593C] font-mono text-[11px] font-semibold transition-colors"
                       >
-                        <span>Meet</span>
-                        <ExternalLink size={10} />
+                        {tag}
+                        {copiedField === contact.id ? <Check size={11} /> : <Copy size={10} />}
                       </button>
+                      <div className="relative">
+                        <button
+                          onClick={() =>
+                            setSchedulingId((prev) => (prev === contact.id ? null : contact.id))
+                          }
+                          className={`inline-flex items-center gap-1 font-sans text-[11.5px] font-medium transition-colors ${
+                            schedulingId === contact.id
+                              ? "text-[#E8593C]"
+                              : `${MUTED} hover:text-[#E8593C]`
+                          }`}
+                        >
+                          <CalendarPlus size={12} />
+                          Schedule meet
+                        </button>
+                        <ScheduleMeetPopover
+                          open={schedulingId === contact.id}
+                          onClose={() => setSchedulingId(null)}
+                          contactName={contact.name}
+                          tag={tag}
+                          onSubmit={sendMeetCommand}
+                        />
+                      </div>
                     </div>
-                  </motion.div>
+                  </div>
                 );
               })}
             </div>
           ) : (
-            /* LIST VIEW */
-            <div className="space-y-2">
-              {filtered.map(contact => {
+            <ul className={`${CARD} overflow-hidden divide-y ${DIVIDE}`}>
+              {filtered.map((contact) => {
                 const palette = getAvatarPalette(contact.name);
                 const tag = `@${contact.name}`;
-
+                const role = contact.role && contact.role !== "Team Member" ? contact.role : null;
                 return (
-                  <div
+                  <li
                     key={contact.id}
-                    className="group p-4 rounded-[12px] border border-[rgba(36,27,20,0.08)] dark:border-[rgba(255,255,255,0.08)] bg-white dark:bg-[#2C2C2C] flex items-center justify-between gap-4 hover:border-[#E8593C]/40 transition-all shadow-sm"
+                    className="group flex items-center gap-4 px-5 py-3.5 hover:bg-[rgba(36,27,20,0.02)] dark:hover:bg-[rgba(255,255,255,0.02)] transition-colors"
                   >
-                    <div className="flex items-center gap-3.5 min-w-0">
-                      <div
-                        className="w-10 h-10 rounded-full flex items-center justify-center font-bold text-[13px] border-2 shrink-0"
-                        style={{
-                          backgroundColor: palette.lightBg,
-                          borderColor: palette.bg + "40",
-                          color: palette.text,
-                        }}
-                      >
-                        {getInitials(contact.name)}
-                      </div>
+                    <span
+                      className="w-9 h-9 rounded-full flex items-center justify-center font-sans font-semibold text-[12.5px] shrink-0"
+                      style={{ backgroundColor: palette.lightBg, color: palette.text }}
+                    >
+                      {getInitials(contact.name)}
+                    </span>
 
-                      <div className="min-w-0">
-                        <div className="flex items-center gap-2">
-                          <span className="text-[14px] font-bold text-[#241B14] dark:text-[#F4F4F5] truncate">
-                            {contact.name}
-                          </span>
-                          {contact.role && (
-                            <span className="px-2 py-[1px] rounded bg-[rgba(36,27,20,0.06)] dark:bg-[rgba(255,255,255,0.08)] text-[10px] font-semibold text-[rgba(36,27,20,0.5)] dark:text-[rgba(255,255,255,0.5)]">
-                              {contact.role}
-                            </span>
-                          )}
-                        </div>
-                        <span className="text-[12px] text-[rgba(36,27,20,0.45)] dark:text-[rgba(255,255,255,0.45)] truncate block">
-                          {contact.email}
+                    <span className="flex-1 min-w-0">
+                      <span className="flex items-baseline gap-2">
+                        <span className="font-sans text-[14.5px] text-[#241B14] dark:text-[#F4F4F5] truncate">
+                          {contact.name}
                         </span>
+                        {role && (
+                          <span className="shrink-0 px-2 py-0.5 rounded-full bg-[rgba(36,27,20,0.05)] dark:bg-[rgba(255,255,255,0.07)] font-sans text-[10.5px] font-medium text-[rgba(36,27,20,0.55)] dark:text-[rgba(255,255,255,0.55)]">
+                            {role}
+                          </span>
+                        )}
+                      </span>
+                      <span className={`block font-sans text-[13px] ${MUTED} truncate`}>{contact.email}</span>
+                    </span>
+
+                    <button
+                      onClick={() => copyTag(tag, contact.id)}
+                      title="Copy @mention"
+                      className={`shrink-0 hidden sm:flex items-center gap-1.5 font-mono text-[12px] ${MUTED} hover:text-[#E8593C] transition-colors`}
+                    >
+                      {tag}
+                      {copiedField === contact.id ? (
+                        <Check size={11} className="text-[#16A34A]" />
+                      ) : (
+                        <Copy size={10} className="opacity-0 group-hover:opacity-100 transition-opacity" />
+                      )}
+                    </button>
+
+                    <span
+                      className={`shrink-0 flex items-center gap-1 transition-opacity ${
+                        schedulingId === contact.id
+                          ? "opacity-100"
+                          : "opacity-0 group-hover:opacity-100"
+                      }`}
+                    >
+                      <div className="relative">
+                        <button
+                          onClick={() =>
+                            setSchedulingId((prev) => (prev === contact.id ? null : contact.id))
+                          }
+                          title="Schedule meet"
+                          className={`p-1.5 rounded-full transition-colors ${
+                            schedulingId === contact.id ? "text-[#E8593C]" : `${FAINT} hover:text-[#E8593C]`
+                          }`}
+                        >
+                          <CalendarPlus size={13} />
+                        </button>
+                        <ScheduleMeetPopover
+                          open={schedulingId === contact.id}
+                          onClose={() => setSchedulingId(null)}
+                          contactName={contact.name}
+                          tag={tag}
+                          onSubmit={sendMeetCommand}
+                        />
                       </div>
-                    </div>
-
-                    <div className="flex items-center gap-3 shrink-0">
                       <button
-                        onClick={() => copyToClipboard(tag, `tag-${contact.id}`)}
-                        className="flex items-center gap-1 px-2.5 py-1 rounded-[6px] bg-[#E8593C]/10 text-[#E8593C] font-mono text-[11px] font-bold hover:bg-[#E8593C]/20 transition-colors"
+                        onClick={(e) => openEditModal(contact, e)}
+                        title="Edit contact"
+                        className={`p-1.5 rounded-full ${FAINT} hover:text-[#E8593C] transition-colors`}
                       >
-                        <AtSign size={11} />
-                        <span>{contact.name.split(" ")[0]}</span>
+                        <Pencil size={13} />
                       </button>
-
                       <button
-                        onClick={e => handleDelete(contact, e)}
-                        className="opacity-0 group-hover:opacity-100 p-1.5 rounded-[6px] hover:bg-red-50 dark:hover:bg-red-950/40 text-[rgba(36,27,20,0.3)] hover:text-red-500 transition-all"
-                        title="Delete Member"
+                        onClick={(e) => handleDelete(contact, e)}
+                        title="Remove contact"
+                        className={`p-1.5 rounded-full ${FAINT} hover:text-red-500 transition-colors`}
                       >
-                        <Trash2 size={14} />
+                        <Trash2 size={13} />
                       </button>
-                    </div>
-                  </div>
+                    </span>
+                  </li>
                 );
               })}
-            </div>
+            </ul>
+          )
           )}
-        </div>
+        </section>
+
+        <div className="h-4" />
       </div>
 
-      {/* Add Member Modal */}
+      {/* ── Add / Edit modal ─────────────────────────────────────────────── */}
       <AnimatePresence>
-        {showAddModal && (
+        {showModal && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4"
+            className="fixed inset-0 z-50 bg-[rgba(36,27,20,0.35)] backdrop-blur-sm flex items-center justify-center p-4"
+            onClick={() => setShowModal(false)}
           >
             <motion.div
-              initial={{ scale: 0.95, opacity: 0 }}
+              initial={{ scale: 0.97, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.95, opacity: 0 }}
-              className="bg-white dark:bg-[#2C2C2C] border border-[rgba(36,27,20,0.12)] dark:border-[rgba(255,255,255,0.12)] rounded-[20px] p-6 max-w-[440px] w-full shadow-2xl space-y-4"
+              exit={{ scale: 0.97, opacity: 0 }}
+              onClick={(e) => e.stopPropagation()}
+              className="bg-white dark:bg-[#383838] border border-[rgba(36,27,20,0.12)] dark:border-[rgba(255,255,255,0.12)] rounded-[16px] p-6 max-w-[420px] w-full"
             >
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <div className="w-7 h-7 rounded-[7px] bg-[#E8593C]/10 text-[#E8593C] flex items-center justify-center">
-                    <UserPlus size={15} />
-                  </div>
-                  <h3 className="text-[16px] font-bold text-[#241B14] dark:text-[#F4F4F5]">Add Team Member</h3>
+              <div className="flex items-start justify-between mb-6">
+                <div>
+                  <p className={`font-sans text-[11px] font-semibold uppercase tracking-wider ${FAINT} mb-2`}>
+                    {editingContact ? "Edit" : "New"}
+                  </p>
+                  <h3 className="text-[22px] leading-tight text-[#241B14] dark:text-[#F4F4F5]" style={SERIF}>
+                    {editingContact ? "Edit contact" : "Add contact"}
+                  </h3>
                 </div>
                 <button
-                  onClick={() => setShowAddModal(false)}
-                  className="p-1 rounded-full text-[rgba(36,27,20,0.4)] dark:text-[rgba(255,255,255,0.4)] hover:text-[#241B14] dark:hover:text-[#F4F4F5]"
+                  onClick={() => setShowModal(false)}
+                  className={`${FAINT} hover:text-[#241B14] dark:hover:text-[#F4F4F5] transition-colors p-1`}
                 >
                   <X size={16} />
                 </button>
               </div>
 
-              <form onSubmit={handleAdd} className="space-y-3 pt-2">
+              <form onSubmit={handleSubmit} className="flex flex-col gap-4">
                 <div>
-                  <label className="block text-[11px] font-bold text-[rgba(36,27,20,0.5)] dark:text-[rgba(255,255,255,0.5)] uppercase mb-1">
-                    Full Name *
+                  <label className={`block font-sans text-[11px] font-semibold uppercase tracking-wider ${FAINT} mb-1.5`}>
+                    Full name
                   </label>
                   <input
                     type="text"
-                    placeholder="e.g. Pranav Gawai"
+                    placeholder="Jane Doe"
                     value={form.name}
-                    onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
+                    onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
                     required
-                    className="w-full h-10 px-3.5 bg-[#FAF8F5] dark:bg-[#383838] border border-[rgba(36,27,20,0.10)] dark:border-[rgba(255,255,255,0.10)] rounded-[10px] text-[13px] text-[#241B14] dark:text-[#F4F4F5] outline-none focus:border-[#E8593C]"
+                    className={`${FIELD} ${RULE}`}
                   />
                 </div>
 
                 <div>
-                  <label className="block text-[11px] font-bold text-[rgba(36,27,20,0.5)] dark:text-[rgba(255,255,255,0.5)] uppercase mb-1">
-                    Email Address *
+                  <label className={`block font-sans text-[11px] font-semibold uppercase tracking-wider ${FAINT} mb-1.5`}>
+                    Email address
                   </label>
                   <input
                     type="email"
-                    placeholder="e.g. pranavgawai1518@gmail.com"
+                    placeholder="jane.doe@company.com"
                     value={form.email}
-                    onChange={e => setForm(f => ({ ...f, email: e.target.value }))}
+                    onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))}
                     required
-                    className="w-full h-10 px-3.5 bg-[#FAF8F5] dark:bg-[#383838] border border-[rgba(36,27,20,0.10)] dark:border-[rgba(255,255,255,0.10)] rounded-[10px] text-[13px] text-[#241B14] dark:text-[#F4F4F5] outline-none focus:border-[#E8593C]"
+                    className={`${FIELD} ${RULE}`}
                   />
                 </div>
 
                 <div>
-                  <label className="block text-[11px] font-bold text-[rgba(36,27,20,0.5)] dark:text-[rgba(255,255,255,0.5)] uppercase mb-1">
-                    Role (Optional)
+                  <label className={`block font-sans text-[11px] font-semibold uppercase tracking-wider ${FAINT} mb-1.5`}>
+                    Role <span className="normal-case">(optional)</span>
                   </label>
                   <input
                     type="text"
-                    placeholder="e.g. Founder, Developer, Designer"
+                    placeholder="Designer"
                     value={form.role}
-                    onChange={e => setForm(f => ({ ...f, role: e.target.value }))}
-                    className="w-full h-10 px-3.5 bg-[#FAF8F5] dark:bg-[#383838] border border-[rgba(36,27,20,0.10)] dark:border-[rgba(255,255,255,0.10)] rounded-[10px] text-[13px] text-[#241B14] dark:text-[#F4F4F5] outline-none focus:border-[#E8593C]"
+                    onChange={(e) => setForm((f) => ({ ...f, role: e.target.value }))}
+                    className={`${FIELD} ${RULE}`}
                   />
                 </div>
 
-                {formError && <p className="text-[12px] text-red-500 font-medium">{formError}</p>}
+                {formError && <p className="font-sans text-[12.5px] text-red-500">{formError}</p>}
 
-                <div className="flex gap-2 pt-2">
+                <div className="flex items-center gap-3 pt-2">
                   <button
                     type="submit"
                     disabled={isPending}
-                    className="flex-1 h-10 bg-[#E8593C] hover:bg-[#D4472B] disabled:opacity-50 text-white rounded-[10px] text-[13px] font-bold transition-all shadow-sm"
+                    className="flex-1 h-10 rounded-[10px] bg-[#E8593C] hover:bg-[#D4472B] text-white font-sans text-[13px] font-semibold transition-colors disabled:opacity-50 shadow-sm"
                   >
-                    {isPending ? "Adding..." : "Add to Team"}
+                    {isPending
+                      ? editingContact
+                        ? "Saving…"
+                        : "Adding…"
+                      : editingContact
+                      ? "Save changes"
+                      : "Add contact"}
                   </button>
                   <button
                     type="button"
-                    onClick={() => setShowAddModal(false)}
-                    className="h-10 px-4 bg-[rgba(36,27,20,0.06)] dark:bg-[rgba(255,255,255,0.08)] text-[#241B14] dark:text-[#F4F4F5] rounded-[10px] text-[13px] font-semibold"
+                    onClick={() => setShowModal(false)}
+                    className={`h-10 px-4 font-sans text-[13px] ${MUTED} hover:text-[#241B14] dark:hover:text-[#F4F4F5] transition-colors`}
                   >
                     Cancel
                   </button>

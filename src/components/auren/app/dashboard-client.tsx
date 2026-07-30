@@ -15,25 +15,35 @@ import { FullCalendarView } from "./full-calendar-view";
 import { SettingsView } from "./settings-view";
 import { HistoryPanel } from "./history-panel";
 import { TeamView } from "./team-view";
+import { HomeView } from "./home-view";
 import { CommandMenu } from "./command-menu";
 import { TerminalDrawer } from "./terminal-drawer";
+import { AurenLoading } from "@/components/ui/auren-loading";
 import { getInboxEmails } from "@/app/actions/inbox";
 import { processCommand } from "@/app/actions/agent";
 import { executePlan } from "@/app/actions/execute";
 import { checkConnectionStatus } from "@/app/actions/connect";
 import { getTeamContacts } from "@/app/actions/team";
+import { markEmailAsRead } from "@/app/actions/mark-read";
 import type { GmailMessage, AgentReasoningResult } from "@/types";
 import { MorphPanel } from "@/components/ui/ai-input";
+import { DownsideCommandBar } from "@/components/ui/downside-command-bar";
 import { motion, AnimatePresence } from "framer-motion";
-import { BriefingCard } from "@/components/ui/briefing-card";
-import { ShiningText } from "@/components/ui/shining-text";
 import { showToast } from "@/components/ui/premium-toast";
 
 export function DashboardClient() {
   const { user, isLoaded } = useUser();
   const router = useRouter();
 
-  const [isCheckingConnection, setIsCheckingConnection] = useState(true);
+  // Optimistic boot: a Google grant that existed last session is still there this
+  // session, so trust the cached answer and render the app immediately while the
+  // real check runs underneath. Only a first-ever load blocks on the network —
+  // the check itself costs ~3s round trip to Corsair, and the dashboard's own data
+  // finishes loading well before it returns.
+  const [isCheckingConnection, setIsCheckingConnection] = useState(() => {
+    if (typeof window === "undefined") return true;
+    return window.localStorage.getItem("auren:google-connected") !== "1";
+  });
 
   useEffect(() => {
     let active = true;
@@ -66,9 +76,13 @@ export function DashboardClient() {
       if (!active) return;
 
       if (!status.google) {
+        // The optimistic cache was wrong (grant revoked, or never existed) — clear it
+        // so the next load blocks properly instead of flashing an unusable app.
+        window.localStorage.removeItem("auren:google-connected");
         console.warn("[verifyConnection] Google not connected after retries. Redirecting to onboarding.");
         router.push("/onboarding");
       } else {
+        window.localStorage.setItem("auren:google-connected", "1");
         setIsCheckingConnection(false);
       }
     }
@@ -81,15 +95,16 @@ export function DashboardClient() {
   const pathname = usePathname();
   
   // Determine initial view from pathname
-  const initialView = pathname.startsWith("/settings") ? "settings" 
-    : pathname.startsWith("/history") ? "history" 
-    : pathname.startsWith("/calendar") ? "calendar" 
+  const initialView = pathname.startsWith("/settings") ? "settings"
+    : pathname.startsWith("/history") ? "history"
+    : pathname.startsWith("/calendar") ? "calendar"
     : pathname.startsWith("/search") ? "search"
     : pathname.startsWith("/github") ? "github"
     : pathname.startsWith("/team") ? "team"
-    : "inbox";
+    : pathname.startsWith("/mail") ? "inbox"
+    : "home";
 
-  const [view, setViewInternal] = useState<"search" | "github" | "calendar" | "inbox" | "settings" | "history" | "team">(initialView as any);
+  const [view, setViewInternal] = useState<"home" | "search" | "github" | "calendar" | "inbox" | "settings" | "history" | "team">(initialView as any);
 
   // Team contacts for @ mentions
   const [teamContacts, setTeamContacts] = useState<{name: string; email: string}[]>([]);
@@ -104,9 +119,13 @@ export function DashboardClient() {
   }, [initialView]);
 
   const setView = (newView: string) => {
-    if (newView === "inbox") {
+    if (newView === "home") {
       setIsZenMode(false);
-      router.push("/app", { scroll: false });
+      router.push("/dashboard", { scroll: false });
+      setViewInternal("home");
+    } else if (newView === "inbox") {
+      setIsZenMode(false);
+      router.push("/mail", { scroll: false });
       setViewInternal("inbox");
     } else if (newView === "team") {
       // Refresh contacts when navigating to Team
@@ -123,7 +142,6 @@ export function DashboardClient() {
   const [isCalendarOpen, setIsCalendarOpen] = useState(true);
   const [isZenMode, setIsZenMode] = useState(true);
   const [isConsoleOpen, setIsConsoleOpen] = useState(false);
-  const [briefingData, setBriefingData] = useState<any>(null);
   const [selectedEmailId, setSelectedEmailId] = useState<string>("");
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
   const [agentPlan, setAgentPlan] = useState<AgentReasoningResult | null>(null);
@@ -223,24 +241,52 @@ export function DashboardClient() {
     }
   }, [selectedEmailId]);
 
+  // Opening a message marks it read. Update local state first so the unread dot and
+  // the topbar badge clear instantly, then persist (DB + Gmail label) in the background.
+  const handleSelectEmail = useCallback((id: string) => {
+    setSelectedEmailId(id);
+    if (!id) return;
+
+    setEmails(prev => {
+      const target = prev.find(e => e.id === id);
+      if (!target || target.isRead) return prev;
+      return prev.map(e => (e.id === id ? { ...e, isRead: true } : e));
+    });
+
+    markEmailAsRead(id).catch(err => console.error("[markEmailAsRead] failed:", err));
+  }, []);
+
   const selectedEmail = emails.find(e => e.id === selectedEmailId);
   const threadEmails = selectedEmail 
     ? emails.filter(e => e.threadId === selectedEmail.threadId).sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
     : [];
 
-  const handleAction = async (command: string, history?: any[]) => {
+  const handleAction = async (command: string, history?: any[], opts?: { fromChat?: boolean }) => {
     setCurrentCommand(command);
     setIsAgentLoading(true);
     const res = await processCommand(command, selectedEmail || null, history);
     setIsAgentLoading(false);
 
     if (res.success && res.data) {
-      // If there is a briefing, intercept it and show the overlay instead of confirmation
+      // Home already shows a live, real-data summary (schedule, inbox, commands) — a
+      // "brief me" style request should just take the user there rather than open a
+      // second, LLM-fabricated summary card with mock data.
       if (res.data.briefing) {
-        setBriefingData(res.data.briefing);
+        setView("home");
+        showToast.success("Here's your day.");
       } else if (res.data.actions && res.data.actions.length > 0) {
         setAgentPlan(res.data);
         setIsConfirmOpen(true);
+      } else if (!opts?.fromChat) {
+        // The agent also answers with a plain explanation or a follow-up question and
+        // no actions (summaries, lookups, anything conversational). Without this the
+        // command ran, cost a request, and showed the user nothing at all.
+        // Skipped for chat-originated commands — the thread already renders the reply,
+        // and toasting it too produced a second copy over the topbar.
+        const reply = res.data.followUpQuestion || res.data.explanation;
+        if (reply) {
+          showToast.success(reply.length > 120 ? `${reply.slice(0, 117)}…` : reply);
+        }
       }
       return res.data;
     } else {
@@ -259,12 +305,13 @@ export function DashboardClient() {
       onToggleCalendar={() => setIsCalendarOpen(prev => !prev)}
       isConsoleOpen={isConsoleOpen}
       onToggleConsole={() => setIsConsoleOpen(prev => !prev)}
+      urgentEmailCount={emails.filter(e => e.priority === "urg" || e.priority === "urgent").length}
     >
-      {/* Loading Overlay */}
+      {/* Loading overlay: frosted, not opaque — the workspace stays visible behind it.
+          HomeView renders a silent skeleton while this is up, so there's no second
+          loader competing underneath. */}
       {(isCheckingConnection || !isLoaded || !user) && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-white/10 dark:bg-black/10 backdrop-blur-md">
-          <ShiningText text="Verifying workspace..." className="text-[15px] font-medium tracking-wide font-sans" />
-        </div>
+        <AurenLoading text="Preparing your workspace…" variant="overlay" size="lg" />
       )}
 
       <AnimatePresence>
@@ -277,21 +324,16 @@ export function DashboardClient() {
             transition={{ duration: 0.3 }}
           />
         )}
-        {briefingData && (
-          <motion.div
-            initial={{ opacity: 0, backdropFilter: "blur(0px)" }}
-            animate={{ opacity: 1, backdropFilter: "blur(6px)" }}
-            exit={{ opacity: 0, backdropFilter: "blur(0px)" }}
-            className="fixed inset-0 z-50 bg-[#FAF8F5] dark:bg-[#2C2C2C]/50 flex items-center justify-center p-8"
-          >
-            <div className="absolute inset-0 cursor-pointer" onClick={() => setBriefingData(null)} />
-            <div className="relative z-10 w-full max-w-[800px]">
-              <BriefingCard data={briefingData} onClose={() => setBriefingData(null)} />
-            </div>
-          </motion.div>
-        )}
       </AnimatePresence>
-      {view === "inbox" ? (
+      {view === "home" ? (
+        <div className="flex flex-1 w-full overflow-hidden h-full">
+          <HomeView
+            onNavigate={(v) => setView(v)}
+            onAction={handleAction}
+            isAgentLoading={isAgentLoading}
+          />
+        </div>
+      ) : view === "inbox" ? (
         <div className="flex flex-1 w-full overflow-hidden h-full relative">
           {!isZenMode && (
             <div 
@@ -301,7 +343,7 @@ export function DashboardClient() {
               <InboxPanel 
                 emails={emails}
                 selectedEmailId={selectedEmailId} 
-                onSelectEmail={setSelectedEmailId} 
+                onSelectEmail={handleSelectEmail} 
                 onRefresh={fetchEmails}
                 isLoading={isLoading}
                 folderType={folderType}
@@ -333,8 +375,8 @@ export function DashboardClient() {
           
           <div className="flex-1 flex flex-col relative overflow-hidden">
             {isLoading && !selectedEmail ? (
-              <div className="flex flex-col items-center justify-center h-full w-full gap-4 bg-white dark:bg-[#383838]">
-                <ShiningText text="Syncing workspace..." className="text-[13px] font-medium tracking-wide font-sans" />
+              <div className="flex flex-col items-center justify-center h-full w-full bg-white dark:bg-[#383838]">
+                <AurenLoading text="Syncing your inbox…" size="md" />
               </div>
             ) : selectedEmail ? (
               <EmailDetail 
@@ -385,11 +427,15 @@ export function DashboardClient() {
       ) : view === "github" ? (
         <GitHubIntegrationView />
       ) : view === "team" ? (
-        <TeamView />
+        <div className="flex flex-1 w-full overflow-hidden h-full">
+          <TeamView />
+        </div>
       ) : view === "settings" ? (
         <SettingsView />
       ) : view === "history" ? (
-        <HistoryPanel />
+        <div className="flex flex-1 w-full overflow-hidden h-full">
+          <HistoryPanel />
+        </div>
       ) : null}
 
       {/* Example trigger for the action confirmation - hidden in production */}
@@ -451,6 +497,14 @@ export function DashboardClient() {
         onExecute={handleAction} 
         isAgentLoading={isAgentLoading} 
       />
+      {view === "home" && (
+        <DownsideCommandBar 
+          onExecute={handleAction} 
+          isAgentLoading={isAgentLoading} 
+          teamContacts={teamContacts} 
+          emails={emails} 
+        />
+      )}
       <div className="fixed bottom-12 right-12 z-[60]">
         <MorphPanel onExecute={handleAction} isAgentLoading={isAgentLoading} emails={emails} teamContacts={teamContacts} />
       </div>

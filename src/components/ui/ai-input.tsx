@@ -4,9 +4,10 @@ import React from "react"
 import { cx } from "class-variance-authority"
 import { AnimatePresence, motion, useDragControls } from "motion/react"
 
-import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import { Mic, Maximize2, Minimize2 } from "lucide-react"
+import { AurenMascotBadge } from "@/components/ui/auren-mascot"
+
 
 interface OrbProps {
   dimension?: string
@@ -20,7 +21,7 @@ interface OrbProps {
   spinDuration?: number
 }
 
-const ColorOrb: React.FC<OrbProps> = ({
+export const ColorOrb: React.FC<OrbProps> = ({
   dimension = "192px",
   className,
   tones,
@@ -176,6 +177,7 @@ const ColorOrb: React.FC<OrbProps> = ({
   )
 }
 
+
 const SPEED_FACTOR = 1
 
 interface ContextShape {
@@ -188,13 +190,14 @@ interface ContextShape {
   isAgentLoading: boolean
   startResize: (e: React.MouseEvent) => void
   dragControls: any
+  isDockHovered: boolean
 }
 
 const FormContext = React.createContext({} as ContextShape)
 const useFormContext = () => React.useContext(FormContext)
 
 interface MorphPanelProps {
-  onExecute: (command: string, history?: any[]) => Promise<any>;
+  onExecute: (command: string, history?: any[], opts?: { fromChat?: boolean }) => Promise<any>;
   isAgentLoading?: boolean;
   emails?: any[];
   teamContacts?: { name: string; email: string; role?: string }[];
@@ -207,6 +210,8 @@ export function MorphPanel({ onExecute, isAgentLoading = false, emails = [], tea
 
   const [showForm, setShowForm] = React.useState(false)
   const [successFlag, setSuccessFlag] = React.useState(false)
+  // Collapsed, the dock is just the mascot; hovering widens it to reveal the label.
+  const [isDockHovered, setIsDockHovered] = React.useState(false)
 
   const [isFullscreen, setIsFullscreen] = React.useState(false)
   const [panelSize, setPanelSize] = React.useState({ width: 400, height: 440 })
@@ -277,8 +282,8 @@ export function MorphPanel({ onExecute, isAgentLoading = false, emails = [], tea
   }, [showForm, triggerClose, triggerOpen])
 
   const ctx = React.useMemo(
-    () => ({ showForm, successFlag, triggerOpen, triggerClose, isFullscreen, setIsFullscreen, isAgentLoading, startResize, dragControls }),
-    [showForm, successFlag, triggerOpen, triggerClose, isFullscreen, isAgentLoading, startResize, dragControls]
+    () => ({ showForm, successFlag, triggerOpen, triggerClose, isFullscreen, setIsFullscreen, isAgentLoading, startResize, dragControls, isDockHovered }),
+    [showForm, successFlag, triggerOpen, triggerClose, isFullscreen, isAgentLoading, startResize, dragControls, isDockHovered]
   )
 
   return (
@@ -287,22 +292,33 @@ export function MorphPanel({ onExecute, isAgentLoading = false, emails = [], tea
         ref={wrapperRef}
         data-panel
         className={cx(
-          "bg-[#FAF8F5] dark:bg-[#383838] z-50 flex flex-col items-center overflow-hidden border border-[rgba(36,27,20,0.08)] dark:border-[rgba(255,255,255,0.08)] shadow-[0_12px_40px_rgba(0,0,0,0.08)]"
+          // Surface-colored in both states; the orange is carried by the mascot badge
+          // alone, so the dock doesn't read as a solid block of brand color.
+          "bg-[#FAF8F5] dark:bg-[#383838] z-50 flex flex-col items-center overflow-hidden border border-[rgba(36,27,20,0.08)] dark:border-[rgba(255,255,255,0.08)]"
         )}
         drag
         dragControls={dragControls}
         dragListener={false}
         dragMomentum={false}
+        onHoverStart={() => setIsDockHovered(true)}
+        onHoverEnd={() => setIsDockHovered(false)}
         initial={false}
         animate={{
-          width: showForm ? (isFullscreen ? "80vw" : panelSize.width) : 140, // compact size when closed
-          height: showForm ? (isFullscreen ? "80vh" : panelSize.height) : 44,
-          borderRadius: showForm ? 14 : 22,
+          // Closed it's a 56px circle holding just the mascot; hover widens it for the label.
+          width: showForm ? (isFullscreen ? "80vw" : panelSize.width) : isDockHovered ? 182 : 56,
+          height: showForm ? (isFullscreen ? "80vh" : panelSize.height) : 56,
+          borderRadius: showForm ? 14 : 28,
+          // A small lift instead of a scale — scaling a bordered surface softens its
+          // edge and reads as a blur; translating keeps it crisp.
+          y: !showForm && isDockHovered ? -3 : 0,
+          boxShadow: !showForm && isDockHovered
+            ? "0 12px 28px rgba(36,27,20,0.14), 0 2px 6px rgba(36,27,20,0.08)"
+            : "0 4px 14px rgba(36,27,20,0.08), 0 1px 3px rgba(36,27,20,0.05)",
         }}
         transition={{
           type: "spring",
-          stiffness: 550 / SPEED_FACTOR,
-          damping: 45,
+          stiffness: showForm ? 550 / SPEED_FACTOR : 420,
+          damping: showForm ? 45 : 38,
           mass: 0.7,
           delay: showForm ? 0 : 0.08,
         }}
@@ -317,56 +333,53 @@ export function MorphPanel({ onExecute, isAgentLoading = false, emails = [], tea
 }
 
 function DockBar() {
-  const { showForm, triggerOpen, dragControls } = useFormContext()
+  const { showForm, triggerOpen, dragControls, isDockHovered } = useFormContext()
   return (
-    <footer 
+    <footer
       className={cx(
-        "mt-auto flex h-[44px] items-center justify-center whitespace-nowrap select-none w-full",
-        !showForm && "cursor-grab active:cursor-grabbing"
+        "mt-auto flex items-center justify-center whitespace-nowrap select-none w-full",
+        showForm ? "h-[44px]" : "h-[56px] cursor-grab active:cursor-grabbing"
       )}
       onPointerDown={(e) => {
-        if (!showForm) {
-          const tag = (e.target as HTMLElement).tagName;
-          if (tag !== 'BUTTON') {
-            dragControls.start(e);
-          }
-        }
+        // The collapsed pill is one button now, so drag from anywhere on it. A
+        // press with no movement still fires onClick, so opening is unaffected.
+        if (!showForm) dragControls.start(e)
       }}
     >
-      <div className="flex items-center justify-center gap-2 px-3 h-full w-full">
-        <div className="flex w-fit items-center gap-2">
-          <AnimatePresence mode="wait">
-            {showForm ? (
-              <motion.div
-                key="blank"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 0 }}
-                exit={{ opacity: 0 }}
-                className="h-5 w-5"
-              />
-            ) : (
-              <motion.div
-                key="orb"
+      {!showForm && (
+        <button
+          type="button"
+          onClick={triggerOpen}
+          aria-label="Ask Auren AI"
+          className="flex items-center h-full w-full overflow-hidden whitespace-nowrap"
+        >
+          {/* Mascot stays pinned in the 56px circle so widening doesn't shift it. */}
+          <motion.span
+            className="w-[56px] h-full flex items-center justify-center shrink-0"
+            animate={{ scale: isDockHovered ? 1.06 : 1 }}
+            transition={{ type: "spring", stiffness: 400, damping: 26 }}
+          >
+            <AurenMascotBadge size={38} />
+          </motion.span>
+
+          {/* Fades without sliding: the container is already moving, and two motions
+              at once is what makes a reveal look busy. */}
+          <AnimatePresence>
+            {isDockHovered && (
+              <motion.span
+                key="label"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
-                transition={{ duration: 0.2 }}
+                transition={{ duration: 0.16, delay: 0.08, ease: "easeOut" }}
+                className="text-[#241B14] dark:text-[#F4F4F5] font-medium text-[13.5px] tracking-[-0.01em] pr-5"
               >
-                <ColorOrb dimension="24px" tones={{ base: "oklch(22.64% 0 0)", accent1: "oklch(60% 0.15 30)", accent2: "oklch(50% 0.15 40)", accent3: "oklch(70% 0.15 20)" }} />
-              </motion.div>
+                Ask Auren AI
+              </motion.span>
             )}
           </AnimatePresence>
-        </div>
-
-        <Button
-          type="button"
-          className="flex h-fit flex-1 justify-center rounded-full px-2 !py-0.5"
-          variant="ghost"
-          onClick={triggerOpen}
-        >
-          <span className="truncate text-[#241B14] dark:text-[#F4F4F5] font-medium text-[13px]">Ask Auren AI</span>
-        </Button>
-      </div>
+        </button>
+      )}
     </footer>
   )
 }
@@ -376,9 +389,8 @@ const FORM_HEIGHT = 440
 
 import { Check } from "lucide-react"
 import { useUser } from "@clerk/nextjs"
-import Image from "next/image"
 
-function InputForm({ inputRef, onSuccess, onExecute, emails = [], teamContacts = [] }: { inputRef: React.RefObject<HTMLTextAreaElement>; onSuccess: () => void; onExecute: (cmd: string, history?: any[]) => Promise<any>; emails?: any[]; teamContacts?: { name: string; email: string; role?: string }[] }) {
+function InputForm({ inputRef, onSuccess, onExecute, emails = [], teamContacts = [] }: { inputRef: React.RefObject<HTMLTextAreaElement>; onSuccess: () => void; onExecute: (cmd: string, history?: any[], opts?: { fromChat?: boolean }) => Promise<any>; emails?: any[]; teamContacts?: { name: string; email: string; role?: string }[] }) {
   const { triggerClose, showForm, isFullscreen, setIsFullscreen, isAgentLoading, startResize, dragControls } = useFormContext()
   const btnRef = React.useRef<HTMLButtonElement>(null)
   const { user } = useUser()
@@ -386,19 +398,32 @@ function InputForm({ inputRef, onSuccess, onExecute, emails = [], teamContacts =
   const [inputValue, setInputValue] = React.useState("")
   const [isListening, setIsListening] = React.useState(false)
 
+  // `runCommand` closes over per-render state, so the listener reads it through a
+  // ref rather than re-subscribing on every keystroke.
+  const runCommandRef = React.useRef<(v?: string, label?: string) => void>(() => {})
+
   React.useEffect(() => {
     function handleOpenChat(e: Event) {
       const customEvent = e as CustomEvent;
-      if (customEvent.detail?.text) {
-        setInputValue(customEvent.detail.text);
-        setTimeout(() => {
-          if (inputRef.current) {
-            inputRef.current.style.height = "auto";
-            inputRef.current.style.height = `${inputRef.current.scrollHeight}px`;
-            inputRef.current.focus();
-          }
-        }, 100);
+      const text = customEvent.detail?.text;
+      if (!text) return;
+
+      // autoSubmit: callers like the dashboard quick actions want the command to
+      // run immediately and stream its answer into the thread.
+      if (customEvent.detail?.autoSubmit) {
+        const label = customEvent.detail?.label;
+        setTimeout(() => runCommandRef.current?.(text, label), 120);
+        return;
       }
+
+      setInputValue(text);
+      setTimeout(() => {
+        if (inputRef.current) {
+          inputRef.current.style.height = "auto";
+          inputRef.current.style.height = `${inputRef.current.scrollHeight}px`;
+          inputRef.current.focus();
+        }
+      }, 100);
     }
     document.addEventListener("open-ai-chat", handleOpenChat);
     return () => {
@@ -444,9 +469,6 @@ function InputForm({ inputRef, onSuccess, onExecute, emails = [], teamContacts =
         }
       });
       emailMentions.push(...Array.from(contacts.values()));
-    } else if (teamContacts.length === 0) {
-      // Hardcoded fallback only when no team contacts AND no emails
-      teamMentions.push({ id: '1', trigger: '@', type: 'contact', label: 'Pranav Gawai', value: '@Pranav Gawai', displayValue: 'pranavgawai1518@gmail.com', icon: '@' });
     }
 
     return [...teamMentions, ...emailMentions, ...baseMentions];
@@ -595,7 +617,13 @@ function InputForm({ inputRef, onSuccess, onExecute, emails = [], teamContacts =
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
-    const val = inputRef.current?.value
+    await runCommand(inputRef.current?.value)
+  }
+
+  /** `label` is what the user sees in the thread; `val` is what the agent receives.
+   *  They differ when a caller attaches a data payload (e.g. the day summary sends
+   *  today's schedule and inbox) that would be unreadable as a chat bubble. */
+  async function runCommand(val?: string, label?: string) {
     if (val) {
       if (inputRef.current) {
         inputRef.current.value = ""
@@ -605,9 +633,11 @@ function InputForm({ inputRef, onSuccess, onExecute, emails = [], teamContacts =
 
       // Add user message & show typing indicator
       const currentHistory = [...chatHistory]
-      setChatHistory(prev => [...prev, {role: "user", content: val}, {role: "agent", isTyping: true}])
-      
-      const res = await onExecute(val, currentHistory)
+      setChatHistory(prev => [...prev, {role: "user", content: label || val}, {role: "agent", isTyping: true}])
+
+      // fromChat: the reply is rendered in this thread, so the caller must not also
+      // fire a toast for it.
+      const res = await onExecute(val, currentHistory, { fromChat: true })
       
       // Replace typing indicator with actual response
       if (res) {
@@ -645,6 +675,8 @@ function InputForm({ inputRef, onSuccess, onExecute, emails = [], teamContacts =
     }
     onSuccess()
   }
+
+  runCommandRef.current = runCommand
 
   function handleKeys(e: React.KeyboardEvent<HTMLTextAreaElement>) {
     if (mentionQuery !== null && filteredMentions.length > 0) {
@@ -731,8 +763,12 @@ function InputForm({ inputRef, onSuccess, onExecute, emails = [], teamContacts =
               }}
             >
               {!isFullscreen && (
-                <div 
+                <div
                   className="absolute top-[2px] left-[2px] w-6 h-6 cursor-nwse-resize z-10 opacity-50 hover:opacity-100"
+                  // The header above starts a window drag on pointerdown, which fires
+                  // before mousedown and bubbles from here — so without this the panel
+                  // dragged instead of resizing. Stop it at the pointer level.
+                  onPointerDown={(e) => e.stopPropagation()}
                   onMouseDown={startResize}
                   title="Drag to resize"
                 >
@@ -741,9 +777,14 @@ function InputForm({ inputRef, onSuccess, onExecute, emails = [], teamContacts =
                   </svg>
                 </div>
               )}
-              <p className="text-[#241B14] dark:text-[#F4F4F5] z-2 ml-[38px] flex items-center gap-[6px] select-none font-medium text-[13px]">
+              {/* Orb sits inline so it baselines with the title. The left margin
+                  clears the resize handle in the corner. */}
+              {/* A div, not a p: ColorOrb renders a div and block elements are invalid
+                  inside <p>, which React reports as a hydration error. */}
+              <div className="text-[#241B14] dark:text-[#F4F4F5] z-2 ml-[30px] flex items-center gap-2 select-none font-medium text-[13px]">
+                <ColorOrb dimension="18px" tones={{ base: "oklch(22.64% 0 0)", accent1: "oklch(60% 0.15 30)", accent2: "oklch(50% 0.15 40)", accent3: "oklch(70% 0.15 20)" }} />
                 Auren AI Agent
-              </p>
+              </div>
               <div className="flex items-center gap-1 right-4 mt-1 -translate-y-[3px]">
                 <button
                   type="button"
@@ -767,7 +808,17 @@ function InputForm({ inputRef, onSuccess, onExecute, emails = [], teamContacts =
             {/* Chat History Area */}
             <div className="flex-1 overflow-y-auto px-4 py-2 scrollbar-hide flex flex-col gap-5">
               {chatHistory.length === 0 ? (
-                 <div className="flex-1 flex items-center justify-center opacity-0" />
+                 /* Resting state: the mascot sits alone on the empty panel and keeps
+                    blinking, so an open chat with no messages still feels awake. */
+                 <div className="flex-1 flex flex-col items-center justify-center gap-3 select-none">
+                   <AurenMascotBadge size={64} />
+                   <span className="font-sans text-[13px] font-medium text-[#241B14] dark:text-[#F4F4F5]">
+                     Ask Auren AI
+                   </span>
+                   <span className="font-sans text-[11.5px] text-[rgba(36,27,20,0.35)] dark:text-[rgba(255,255,255,0.35)] -mt-2">
+                     Type a command, or @mention someone.
+                   </span>
+                 </div>
               ) : (
                 <>
                   {chatHistory.map((msg, i) => {
@@ -782,8 +833,20 @@ function InputForm({ inputRef, onSuccess, onExecute, emails = [], teamContacts =
                     } else if (msg.role === "agent") {
                       return (
                         <div key={i} className="flex items-start gap-2 w-full">
+                          {/* The orb, not the flat logo: it's alive, and it spins faster
+                              while the agent is still composing so the avatar itself
+                              carries the "working" state. */}
                           <div className="w-7 h-7 flex items-center justify-center shrink-0 mt-1">
-                            <Image src="/auren_logo.webp" alt="AI" width={24} height={24} className="opacity-100 object-contain drop-shadow-sm" />
+                            <ColorOrb
+                              dimension="24px"
+                              spinDuration={msg.isTyping ? 4 : 14}
+                              tones={{
+                                base: "oklch(22.64% 0 0)",
+                                accent1: "oklch(60% 0.15 30)",
+                                accent2: "oklch(50% 0.15 40)",
+                                accent3: "oklch(70% 0.15 20)",
+                              }}
+                            />
                           </div>
                           
                           {msg.isTyping ? (
@@ -919,19 +982,8 @@ function InputForm({ inputRef, onSuccess, onExecute, emails = [], teamContacts =
         )}
       </AnimatePresence>
 
-      <AnimatePresence>
-        {showForm && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.2 }}
-            className="absolute top-2 left-3"
-          >
-            <ColorOrb dimension="24px" tones={{ base: "oklch(22.64% 0 0)", accent1: "oklch(60% 0.15 30)", accent2: "oklch(50% 0.15 40)", accent3: "oklch(70% 0.15 20)" }} />
-          </motion.div>
-        )}
-      </AnimatePresence>
+      {/* The orb now lives inline in the header title, so it stays aligned with the
+          text instead of floating in the panel's corner. */}
     </form>
   )
 }

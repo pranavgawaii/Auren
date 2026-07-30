@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import { showToast } from "@/components/ui/premium-toast";
 import { checkConnectionStatus, getConnectUrl, disconnectService, getConnectedGithubUsername, getDefaultGithubUsername } from "@/app/actions/connect";
+import { getGoogleMeetAuthUrl, getGoogleMeetStatus, disconnectGoogleMeet } from "@/app/actions/google-direct";
 import { useRouter } from "next/navigation";
 import { useUser } from "@clerk/nextjs";
 import Image from "next/image";
@@ -98,6 +99,10 @@ export function SettingsView() {
   const [loading, setLoading] = useState({ google: false, github: false });
   const [githubUsername, setGithubUsername] = useState("");
 
+  // Direct Google Meet grant (separate from the Corsair Google connection)
+  const [meetConnected, setMeetConnected] = useState(false);
+  const [meetLoading, setMeetLoading] = useState(false);
+
   // Preferences
   const [theme, setTheme] = useState("light");
   const [replyTone, setReplyTone] = useState("formal");
@@ -122,6 +127,12 @@ export function SettingsView() {
   const loadStatus = async () => {
     const status = await checkConnectionStatus();
     setConnected(status);
+    try {
+      const meet = await getGoogleMeetStatus();
+      setMeetConnected(meet.connected);
+    } catch (e) {
+      console.warn("Failed to load Google Meet grant status:", e);
+    }
     if (status.github) {
       try {
         const username = await getConnectedGithubUsername();
@@ -211,6 +222,44 @@ export function SettingsView() {
       showToast.error(res.error || `Failed to connect ${service}`);
     }
     setLoading((prev) => ({ ...prev, [service]: false }));
+  };
+
+  const handleMeetConnect = async () => {
+    setMeetLoading(true);
+    try {
+      const res = await getGoogleMeetAuthUrl();
+      if (res.success && res.url) {
+        const popup = window.open(res.url, "_blank", "width=520,height=650");
+        // Google redirects back to /api/google/callback, which closes itself on success.
+        const timer = setInterval(async () => {
+          if (popup?.closed) {
+            clearInterval(timer);
+            const status = await getGoogleMeetStatus();
+            setMeetConnected(status.connected);
+            if (status.connected) showToast.success("Google Meet links enabled.");
+            setMeetLoading(false);
+          }
+        }, 800);
+      } else {
+        showToast.error(res.error || "Failed to start Google authorization.");
+        setMeetLoading(false);
+      }
+    } catch (e) {
+      showToast.error(e instanceof Error ? e.message : "Unexpected error");
+      setMeetLoading(false);
+    }
+  };
+
+  const handleMeetDisconnect = async () => {
+    if (!confirm("Disconnect Google Meet link generation?")) return;
+    setMeetLoading(true);
+    const res = await disconnectGoogleMeet();
+    if (res.success) {
+      setMeetConnected(false);
+    } else {
+      showToast.error(res.error || "Failed to disconnect");
+    }
+    setMeetLoading(false);
   };
 
   const handleDisconnect = async (service: "google" | "github") => {
@@ -571,10 +620,33 @@ export function SettingsView() {
                       <p className="text-[12px] text-[rgba(36,27,20,0.5)] dark:text-[rgba(255,255,255,0.5)] max-w-sm">Sync your inbox messages and calendar appointments dynamically.</p>
                     </div>
                   </div>
-                  <Switch 
-                    checked={connected.google} 
+                  <Switch
+                    checked={connected.google}
                     disabled={loading.google}
                     onChange={() => connected.google ? handleDisconnect("google") : handleConnect("google")}
+                  />
+                </div>
+
+                {/* Google Meet (direct grant) — required for real meet.google.com links */}
+                <div className="bg-white dark:bg-[#383838] rounded-[16px] border border-[rgba(36,27,20,0.08)] dark:border-[rgba(255,255,255,0.08)] shadow-sm p-5 flex items-center justify-between transition-all hover:shadow-md">
+                  <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 rounded-[12px] border border-[rgba(36,27,20,0.08)] dark:border-[rgba(255,255,255,0.08)] bg-[#FAF8F5] dark:bg-[#2C2C2C] flex items-center justify-center shadow-inner">
+                      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="text-[#241B14] dark:text-[#F4F4F5]"><path d="M15 10L20.5 7.5V16.5L15 14M4 8H14C14.5523 8 15 8.44772 15 9V15C15 15.5523 14.5523 16 14 16H4C3.44772 16 3 15.5523 3 15V9C3 8.44772 3.44772 8 4 8Z"/></svg>
+                    </div>
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-2">
+                        <span className="font-bold text-[16px] text-[#241B14] dark:text-[#F4F4F5]" style={{ fontFamily: "var(--font-civane, Georgia, serif)" }}>Google Meet links</span>
+                        {meetConnected && <span className="text-[9px] font-bold bg-[#10B981]/10 text-[#10B981] px-2 py-0.5 rounded-full border border-[#10B981]/20">ACTIVE</span>}
+                      </div>
+                      <p className="text-[12px] text-[rgba(36,27,20,0.5)] dark:text-[rgba(255,255,255,0.5)] max-w-sm">
+                        Grants calendar access so Auren can generate real, joinable meet.google.com links. Without this, meeting emails only include a calendar link.
+                      </p>
+                    </div>
+                  </div>
+                  <Switch
+                    checked={meetConnected}
+                    disabled={meetLoading}
+                    onChange={() => meetConnected ? handleMeetDisconnect() : handleMeetConnect()}
                   />
                 </div>
 

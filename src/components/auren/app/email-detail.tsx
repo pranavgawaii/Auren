@@ -4,6 +4,7 @@ import React, { useState, useRef, useEffect } from "react";
 import { MoreHorizontal, Reply, CalendarPlus, GitBranch, Archive, FileText } from "lucide-react";
 import type { GmailMessage } from "@/types";
 import { ShiningText } from "@/components/ui/shining-text";
+import { AurenLoading } from "@/components/ui/auren-loading";
 import { saveDraft } from "@/app/actions/save-draft";
 import { toast } from "sonner";
 
@@ -95,7 +96,7 @@ export function EmailDetail({ email, thread = [], onAction, isAgentLoading }: Em
       {/* ShiningText Thinking Overlay */}
       {isAgentLoading && (
         <div className="absolute inset-0 bg-white/60 dark:bg-[#383838]/60 backdrop-blur-md z-50 flex flex-col items-center justify-center pointer-events-auto transition-all duration-300">
-          <ShiningText text="Auren is thinking..." className="text-[20px] font-sans font-medium tracking-tight" />
+          <AurenLoading text="Auren is thinking…" size="md" />
         </div>
       )}
 

@@ -21,8 +21,6 @@ export type AdminUser = {
     inputTokens: number;
     outputTokens: number;
     totalTokens: number;
-    estimatedCost: number;
-    byModel: { modelName: string; tokens: number; percentage: number }[];
   };
 };
 
@@ -36,13 +34,18 @@ export async function getSystemStatus() {
 
   const db = await getDb();
 
+  // Reflects the services the app actually calls, not a fixed list of every
+  // provider key in .env — GROQ is the live reasoning engine (src/lib/gemini.ts),
+  // not Anthropic/OpenAI/Gemini directly, so this used to report the wrong engine
+  // as "active" and leave the real one unmonitored.
   return {
     success: true,
     data: {
-      gemini: !!process.env.GEMINI_API_KEY,
-      anthropic: !!process.env.ANTHROPIC_API_KEY,
-      openai: !!process.env.OPENAI_API_KEY,
-      openrouter: !!process.env.OPENROUTER_API_KEY,
+      groq: !!process.env.GROQ_API_KEY,
+      corsair: !!(process.env.CORSAIR_DEV_KEY && process.env.CORSAIR_INSTANCE_ID),
+      resend: !!process.env.RESEND_API_KEY,
+      clerk: !!process.env.CLERK_SECRET_KEY,
+      googleOAuth: !!(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET),
       database: !!db,
     }
   };
@@ -108,32 +111,26 @@ export async function getAdminAnalytics() {
         createdAt: a.created_at || new Date().toISOString()
       }));
 
-      // Calculate token metrics for this user
+      // Token estimate — there's no per-call token metering on the Groq path today
+      // (src/lib/gemini.ts doesn't record usage), so this stays a length-derived
+      // approximation, same as before. What's removed is the old 65/25/10 Claude/
+      // Gemini/Sonnet split: the app only ever calls Groq's Llama 3.3 70B for
+      // reasoning, so presenting a three-model breakdown was fabricated, not
+      // rounded — none of those models are in the request path.
       let inputTokens = 0;
       let outputTokens = 0;
-      
+
       userActions.forEach(action => {
         inputTokens += 400 + ((action.command || "").length * 3);
         outputTokens += 600;
-        
+
         const actionsCount = Array.isArray(action.actions_taken) ? action.actions_taken.length : 0;
         inputTokens += actionsCount * 1200;
         outputTokens += actionsCount * 800;
       });
-      
+
       const totalTokens = inputTokens + outputTokens;
-      const estimatedCost = (inputTokens * 0.000003) + (outputTokens * 0.000015);
-      
-      const sonnetTokens = Math.round(totalTokens * 0.65);
-      const haikuTokens = Math.round(totalTokens * 0.25);
-      const geminiTokens = Math.round(totalTokens * 0.10);
-      
-      const byModel = [
-        { modelName: "Claude 3.5 Sonnet", tokens: sonnetTokens, percentage: 65 },
-        { modelName: "Claude 3 Haiku", tokens: haikuTokens, percentage: 25 },
-        { modelName: "Gemini 1.5 Pro", tokens: geminiTokens, percentage: 10 }
-      ];
-      
+
       return {
         id: u.id,
         email,
@@ -145,57 +142,37 @@ export async function getAdminAnalytics() {
         supabaseId,
         integrations: userIntegrations,
         recentCommands,
-        tokenConsumption: {
-          inputTokens,
-          outputTokens,
-          totalTokens,
-          estimatedCost,
-          byModel
-        }
+        tokenConsumption: { inputTokens, outputTokens, totalTokens }
       };
     }));
-    
-    let globalTotalTokens = 0;
-    let globalEstimatedCost = 0;
-    let globalSonnetTokens = 0;
-    let globalHaikuTokens = 0;
-    let globalGeminiTokens = 0;
 
-    adminUsers.forEach(u => {
-      if (u.tokenConsumption) {
-        globalTotalTokens += u.tokenConsumption.totalTokens;
-        globalEstimatedCost += u.tokenConsumption.estimatedCost;
-        const sonnet = u.tokenConsumption.byModel.find(m => m.modelName.includes("Sonnet"))?.tokens || 0;
-        const haiku = u.tokenConsumption.byModel.find(m => m.modelName.includes("Haiku"))?.tokens || 0;
-        const gemini = u.tokenConsumption.byModel.find(m => m.modelName.includes("Gemini"))?.tokens || 0;
-        globalSonnetTokens += sonnet;
-        globalHaikuTokens += haiku;
-        globalGeminiTokens += gemini;
-      }
-    });
+    let globalTotalTokens = 0;
+    adminUsers.forEach(u => { globalTotalTokens += u.tokenConsumption?.totalTokens || 0; });
+
+    // Real, not estimated: every action row carries a status, so these counts
+    // come straight out of the same query already run above.
+    const statusBreakdown = {
+      completed: actions.filter((a: any) => a.status === "completed").length,
+      failed: actions.filter((a: any) => a.status === "failed").length,
+      pending: actions.filter((a: any) => a.status !== "completed" && a.status !== "failed").length,
+    };
+
+    // Real: derived from the Corsair credential lookups already done per user above.
+    const usersWithGoogle = adminUsers.filter(u => u.integrations?.some(i => i.provider === "google")).length;
+    const usersWithGithub = adminUsers.filter(u => u.integrations?.some(i => i.provider === "github")).length;
+    const integrationBreakdown = {
+      google: usersWithGoogle,
+      github: usersWithGithub,
+      googlePct: adminUsers.length ? Math.round((usersWithGoogle / adminUsers.length) * 100) : 0,
+      githubPct: adminUsers.length ? Math.round((usersWithGithub / adminUsers.length) * 100) : 0,
+    };
 
     const globalTokenMetrics = {
       totalTokens: globalTotalTokens,
-      estimatedCost: globalEstimatedCost,
-      byModel: [
-        { 
-          modelName: "Claude 3.5 Sonnet (OpenRouter)", 
-          tokens: globalSonnetTokens, 
-          percentage: globalTotalTokens > 0 ? Math.round((globalSonnetTokens / globalTotalTokens) * 100) : 0 
-        },
-        { 
-          modelName: "Claude 3 Haiku (Direct)", 
-          tokens: globalHaikuTokens, 
-          percentage: globalTotalTokens > 0 ? Math.round((globalHaikuTokens / globalTotalTokens) * 100) : 0 
-        },
-        { 
-          modelName: "Gemini 1.5 Pro (Workspace Mappings)", 
-          tokens: globalGeminiTokens, 
-          percentage: globalTotalTokens > 0 ? Math.round((globalGeminiTokens / globalTotalTokens) * 100) : 0 
-        }
-      ]
+      engine: "Llama 3.3 70B (Groq)",
+      tpmLimit: 12000, // Groq free-tier cap that executor.ts now guards against — see src/agents/executor.ts
     };
-    
+
     const globalRecentCommands = (actions || []).slice(0, 100).map((a: any) => {
       const user = adminUsers.find(u => u.supabaseId === a.user_id);
       return {
@@ -218,7 +195,9 @@ export async function getAdminAnalytics() {
         totalCommands,
         limit: RATE_LIMITS.COMMANDS_PER_HOUR,
         globalTokenMetrics,
-        globalRecentCommands
+        globalRecentCommands,
+        statusBreakdown,
+        integrationBreakdown,
       }
     };
   } catch (error: any) {

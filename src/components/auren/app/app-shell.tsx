@@ -31,22 +31,24 @@ export function ClockHistoryIcon({ size = 20, className = "" }: { size?: number;
 
 interface AppShellProps {
   children: React.ReactNode;
-  currentView?: "search" | "calendar" | "inbox" | "settings" | "history" | "github" | "team";
-  onViewChange?: (view: "search" | "calendar" | "inbox" | "settings" | "history" | "github" | "team") => void;
+  currentView?: "home" | "search" | "calendar" | "inbox" | "settings" | "history" | "github" | "team";
+  onViewChange?: (view: "home" | "search" | "calendar" | "inbox" | "settings" | "history" | "github" | "team") => void;
   isCalendarOpen?: boolean;
   onToggleCalendar?: () => void;
   isConsoleOpen?: boolean;
   onToggleConsole?: () => void;
+  urgentEmailCount?: number;
 }
 
 export function AppShell({ 
   children, 
-  currentView = "inbox", 
+  currentView = "home", 
   onViewChange, 
   isCalendarOpen = true, 
   onToggleCalendar,
   isConsoleOpen = false,
-  onToggleConsole
+  onToggleConsole,
+  urgentEmailCount = 0,
 }: AppShellProps) {
   const { user } = useUser();
   const isPro = user?.publicMetadata?.isPro === true || user?.publicMetadata?.plan === "pro" || user?.publicMetadata?.tier === "pro";
@@ -95,14 +97,18 @@ export function AppShell({
         className="h-[56px] border-b border-[rgba(36,27,20,0.08)] dark:border-[rgba(255,255,255,0.08)] flex items-center justify-between px-6 shrink-0 z-10 bg-[rgba(251,243,236,0.92)] dark:bg-[#2C2C2C]/90 backdrop-blur-md"
       >
           
-          {/* Left: Brand */}
+          {/* Left: Brand — clicking the logo is how you get Home (it's the app's front door,
+              not a peer of the data-source tabs, so it has no icon in the nav group). */}
           <div className="flex items-center gap-4">
-            <Link href="/app" style={{ display: "flex", alignItems: "center", gap: "10px", textDecoration: "none" }}>
+            <Link
+              href="/dashboard"
+              style={{ display: "flex", alignItems: "center", gap: "10px", textDecoration: "none" }}
+            >
               <div style={{
                 width: "24px", height: "24px", borderRadius: "6px", overflow: "hidden",
                 position: "relative", flexShrink: 0,
               }}>
-                <Image src="/auren_logo.webp" alt="Auren Logo" fill style={{ objectFit: "cover" }} />
+                <Image src="/auren_logo.webp" alt="Auren Logo" fill sizes="64px" style={{ objectFit: "cover" }} />
               </div>
               <div className="flex items-center gap-3">
                 <div className="flex items-center gap-2">
@@ -118,15 +124,24 @@ export function AppShell({
           </div>
 
           {/* Center: Search/Command */}
-          <div className="flex-1 max-w-[480px] mx-8 flex items-center gap-4">
+          <div className="flex-1 max-w-[520px] mx-8 flex items-center gap-4">
             <div className="flex items-center gap-1 bg-[rgba(36,27,20,0.04)] dark:bg-[rgba(255,255,255,0.1)] p-1 rounded-[10px]">
+              {/* Home is reached via the logo (top-left) — it's the app's front door, not a
+                  peer of the live data-source tabs below, so it doesn't belong in this group. */}
+              {/* Inbox with urgent badge */}
               <button 
                 onClick={() => onViewChange?.("inbox")}
-                className={`p-1.5 rounded-[8px] flex items-center justify-center transition-colors ${currentView === "inbox" ? "bg-white dark:bg-[#383838] shadow-sm text-[#E8593C]" : "text-[rgba(36,27,20,0.4)] dark:text-[rgba(255,255,255,0.4)] hover:text-[#241B14] dark:text-[#F4F4F5]"}`}
+                className={`p-1.5 rounded-[8px] flex items-center justify-center transition-colors relative ${currentView === "inbox" ? "bg-white dark:bg-[#383838] shadow-sm text-[#E8593C]" : "text-[rgba(36,27,20,0.4)] dark:text-[rgba(255,255,255,0.4)] hover:text-[#241B14] dark:text-[#F4F4F5]"}`}
                 title="Inbox"
               >
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
+                {urgentEmailCount > 0 && (
+                  <span className="absolute -top-0.5 -right-0.5 min-w-[14px] h-[14px] bg-[#E8593C] text-white font-mono font-bold text-[8px] rounded-full flex items-center justify-center px-[3px] leading-none">
+                    {urgentEmailCount > 9 ? "9+" : urgentEmailCount}
+                  </span>
+                )}
               </button>
+              {/* Calendar */}
               <button 
                 onClick={() => onViewChange?.("calendar")}
                 className={`p-1.5 rounded-[8px] flex items-center justify-center transition-colors ${currentView === "calendar" ? "bg-white dark:bg-[#383838] shadow-sm text-[#E8593C]" : "text-[rgba(36,27,20,0.4)] dark:text-[rgba(255,255,255,0.4)] hover:text-[#241B14] dark:text-[#F4F4F5]"}`}
@@ -134,19 +149,13 @@ export function AppShell({
               >
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/></svg>
               </button>
-              <button 
+              {/* GitHub */}
+              <button
                 onClick={() => onViewChange?.("github")}
                 className={`p-1.5 rounded-[8px] flex items-center justify-center transition-colors ${currentView === "github" ? "bg-white dark:bg-[#383838] shadow-sm text-[#E8593C]" : "text-[rgba(36,27,20,0.4)] dark:text-[rgba(255,255,255,0.4)] hover:text-[#241B14] dark:text-[#F4F4F5]"}`}
                 title="GitHub"
               >
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M15 22v-4a4.8 4.8 0 0 0-1-3.5c3 0 6-2 6-5.5.08-1.25-.27-2.48-1-3.5.28-1.15.28-2.35 0-3.5 0 0-1 0-3 1.5-2.64-.5-5.36-.5-8 0C6 2 5 2 5 2c-.3 1.15-.3 2.35 0 3.5A5.403 5.403 0 0 0 4 9c0 3.5 3 5.5 6 5.5-.39.49-.68 1.05-.85 1.65-.17.6-.22 1.23-.15 1.85v4"/><path d="M9 18c-4.51 2-5-2-7-2"/></svg>
-              </button>
-              <button 
-                onClick={() => onViewChange?.("team")}
-                className={`p-1.5 rounded-[8px] flex items-center justify-center transition-colors ${currentView === "team" ? "bg-white dark:bg-[#383838] shadow-sm text-[#E8593C]" : "text-[rgba(36,27,20,0.4)] dark:text-[rgba(255,255,255,0.4)] hover:text-[#241B14] dark:text-[#F4F4F5]"}`}
-                title="Team"
-              >
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>
               </button>
             </div>
 
@@ -178,14 +187,21 @@ export function AppShell({
           )}
 
           <div className="flex items-center gap-1 bg-[rgba(36,27,20,0.04)] dark:bg-[rgba(255,255,255,0.1)] p-1 rounded-[10px]">
-            <button 
+            <button
+              onClick={() => onViewChange?.("team")}
+              className={`p-1.5 rounded-[8px] flex items-center justify-center transition-colors ${currentView === "team" ? "bg-white dark:bg-[#383838] shadow-sm text-[#E8593C]" : "text-[rgba(36,27,20,0.4)] dark:text-[rgba(255,255,255,0.4)] hover:text-[#241B14] dark:text-[#F4F4F5]"}`}
+              title="Team"
+            >
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+            </button>
+            <button
               onClick={() => onViewChange?.("history")}
               className={`p-1.5 rounded-[8px] flex items-center justify-center transition-colors ${currentView === "history" ? "bg-white dark:bg-[#383838] shadow-sm text-[#E8593C]" : "text-[rgba(36,27,20,0.4)] dark:text-[rgba(255,255,255,0.4)] hover:text-[#241B14] dark:text-[#F4F4F5]"}`}
               title="History"
             >
               <History size={18} />
             </button>
-            <button 
+            <button
               onClick={() => onViewChange?.("settings")}
               className={`p-1.5 rounded-[8px] flex items-center justify-center transition-colors ${currentView === "settings" ? "bg-white dark:bg-[#383838] shadow-sm text-[#E8593C]" : "text-[rgba(36,27,20,0.4)] dark:text-[rgba(255,255,255,0.4)] hover:text-[#241B14] dark:text-[#F4F4F5]"}`}
               title="Settings"
