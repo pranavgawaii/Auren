@@ -47,3 +47,5 @@ project-docs/
 launch-video/*.mp4
 
 .claude/
+
+launch-video/
