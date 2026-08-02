@@ -1,0 +1,80 @@
+name: Bug Report
+description: Report a bug or unexpected behavior in Auren.
+title: "[bug]: "
+labels: ["bug", "triage"]
+assignees: []
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to fill this out. The more detail you provide, the faster we can fix it.
+
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened?
+      description: A clear description of the bug.
+      placeholder: When I type "reply to Rahul..." the agent returns an error instead of a plan.
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: What did you expect to happen?
+      placeholder: The agent should have returned a gmail_send action plan.
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      description: Step-by-step instructions to reproduce the bug.
+      placeholder: |
+        1. Connect Gmail in Settings
+        2. Select an email from the inbox
+        3. Type "reply to this email"
+        4. Click Confirm
+        5. See error
+    validations:
+      required: true
+
+  - type: textarea
+    id: console-output
+    attributes:
+      label: Console output / error message
+      description: Paste any browser console errors or server logs here.
+      render: shell
+
+  - type: input
+    id: node-version
+    attributes:
+      label: Node.js version
+      placeholder: "v20.11.0"
+    validations:
+      required: false
+
+  - type: dropdown
+    id: browser
+    attributes:
+      label: Browser
+      options:
+        - Chrome
+        - Firefox
+        - Safari
+        - Edge
+        - Other
+    validations:
+      required: false
+
+  - type: checkboxes
+    id: checklist
+    attributes:
+      label: Pre-submission checklist
+      options:
+        - label: I have searched existing issues and this is not a duplicate.
+          required: true
+        - label: I am not reporting a security vulnerability (see SECURITY.md for that).
+          required: true
