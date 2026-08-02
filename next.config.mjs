@@ -43,7 +43,7 @@ const nextConfig = {
               "font-src 'self' https://fonts.gstatic.com",
               "img-src 'self' data: blob: https:",
               "connect-src 'self' https://*.clerk.accounts.dev https://clerk.com https://api.groq.com https://api.anthropic.com https://oauth2.googleapis.com https://www.googleapis.com",
-              "frame-src 'none'",
+              "frame-src 'self' https://www.youtube.com",
               "object-src 'none'",
               "base-uri 'self'",
               "form-action 'self'",
