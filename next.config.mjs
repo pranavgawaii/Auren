@@ -32,6 +32,23 @@ const nextConfig = {
             key: 'Permissions-Policy',
             value: 'camera=(), microphone=(), geolocation=()',
           },
+          {
+            // SEC-FIX: Content Security Policy — prevents XSS, script injection, and data exfiltration.
+            // Clerk auth widgets require 'unsafe-inline' for styles and the Clerk CDN for scripts.
+            key: 'Content-Security-Policy',
+            value: [
+              "default-src 'self'",
+              "script-src 'self' 'unsafe-eval' 'unsafe-inline' https://clerk.com https://*.clerk.accounts.dev https://cdn.tailwindcss.com",
+              "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://clerk.com",
+              "font-src 'self' https://fonts.gstatic.com",
+              "img-src 'self' data: blob: https:",
+              "connect-src 'self' https://*.clerk.accounts.dev https://clerk.com https://api.groq.com https://api.anthropic.com https://oauth2.googleapis.com https://www.googleapis.com",
+              "frame-src 'none'",
+              "object-src 'none'",
+              "base-uri 'self'",
+              "form-action 'self'",
+            ].join("; "),
+          },
         ],
       },
     ];

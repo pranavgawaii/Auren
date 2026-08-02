@@ -2,7 +2,8 @@
 
 import { githubCreateIssue } from "@/lib/corsair";
 import { getDb } from "@/lib/db";
-import { DEMO_USER_ID, ACTION_STATUS } from "@/lib/constants";
+import { getUserId } from "@/lib/user";
+import { ACTION_STATUS } from "@/lib/constants";
 
 interface CreateGithubIssuePayload {
   title: string;
@@ -12,6 +13,9 @@ interface CreateGithubIssuePayload {
 
 export async function createGithubIssue(payload: CreateGithubIssuePayload) {
   try {
+    // SEC-FIX: Resolve authenticated caller on the server — never trust client-supplied userId.
+    const userId = await getUserId();
+
     const result = await githubCreateIssue({
       repoUrl: payload.repo || "",
       title: payload.title,
@@ -27,7 +31,7 @@ export async function createGithubIssue(payload: CreateGithubIssuePayload) {
 
     if (db) {
       await db.collection("agent_actions").insertOne({
-        user_id: DEMO_USER_ID,
+        user_id: userId,
         command: "Create GitHub issue",
         status: ACTION_STATUS.COMPLETED,
         actions_taken: [

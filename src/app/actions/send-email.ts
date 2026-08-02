@@ -2,7 +2,8 @@
 
 import { gmailSend } from "@/lib/corsair";
 import { getDb } from "@/lib/db";
-import { DEMO_USER_ID, ACTION_STATUS } from "@/lib/constants";
+import { getUserId } from "@/lib/user";
+import { ACTION_STATUS } from "@/lib/constants";
 
 interface SendEmailPayload {
   to: string;
@@ -14,6 +15,9 @@ interface SendEmailPayload {
 
 export async function sendEmail(payload: SendEmailPayload) {
   try {
+    // SEC-FIX: Resolve authenticated caller on the server — never trust client-supplied userId.
+    const userId = await getUserId();
+
     const result = await gmailSend({
       to: payload.to,
       subject: payload.subject,
@@ -30,7 +34,7 @@ export async function sendEmail(payload: SendEmailPayload) {
 
     if (db) {
       await db.collection("agent_actions").insertOne({
-        user_id: DEMO_USER_ID,
+        user_id: userId,
         command: "Send email",
         status: ACTION_STATUS.COMPLETED,
         actions_taken: [

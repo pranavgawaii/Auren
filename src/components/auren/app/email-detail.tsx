@@ -173,18 +173,17 @@ export function EmailDetail({ email, thread = [], onAction, isAgentLoading }: Em
                     <iframe 
                       srcDoc={msg.body} 
                       className="w-full border-none"
-                      sandbox="allow-popups allow-popups-to-escape-sandbox allow-same-origin"
+                      sandbox="allow-popups"
                       scrolling="no"
+                      // SEC: allow-same-origin is intentionally absent — iframe runs with origin:null
+                      // so we cannot access contentDocument for height measurement.
+                      // Use a generous min-height + overflow:auto on the parent instead.
+                      style={{ minHeight: "400px", display: "block" }}
                       onLoad={(e) => {
-                        const iframe = e.target as HTMLIFrameElement;
-                        if (iframe.contentWindow?.document) {
-                          const doc = iframe.contentWindow.document;
-                          // Reset height temporarily to allow shrinking
-                          iframe.style.height = '10px';
-                          // Use documentElement for more accurate measurement and add safety padding
-                          const newHeight = Math.max(doc.body.scrollHeight, doc.documentElement.scrollHeight);
-                          iframe.style.height = `${newHeight + 20}px`;
-                        }
+                        // The iframe is sandboxed without allow-same-origin, so accessing
+                        // contentDocument from here will throw a SecurityError.
+                        // We silently ignore the load event — the CSS min-height handles layout.
+                        void e;
                       }}
                     />
                   ) : (

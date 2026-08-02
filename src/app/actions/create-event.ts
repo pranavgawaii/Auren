@@ -2,11 +2,15 @@
 
 import { googleCalendarCreate } from "@/lib/corsair";
 import { getDb } from "@/lib/db";
-import { DEMO_USER_ID, ACTION_STATUS } from "@/lib/constants";
+import { getUserId } from "@/lib/user";
+import { ACTION_STATUS } from "@/lib/constants";
 import type { CalendarEventPayload } from "@/types";
 
 export async function createCalendarEvent(payload: CalendarEventPayload) {
   try {
+    // SEC-FIX: Resolve authenticated caller on the server — never trust client-supplied userId.
+    const userId = await getUserId();
+
     const requestId = `auren-meet-${Date.now()}`;
     const description = payload.description || "";
 
@@ -28,7 +32,7 @@ export async function createCalendarEvent(payload: CalendarEventPayload) {
       const newGcalId = `evt_fallback_${Date.now()}`;
       if (db) {
         await db.collection("calendar_events").insertOne({
-          user_id: DEMO_USER_ID,
+          user_id: userId,
           gcal_id: newGcalId,
           title: payload.title,
           start_at: payload.startAt,
@@ -59,7 +63,7 @@ export async function createCalendarEvent(payload: CalendarEventPayload) {
         { gcal_id: event.id },
         {
           $set: {
-            user_id: DEMO_USER_ID,
+            user_id: userId,
             gcal_id: event.id,
             title: event.title,
             start_at: event.startAt,
@@ -76,7 +80,7 @@ export async function createCalendarEvent(payload: CalendarEventPayload) {
       );
 
       await db.collection("agent_actions").insertOne({
-        user_id: DEMO_USER_ID,
+        user_id: userId,
         command: "Create calendar event",
         status: ACTION_STATUS.COMPLETED,
         actions_taken: [

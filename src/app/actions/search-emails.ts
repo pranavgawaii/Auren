@@ -1,6 +1,7 @@
 "use server";
 
 import { getDb } from "@/lib/db";
+import { getUserId } from "@/lib/user";
 import type { Email } from "@/types";
 import { EMAIL_PRIORITY } from "@/lib/constants";
 
@@ -43,13 +44,28 @@ function rowToEmail(row: Record<string, unknown>): Email {
   };
 }
 
+/**
+ * Escapes special regex characters to prevent ReDoS and injection attacks.
+ * SEC-FIX: Prevents CWE-1333 (ReDoS) and CWE-185 (RegEx injection).
+ */
+function escapeRegex(str: string): string {
+  return str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+/**
+ * SEC-FIX: Removed `userId` parameter — user identity is now resolved exclusively
+ * from the authenticated server session via getUserId(), preventing CWE-639 (IDOR)
+ * cross-tenant email enumeration attacks.
+ */
 export async function searchEmails(
-  query: string,
-  userId: string
+  query: string
 ): Promise<SearchEmailsResult | SearchEmailsFailure> {
   const startMs = Date.now();
 
   try {
+    // Resolve caller identity from session — never accept userId from client.
+    const userId = await getUserId();
+
     const trimmedQuery = query.trim().slice(0, 500);
     if (!trimmedQuery) {
       return { success: false, error: "Query cannot be empty.", latencyMs: 0 };
@@ -61,7 +77,10 @@ export async function searchEmails(
     }
 
     const collection = db.collection("emails");
-    const regex = new RegExp(trimmedQuery.split(/\s+/).join("|"), "i");
+
+    // SEC-FIX: Escape each token before building the regex to prevent ReDoS.
+    const safePattern = trimmedQuery.split(/\s+/).map(escapeRegex).join("|");
+    const regex = new RegExp(safePattern, "i");
 
     const rows = await collection
       .find({

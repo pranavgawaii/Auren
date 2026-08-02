@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { timingSafeEqual } from "crypto";
 import { z } from "zod";
 import { classifyWithHaiku } from "@/lib/anthropic";
 import { getDb } from "@/lib/db";
@@ -8,11 +9,28 @@ const PrioritySchema = z.object({
   priority: z.enum(EMAIL_PRIORITY_VALUES),
 });
 
+/**
+ * SEC-FIX: Constant-time comparison to prevent timing-attack secret enumeration (CWE-208).
+ * A direct `===` comparison leaks per-character timing — timingSafeEqual closes that gap.
+ */
+function safeCompareSecrets(a: string, b: string): boolean {
+  const bufA = Buffer.from(a, "utf-8");
+  const bufB = Buffer.from(b, "utf-8");
+  if (bufA.length !== bufB.length) return false;
+  return timingSafeEqual(bufA, bufB);
+}
+
 export async function POST(req: Request) {
-  const secret = req.headers.get('x-webhook-secret') || req.headers.get('x-corsair-secret');
+  const receivedSecret = req.headers.get("x-webhook-secret") || req.headers.get("x-corsair-secret");
   const expectedSecret = process.env.WEBHOOK_SECRET;
-  if (expectedSecret && secret !== expectedSecret) {
-    return new Response('Unauthorized', { status: 401 });
+
+  // SEC-FIX: Fail closed when no secret is configured — a missing secret must not be a bypass.
+  if (!expectedSecret) {
+    console.error("[webhook/gmail] WEBHOOK_SECRET env var is not set — rejecting all requests.");
+    return new Response("Webhook not configured", { status: 503 });
+  }
+  if (!receivedSecret || !safeCompareSecrets(receivedSecret, expectedSecret)) {
+    return new Response("Unauthorized", { status: 401 });
   }
 
   try {
@@ -27,19 +45,19 @@ export async function POST(req: Request) {
     }
 
     const email = {
-      id: payload.id,
-      threadId: payload.threadId || payload.id,
-      from: payload.from,
-      fromName: payload.from,
-      to: payload.to || "",
-      subject: payload.subject,
-      snippet: payload.snippet || "",
-      body: payload.body || "",
-      date: payload.internalDate || payload.createdAt || new Date().toISOString(),
-      isRead: payload.isRead || false,
+      id: String(payload.id),
+      threadId: String(payload.threadId || payload.id),
+      from: String(payload.from),
+      fromName: String(payload.from),
+      to: String(payload.to || ""),
+      subject: String(payload.subject),
+      snippet: String(payload.snippet || ""),
+      body: String(payload.body || ""),
+      date: String(payload.internalDate || payload.createdAt || new Date().toISOString()),
+      isRead: Boolean(payload.isRead),
     };
 
-    const userId = payload.userId || payload.tenantId || process.env.CORSAIR_TENANT_ID || "default-user";
+    const userId = String(payload.userId || payload.tenantId || process.env.CORSAIR_TENANT_ID || "default-user");
 
     const systemPrompt = `You are an email classifier.
 Return only valid JSON with one field called priority.
@@ -49,8 +67,7 @@ nrm means normal priority.
 fyi means informational only.
 No explanation. No markdown. Only JSON.`;
 
-    const userMessage = `Subject: ${email.subject}
-Preview: ${email.snippet}`;
+    const userMessage = `Subject: ${email.subject}\nPreview: ${email.snippet}`;
 
     let priority: EmailPriority = EMAIL_PRIORITY.NORMAL;
     try {

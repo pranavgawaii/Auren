@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { timingSafeEqual } from "crypto";
 import { getDb } from "@/lib/db";
 import { generateMeetingPrep } from "@/app/actions/generate-meeting-prep";
 
@@ -15,21 +16,37 @@ interface CalendarWebhookPayload {
 
 const MEETING_PREP_WINDOW_MINUTES = 35;
 
+/**
+ * SEC-FIX: Constant-time comparison to prevent timing-attack secret enumeration (CWE-208).
+ */
+function safeCompareSecrets(a: string, b: string): boolean {
+  const bufA = Buffer.from(a, "utf-8");
+  const bufB = Buffer.from(b, "utf-8");
+  if (bufA.length !== bufB.length) return false;
+  return timingSafeEqual(bufA, bufB);
+}
+
 export async function POST(request: NextRequest): Promise<NextResponse> {
-  const secret = request.headers.get('x-webhook-secret') || request.headers.get('x-corsair-secret');
+  const receivedSecret = request.headers.get("x-webhook-secret") || request.headers.get("x-corsair-secret");
   const expectedSecret = process.env.WEBHOOK_SECRET;
-  if (expectedSecret && secret !== expectedSecret) {
-    return new NextResponse('Unauthorized', { status: 401 });
+
+  // SEC-FIX: Fail closed when no secret is configured.
+  if (!expectedSecret) {
+    console.error("[webhook/calendar] WEBHOOK_SECRET env var is not set — rejecting all requests.");
+    return new NextResponse("Webhook not configured", { status: 503 });
+  }
+  if (!receivedSecret || !safeCompareSecrets(receivedSecret, expectedSecret)) {
+    return new NextResponse("Unauthorized", { status: 401 });
   }
 
   try {
     const payload = await request.json() as CalendarWebhookPayload;
 
     const db = await getDb();
-    const userId = payload.user_id ?? process.env.CORSAIR_TENANT_ID ?? "default-user";
+    const userId = String(payload.user_id ?? process.env.CORSAIR_TENANT_ID ?? "default-user");
 
     const attendees = (payload.attendees ?? []).map((a) => ({
-      email: a.email,
+      email: String(a.email),
       name: a.name ?? null,
       responseStatus: a.responseStatus ?? "needsAction",
     }));

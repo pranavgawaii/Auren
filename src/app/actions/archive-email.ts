@@ -1,14 +1,19 @@
 "use server";
 
 import { getDb } from "@/lib/db";
-import { DEMO_USER_ID } from "@/lib/constants";
+import { getUserId } from "@/lib/user";
 
 export async function archiveEmail(emailId: string) {
   try {
+    if (!emailId) return { success: false, error: "Missing email ID" };
+
+    // SEC-FIX: Resolve authenticated caller on the server — never trust client-supplied userId.
+    const userId = await getUserId();
     const db = await getDb();
+
     if (db) {
       await db.collection("emails").updateOne(
-        { gmail_id: emailId, user_id: DEMO_USER_ID },
+        { gmail_id: emailId, user_id: userId },
         { $set: { is_archived: true } }
       );
     }
