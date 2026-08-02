@@ -1,129 +1,253 @@
+<div align="center">
+
+<img src="public/auren_logo.webp" alt="Auren" height="72" />
+
 # Auren
 
 **The execution layer between thinking and doing.**
 
-Auren is an AI-powered command center for Gmail, Google Calendar, and GitHub.
-Type one natural language command — Auren plans the steps, shows you the
-full execution plan, and executes everything simultaneously with a single approval.
+Auren is an open-source AI command center for Gmail, Google Calendar, and GitHub.
+Type one natural-language command — Auren plans every step, shows you the full execution plan, and executes everything simultaneously with a single approval.
 
 <br />
+
 <a href="https://www.youtube.com/watch?v=C-uXkFPFwmc"><code>➜ onboarding guide: Watch Setup Walkthrough</code></a><br>
 <a href="https://youtu.be/uBdourG9P2w"><code>➜ demo video: Watch Demo Video</code></a><br>
 <a href="https://tryauren.in"><code>➜ try live: tryauren.in</code></a><br>
+
 <br />
+
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![Next.js](https://img.shields.io/badge/Next.js-15-black?logo=next.js)](https://nextjs.org)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5-blue?logo=typescript)](https://www.typescriptlang.org)
+[![MongoDB](https://img.shields.io/badge/MongoDB-Atlas-green?logo=mongodb)](https://mongodb.com)
+[![Clerk](https://img.shields.io/badge/Auth-Clerk-purple?logo=clerk)](https://clerk.com)
+
+</div>
 
 ---
 
 ## What is Auren?
 
-Most productivity tools make you manage them.
-Auren executes on your behalf.
+Most productivity tools make you manage them. Auren executes on your behalf.
 
-Type: `reply to rahul confirming thursday 3pm and send a calendar invite`
+Type:
+```
+Reply to Rahul confirming Thursday 3 PM and send a calendar invite with a Meet link.
+```
 
-Auren plans → shows you the full execution plan → Gmail replies + Calendar
-event creates simultaneously → one approval, everything done in 4 seconds.
+Auren:
+1. **Plans** — parses your intent into a structured JSON execution plan
+2. **Shows you** — displays every action before running anything
+3. **Executes** — fires Gmail reply + Calendar event + Meet link simultaneously
+4. **Logs** — stores the full audit trail to your history
 
----
-
-## Core Features
-
-**Human-in-the-Loop Execution**
-The agent always shows you the full plan before any API call is made.
-Review, edit, or cancel — you are always in control.
-
-**Premium Guided Onboarding**
-A clean, guided workspace setup experience that gets you connected to Google Workspace (Gmail & Calendar) and GitHub in less than a minute, complete with a video setup walkthrough.
-
-**Parallel Multi-Tool Execution**
-One command fires Gmail, Google Calendar, and GitHub simultaneously.
-Not sequentially. At the same time.
-
-**Real-Time Inbox Classification**
-Every incoming email is classified as Urgent, Normal, or FYI
-by Claude Haiku via Corsair webhooks. No polling. Instant.
-
-**Semantic Email Search**
-Search your inbox by meaning, not just keywords.
-Powered by OpenAI vector embeddings and Supabase pgvector RPC search.
-
-**Agent History & Audit Trail**
-Every action the AI takes is logged. Full transparency —
-command, actions taken, timestamp, result.
-
-**Keyboard-First Design**
-⌘K command palette, R to reply, E to archive, J/K to navigate,
-voice input via Web Speech API. Designed for power users.
-
-**Google Meet Auto-Generation**
-Every calendar event created through Auren automatically
-includes a Google Meet link. No extra steps.
+One command. One approval. Four seconds.
 
 ---
 
-## Tech Stack
+## Features
 
-| Layer | Technology |
+| Feature | Description |
 |---|---|
-| Frontend | Next.js 16, TypeScript, Tailwind CSS, Framer Motion |
-| Database | MongoDB Atlas (24/7 High Availability Document Store) |
-| Auth | Clerk |
-| AI — Agent | OpenRouter API (auto-routing) |
-| AI — Classification | Claude Haiku (per-email priority classification) |
-| Integrations | Corsair App SDK (Gmail, Google Calendar, GitHub) |
-| Deploy | Vercel |
-
----
-
-## Integrations via Corsair App SDK
-
-| Integration | Capabilities |
-|---|---|
-| **Gmail** | Read, send, draft, search, real-time webhooks |
-| **Google Calendar** | List events, create events, Google Meet links, real-time webhooks |
-| **GitHub** | Create issues, list issues, submit PR reviews |
-
-All integrations are handled through Corsair's App SDK —
-a unified interface that lets the AI agent execute actions across connected user services.
+| **Human-in-the-Loop Execution** | Every plan is shown before any API call. Review, edit, or cancel — you are always in control. |
+| **Parallel Multi-Tool Execution** | One command dispatches Gmail, Calendar, and GitHub simultaneously — not sequentially. |
+| **Real-Time Inbox Classification** | Every incoming email is classified as Urgent / Normal / FYI by Claude Haiku via webhooks. No polling. |
+| **Google Meet Auto-Generation** | Calendar events created through Auren automatically carry a real, joinable Google Meet link. |
+| **Meet-link chaining** | When scheduling a meeting and emailing the link in one command, Auren injects the live Meet URL into the email body before sending. |
+| **Semantic Email Search** | Search your inbox by meaning. Powered by regex + vector-ready architecture. |
+| **Agent History & Audit Trail** | Every action is logged — command, tool, inputs, outputs, timestamp, result. |
+| **Keyboard-First Design** | `⌘K` command palette, `R` to reply, `E` to archive, `J`/`K` to navigate. Built for power users. |
+| **Meeting Prep Cards** | 35 minutes before any meeting, Auren auto-generates a briefing from your email history with attendees. |
+| **Rate Limiting** | 1,000 commands/hour for free users. Unlimited for Pro. |
 
 ---
 
 ## Architecture
 
-<p align="center">
-  <img src="public/auren_architecture_diagram.png" alt="Auren AI Software Architecture Diagram" width="800" />
-</p>
-
 ```
-User Command
-     ↓
-Auren Agent (OpenRouter AI)
-     ↓
-┌────────────────────────────┐
-│  Gmail API (Corsair)       │
-│  Google Calendar (Corsair) │  ← executes in parallel
-│  GitHub API (Corsair)      │
-└────────────────────────────┘
-     ↓
-Human-in-the-Loop Confirmation
-     ↓
-Execution + Agent History Log (MongoDB Atlas)
+┌─────────────────────────────────────────────────────────┐
+│                        Browser                          │
+│   Natural language command (Terminal Drawer / ⌘K)       │
+└────────────────────┬────────────────────────────────────┘
+                     │  Next.js Server Action
+                     ▼
+┌─────────────────────────────────────────────────────────┐
+│               Auren Planning Layer                      │
+│   analyzeCommand()  →  Groq (Llama 3.3-70B)             │
+│   Returns: { actions[], explanation, requiresConfirm }  │
+└────────────────────┬────────────────────────────────────┘
+                     │  Human-in-the-Loop gate
+                     ▼
+┌─────────────────────────────────────────────────────────┐
+│           Action Confirmation UI (client)               │
+│   User reviews plan → edits parameters → Confirms       │
+└────────────────────┬────────────────────────────────────┘
+                     │  executePlan() Server Action
+                     ▼
+┌─────────────────────────────────────────────────────────┐
+│                Execution Layer (parallel)               │
+│   ┌──────────────┐  ┌──────────────┐  ┌─────────────┐  │
+│   │  Gmail API   │  │ Calendar API │  │  GitHub API │  │
+│   │  (Corsair)   │  │  (Corsair +  │  │  (Corsair)  │  │
+│   │              │  │  Direct OAuth│  │             │  │
+│   └──────────────┘  └──────────────┘  └─────────────┘  │
+└────────────────────┬────────────────────────────────────┘
+                     │
+                     ▼
+┌─────────────────────────────────────────────────────────┐
+│           MongoDB Atlas — Audit Log                     │
+│   agent_actions, emails, calendar_events, contacts      │
+└─────────────────────────────────────────────────────────┘
 
 Real-time webhook pipeline:
-Gmail Inbox → Corsair Webhook → Claude Haiku → Priority Classification → MongoDB Atlas
+Gmail Inbox → Corsair Webhook → Claude Haiku → Priority Classification → MongoDB
+```
+
+See [`docs/architecture.md`](docs/architecture.md) for a detailed component-by-component breakdown.
+
+---
+
+## How it Works
+
+### 1. Command Intake
+The user types a command in the terminal drawer or `⌘K` palette. The command is sent to a Next.js Server Action (`processAgentCommand`).
+
+### 2. AI Planning
+`analyzeCommand()` in `src/agents/executor.ts` sends the command plus context (current email, team contacts, chat history) to Groq's Llama 3.3-70B. The model returns a structured JSON plan:
+
+```json
+{
+  "actions": [
+    { "tool": "calendar_create", "parameters": { "title": "Sync with Rahul", "startAt": "...", "attendees": ["rahul@acme.in"], "withMeetLink": true }, "description": "..." },
+    { "tool": "gmail_send", "parameters": { "to": "rahul@acme.in", "subject": "...", "body": "..." }, "description": "..." }
+  ],
+  "explanation": "I'll create a Google Meet event and send Rahul the invite.",
+  "requiresConfirmation": true
+}
+```
+
+### 3. Human Review
+The `ActionConfirmation` component renders a card for every planned action. The user can edit any parameter field inline before confirming.
+
+### 4. Parallel Execution
+`executePlan()` dispatches all actions. When a `calendar_create` runs first, the resulting Meet link is automatically injected into the subsequent `gmail_send` body — no manual copy-paste.
+
+### 5. Audit Logging
+Every execution is written to `agent_actions` in MongoDB with full input/output/timing per tool.
+
+---
+
+## Tech Stack
+
+| Layer | Technology | Why |
+|---|---|---|
+| **Framework** | Next.js 15 (App Router) | Server Actions eliminate a separate API layer |
+| **Language** | TypeScript 5 | End-to-end type safety |
+| **Styling** | Tailwind CSS | Utility-first, zero runtime overhead |
+| **Auth** | Clerk | Production-grade auth with webhooks and metadata |
+| **Database** | MongoDB Atlas | Flexible document store; no schema migrations for AI data |
+| **AI — Planning** | Groq / Llama 3.3-70B | 14,400 req/day free tier, 128k context, sub-second inference |
+| **AI — Classification** | Anthropic Claude Haiku | Cost-effective per-email priority classification |
+| **Integrations** | Corsair App SDK | Unified OAuth broker for Gmail, Calendar, GitHub |
+| **Direct OAuth** | Google Calendar API | Real Google Meet link generation (requires `conferenceDataVersion=1`) |
+| **Deploy** | Vercel | Zero-config Next.js deployment |
+
+---
+
+## Project Structure
+
+```
+auren/
+├── src/
+│   ├── agents/
+│   │   └── executor.ts          # Core AI reasoning engine (Groq/Llama)
+│   │
+│   ├── app/
+│   │   ├── (dashboard)/         # Auth-protected app shell
+│   │   │   ├── dashboard/       # Home view
+│   │   │   ├── mail/            # Inbox + email detail
+│   │   │   ├── calendar/        # Full calendar view
+│   │   │   ├── github/          # GitHub activity
+│   │   │   ├── history/         # Agent action audit log
+│   │   │   ├── settings/        # Integrations + preferences
+│   │   │   └── team/            # Team contacts
+│   │   │
+│   │   ├── actions/             # Next.js Server Actions (backend)
+│   │   │   ├── execute.ts       # executePlan() — parallel tool dispatch
+│   │   │   ├── agent-command.ts # processAgentCommand() — AI routing
+│   │   │   ├── create-event.ts  # Calendar event creation
+│   │   │   ├── send-email.ts    # Gmail send
+│   │   │   ├── archive-email.ts # Email archive
+│   │   │   ├── search-emails.ts # Email search (IDOR-safe)
+│   │   │   ├── sync-emails.ts   # Gmail → MongoDB sync
+│   │   │   ├── sync-calendar.ts # Calendar → MongoDB sync
+│   │   │   ├── team.ts          # Team contact CRUD
+│   │   │   └── admin.ts         # Admin analytics
+│   │   │
+│   │   └── api/
+│   │       └── webhooks/
+│   │           ├── gmail/       # Real-time email classification
+│   │           └── calendar/    # Meeting prep trigger
+│   │
+│   ├── components/
+│   │   ├── auren/app/           # Dashboard UI components
+│   │   │   ├── email-detail.tsx # Email viewer (sandboxed iframe)
+│   │   │   ├── action-confirmation.tsx  # HITL review UI
+│   │   │   ├── terminal-drawer.tsx      # Command input
+│   │   │   └── ...
+│   │   └── ui/                  # Design system primitives
+│   │
+│   ├── lib/
+│   │   ├── corsair.ts           # Corsair SDK wrapper (Gmail, Calendar, GitHub)
+│   │   ├── google-direct.ts     # Direct Google OAuth (Meet link generation)
+│   │   ├── anthropic.ts         # Claude client (Haiku + Sonnet)
+│   │   ├── gemini.ts            # Groq/Llama client
+│   │   ├── db.ts                # MongoDB singleton
+│   │   ├── user.ts              # getUserId() — session → userId
+│   │   ├── rate-limit.ts        # Command + sync rate limiting
+│   │   └── constants.ts         # App-wide constants
+│   │
+│   ├── db/
+│   │   ├── schema.sql           # Reference schema (historical Supabase)
+│   │   └── seed-demo.ts         # Demo data seeder
+│   │
+│   ├── types/
+│   │   ├── index.ts             # Core type definitions
+│   │   └── corsair.ts           # Corsair SDK types
+│   │
+│   └── proxy.ts                 # Clerk auth middleware (route protection)
+│
+├── docs/                        # Extended documentation
+│   ├── architecture.md
+│   ├── execution-flow.md
+│   ├── security.md
+│   ├── corsair.md
+│   └── database.md
+│
+├── examples/                    # Realistic usage examples
+├── .github/
+│   ├── ISSUE_TEMPLATE/
+│   └── workflows/
+├── next.config.mjs              # Security headers + CSP
+├── SECURITY.md
+├── CONTRIBUTING.md
+├── CHANGELOG.md
+└── ROADMAP.md
 ```
 
 ---
 
-## Getting Started
+## Running Locally
 
 ### Prerequisites
+
 - Node.js 18+
-- Supabase account
-- Clerk account
-- Corsair account (for integrations)
-- OpenRouter API key
-- Anthropic API key
+- MongoDB Atlas account (free tier works)
+- [Clerk](https://clerk.com) account
+- [Corsair](https://corsair.dev) account (for Gmail, Calendar, GitHub OAuth)
+- [Groq](https://groq.com) API key (free tier)
+- [Anthropic](https://anthropic.com) API key
 
 ### Installation
 
@@ -134,93 +258,45 @@ npm install
 cp .env.example .env.local
 ```
 
-### Environment Variables
-
-```env
-# Supabase
-NEXT_PUBLIC_SUPABASE_URL=
-NEXT_PUBLIC_SUPABASE_ANON_KEY=
-SUPABASE_SERVICE_ROLE_KEY=
-
-# Clerk
-NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=
-CLERK_SECRET_KEY=
-NEXT_PUBLIC_CLERK_SIGN_IN_URL=/sign-in
-NEXT_PUBLIC_CLERK_SIGN_UP_URL=/sign-up
-
-# Corsair
-CORSAIR_INSTANCE_ID=
-CORSAIR_TENANT_ID=
-CORSAIR_DEV_KEY=
-CORSAIR_MCP_TOKEN=
-
-# AI
-OPENROUTER_API_KEY=
-ANTHROPIC_API_KEY=
-
-# App
-NEXT_PUBLIC_APP_URL=https://tryauren.in
-WEBHOOK_SECRET=
-DEMO_REPLY_EMAIL=
-```
-
-### Run Development Server
+Fill in `.env.local` (see [Environment Variables](#environment-variables) below), then:
 
 ```bash
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000)
+Open [http://localhost:3000](http://localhost:3000).
 
----
+### Environment Variables
 
-## Project Structure
+```env
+# MongoDB
+MONGODB_URI=mongodb+srv://...
 
-```
-src/
-├── app/
-│   ├── actions/          # Server actions (send email, create event, etc.)
-│   ├── api/webhooks/     # Real-time Gmail + Calendar webhook handlers
-│   ├── app/              # Main /app dashboard
-│   ├── calendar/         # Full calendar view
-│   ├── history/          # Agent action history
-│   ├── github/           # GitHub activity view
-│   ├── settings/         # User settings + integrations
-│   └── docs/             # Documentation page
-├── agents/
-│   └── executor.ts       # Core AI agent + HITL execution engine
-├── components/auren/     # All UI components
-├── lib/
-│   ├── corsair.ts        # Corsair MCP integration layer
-│   ├── anthropic.ts      # Claude Haiku classification
-│   └── rate-limit.ts     # Pro tier rate limiting
-└── types/
-    └── index.ts          # TypeScript types + Corsair types
-```
+# Clerk
+NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=pk_...
+CLERK_SECRET_KEY=sk_...
+NEXT_PUBLIC_CLERK_SIGN_IN_URL=/sign-in
+NEXT_PUBLIC_CLERK_SIGN_UP_URL=/sign-up
 
----
+# Corsair (Gmail, Calendar, GitHub broker)
+CORSAIR_INSTANCE_ID=
+CORSAIR_TENANT_ID=
+CORSAIR_DEV_KEY=
 
-## Agent Architecture
+# Google (Direct Calendar OAuth — for real Meet links)
+GOOGLE_CLIENT_ID=
+GOOGLE_CLIENT_SECRET=
 
-Auren uses a Human-in-the-Loop (HITL) pattern for all agent actions:
+# AI
+GROQ_API_KEY=
+ANTHROPIC_API_KEY=
 
-```
-1. User types a natural language command
-2. analyzeCommand() sends to OpenRouter (Claude Sonnet via auto-routing)
-3. AI returns a structured JSON plan: { actions: [...] }
-4. ActionConfirmation UI shows the full plan to the user
-5. User reviews, optionally edits details, then confirms
-6. executePlan() dispatches to Corsair APIs in parallel
-7. Results logged to agent_actions table in Supabase
-8. History panel updates in real time via Supabase Realtime
+# App
+NEXT_PUBLIC_APP_URL=http://localhost:3000
+WEBHOOK_SECRET=
 ```
 
-Available agent tools:
-- `gmail_send` — Send an email via Gmail
-- `calendar_create` — Create a Calendar event with Meet link
-- `github_create_issue` — Create a GitHub issue
-- `github_list_issues` — List repository issues
-- `github_review_pr` — Submit a PR review
+> See [`.env.example`](.env.example) for the full annotated list.
 
 ---
 
@@ -233,55 +309,120 @@ Available agent tools:
 | `E` | Archive selected email |
 | `J` / `K` | Navigate emails up/down |
 | `C` | Compose new email |
-| `?` | Show all keyboard shortcuts |
-| `G` then `I` | Go to inbox |
-| `G` then `C` | Go to calendar |
-| `G` then `H` | Go to history |
+| `?` | Show all shortcuts |
+| `G` → `I` | Go to Inbox |
+| `G` → `C` | Go to Calendar |
+| `G` → `H` | Go to History |
 | `/` | Focus search |
-| `Escape` | Close/dismiss |
+| `Escape` | Close / dismiss |
 
 ---
 
 ## Security
 
-- **No phantom executions** — agent presents full plan before any API call
-- **Strict OAuth scopes** — only requests Gmail read/write and Calendar write
-- **Webhook verification** — HMAC signature check on all incoming webhooks
-- **Rate limiting** — 1000 commands/hour standard, unlimited for Pro users
-- **Row-level security** — all Supabase tables protected by RLS policies
-- **Zero hardcoded secrets** — all credentials via environment variables
+Auren is designed with user safety as the primary constraint on the agent.
+
+| Control | Implementation |
+|---|---|
+| **Human-in-the-Loop** | Agent cannot execute any action without explicit user confirmation |
+| **Tenant Isolation** | Every DB query is scoped to the authenticated caller's `userId` via `getUserId()` — never a client-supplied value |
+| **Constant-time secret comparison** | Webhook authentication uses `crypto.timingSafeEqual()` to prevent timing attacks |
+| **Email iframe sandboxing** | HTML emails render in a sandboxed iframe with `origin: null` — no DOM access to the parent app |
+| **Prompt injection guard** | External email content is wrapped in `<untrusted_email_context>` XML tags with an explicit system-level guard |
+| **Content Security Policy** | Full CSP header restricts scripts, connect targets, frames, and form actions |
+| **Regex injection / ReDoS** | Search queries are escaped before constructing regular expressions |
+| **Strict OAuth scopes** | Only requests `calendar.events` — no read access to Drive, Contacts, or other user data |
+| **Webhook fail-closed** | If `WEBHOOK_SECRET` is not configured, all webhook requests are rejected with `503` |
+| **Rate limiting** | 1,000 commands/hour (free), cooldown on syncs, Pro tier bypass stored in Clerk metadata |
+
+See [`SECURITY.md`](SECURITY.md) for the full threat model and responsible disclosure policy.
 
 ---
 
 ## Roadmap
 
-- [ ] Google Sheets integration — log emails and events to spreadsheets
-- [ ] Google Drive integration — attach and share documents via agent
-- [ ] Slack integration — notify team on agent actions
-- [ ] Notion integration — save email summaries to workspace
-- [ ] Linear integration — create tickets from GitHub/email context
-- [ ] Razorpay billing — Pro subscription tier
-- [ ] pgvector semantic search — search inbox by meaning locally
-- [ ] Multi-account Gmail support
+| Status | Item |
+|---|---|
+| ✅ | Gmail read, send, draft, archive |
+| ✅ | Google Calendar events + Google Meet links |
+| ✅ | GitHub issues + PR reviews |
+| ✅ | Real-time email classification (Claude Haiku) |
+| ✅ | Human-in-the-Loop confirmation UI |
+| ✅ | Team contacts + @mention resolution |
+| ✅ | Meeting prep briefing cards |
+| ✅ | Dark mode |
+| 🔄 | Encrypted OAuth token storage at rest |
+| 🔄 | Webhook rate limiting (per-tenant) |
+| 📋 | Google Sheets integration |
+| 📋 | Slack notifications on agent actions |
+| 📋 | Notion — save email summaries |
+| 📋 | Linear — create tickets from email/GitHub context |
+| 📋 | Multi-account Gmail support |
+| 📋 | Razorpay / Stripe Pro subscription |
+| 🔭 | Self-hosted Auren (Docker, Ollama) |
+| 🔭 | Agent memory — long-term context across sessions |
+
+See [`ROADMAP.md`](ROADMAP.md) for the full plan with milestones.
+
+---
+
+## Examples
+
+```
+# Email + Calendar in one command
+Reply to Rahul confirming Thursday 3 PM and send a calendar invite with a Meet link.
+
+# GitHub from email context
+Create a GitHub issue from this email and label it as a bug.
+
+# Intelligent scheduling
+Check my calendar and schedule a 30-minute meeting with Priya tomorrow afternoon.
+
+# Batch actions
+Archive all FYI emails and send Hitesh a summary of what I archived.
+```
+
+See [`examples/`](examples/) for the full library with expected outputs.
+
+---
+
+## FAQ
+
+**Does Auren store my emails?**
+Auren syncs email metadata (subject, sender, snippet, priority classification) to your MongoDB instance for fast retrieval. Raw email bodies are fetched live from Gmail and cached briefly in the browser session — they are not persisted to the database.
+
+**Can Auren send emails without my approval?**
+No. Every action — including sending emails — requires explicit confirmation through the HITL review UI. The agent cannot bypass this gate.
+
+**What AI models does Auren use?**
+Planning: Groq (Llama 3.3-70B) — fast, free tier, 128k context. Classification: Anthropic Claude Haiku — cost-effective per-email priority detection.
+
+**Is Auren production-ready?**
+Auren is in active development (v0.3.x). The security model, multi-tenant isolation, and HITL controls are production-grade. Token encryption at rest and webhook rate limiting are in progress.
+
+**Can I self-host Auren?**
+Yes — it's MIT licensed. You need a MongoDB instance, Clerk account, Corsair account, and API keys for Groq and Anthropic. Docker support is on the roadmap.
 
 ---
 
 ## Contributing
 
-Pull requests are welcome. For major changes please open an issue first.
+We welcome contributions. See [`CONTRIBUTING.md`](CONTRIBUTING.md) for setup instructions, commit conventions, and the PR process.
 
 ---
 
 ## License
 
-MIT — see [LICENSE](LICENSE) for details.
+MIT — see [`LICENSE`](LICENSE) for details.
 
 ---
 
 ## Author
 
-Developed by **Pranav Gawai** — [X/Twitter](https://x.com/pranavgawaii_) • [Portfolio](https://pranavx.in)
+Built by **Pranav Gawai** — [X / Twitter](https://x.com/pranavgawaii_) · [Portfolio](https://pranavx.in)
 
 ---
 
-*The execution layer between thinking and doing.*
+<div align="center">
+<i>The execution layer between thinking and doing.</i>
+</div>
