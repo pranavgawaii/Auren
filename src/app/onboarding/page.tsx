@@ -411,7 +411,7 @@ export default function OnboardingPage() {
         </div>
         
       </div>
-      <WatchDemoModal isOpen={showVideo} onClose={() => setShowVideo(false)} />
+      <WatchDemoModal isOpen={showVideo} onClose={() => setShowVideo(false)} videoId="C-uXkFPFwmc" />
     </div>
   );
 }
