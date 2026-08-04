@@ -230,10 +230,8 @@ auren/
 │   ├── ISSUE_TEMPLATE/
 │   └── workflows/
 ├── next.config.mjs              # Security headers + CSP
-├── SECURITY.md
 ├── CONTRIBUTING.md
-├── CHANGELOG.md
-└── ROADMAP.md
+└── CHANGELOG.md
 ```
 
 ---
@@ -335,36 +333,9 @@ Auren is designed with user safety as the primary constraint on the agent.
 | **Webhook fail-closed** | If `WEBHOOK_SECRET` is not configured, all webhook requests are rejected with `503` |
 | **Rate limiting** | 1,000 commands/hour (free), cooldown on syncs, Pro tier bypass stored in Clerk metadata |
 
-See [`SECURITY.md`](SECURITY.md) for the full threat model and responsible disclosure policy.
-
 ---
 
-## Roadmap
 
-| Status | Item |
-|---|---|
-| ✅ | Gmail read, send, draft, archive |
-| ✅ | Google Calendar events + Google Meet links |
-| ✅ | GitHub issues + PR reviews |
-| ✅ | Real-time email classification (Claude Haiku) |
-| ✅ | Human-in-the-Loop confirmation UI |
-| ✅ | Team contacts + @mention resolution |
-| ✅ | Meeting prep briefing cards |
-| ✅ | Dark mode |
-| 🔄 | Encrypted OAuth token storage at rest |
-| 🔄 | Webhook rate limiting (per-tenant) |
-| 📋 | Google Sheets integration |
-| 📋 | Slack notifications on agent actions |
-| 📋 | Notion — save email summaries |
-| 📋 | Linear — create tickets from email/GitHub context |
-| 📋 | Multi-account Gmail support |
-| 📋 | Razorpay / Stripe Pro subscription |
-| 🔭 | Self-hosted Auren (Docker, Ollama) |
-| 🔭 | Agent memory — long-term context across sessions |
-
-See [`ROADMAP.md`](ROADMAP.md) for the full plan with milestones.
-
----
 
 ## Examples
 
@@ -419,7 +390,7 @@ MIT — see [`LICENSE`](LICENSE) for details.
 
 ## Author
 
-Built by **Pranav Gawai** — [X / Twitter](https://x.com/pranavgawaii_) · [Portfolio](https://pranavx.in)
+Built by **Pranav Gawai** — [X / Twitter](https://x.com/pranavgawai_) · [Portfolio](https://pranavx.in)
 
 ---
 
