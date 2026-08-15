@@ -28,7 +28,9 @@ export async function getAgentHistory(limit = 50): Promise<{ success: boolean; d
       actionsTaken: row.actions_taken || [],
       errorMessage: row.error_message,
       createdAt: row.created_at || new Date().toISOString(),
-      completedAt: row.completed_at || new Date().toISOString(),
+      // BUG-21: completedAt is typed string | null — don't fabricate a timestamp
+      // for still-pending actions; null correctly signals "not yet completed".
+      completedAt: row.completed_at ?? null,
     }));
 
     return { success: true, data: formattedData };

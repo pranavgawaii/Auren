@@ -211,7 +211,8 @@ export async function gmailSearch(
       snippet: String(msg.snippet || ""),
       body: String(msg.body || ""),
       date: String(msg.internalDate || msg.createdAt || new Date().toISOString()),
-      isRead: false,
+      // BUG-06: Use label data when available instead of hard-coding unread.
+      isRead: Array.isArray(msg.labels) ? !(msg.labels as string[]).includes("UNREAD") : false,
     }));
 
     return { success: true, data: { messages, resultCount: messages.length } };
@@ -581,7 +582,10 @@ function parseRepoUrl(repoInput: string): { owner: string; repo: string } {
   if (urlMatch) {
     owner = urlMatch[1];
     repo = urlMatch[2].replace(/\.git$/, "");
-  } else if (repoInput.includes("/")) {
+  } else if (repoInput.includes("/") && !repoInput.includes("://")) {
+    // BUG-03: Only treat as owner/repo shorthand when there's no URL scheme.
+    // Full URLs that don't match the regex above (e.g. encoding issues) must
+    // not fall into this branch where split("/")[0] would be "https:".
     const parts = repoInput.split("/");
     owner = parts[0];
     repo = parts[1];

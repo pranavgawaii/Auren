@@ -120,12 +120,17 @@ export async function getAccessToken(): Promise<string | null> {
     return null;
   }
 
+  // BUG-16: Guard against a malformed refresh response where expires_in is
+  // missing or non-numeric, which would produce NaN in expires_at and cause
+  // every subsequent access-token check to trigger another refresh.
+  const expiresIn = typeof data.expires_in === "number" ? data.expires_in : 3600;
+
   await db.collection(TOKEN_COLLECTION).updateOne(
     { user_id: userId },
     {
       $set: {
         access_token: data.access_token,
-        expires_at: Date.now() + data.expires_in * 1000,
+        expires_at: Date.now() + expiresIn * 1000,
         updated_at: new Date().toISOString(),
       },
     }

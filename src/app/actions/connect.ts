@@ -40,7 +40,15 @@ export async function getConnectUrl(service: "google" | "github"): Promise<{ suc
     return { success: true, url: link.url };
   } catch (error: any) {
     console.error(`Failed to generate connect link for ${service}:`, error);
-    return { success: false, error: error.message || "Unknown error" };
+    // BUG-08: Distinguish auth errors (user not signed in) from Corsair config
+    // errors so the UI can show a meaningful prompt instead of a generic message.
+    const isAuthError = error?.message?.toLowerCase().includes("unauthorized");
+    return {
+      success: false,
+      error: isAuthError
+        ? "You must be signed in to connect an integration."
+        : error.message || "Unknown error",
+    };
   }
 }
 

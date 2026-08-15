@@ -32,7 +32,9 @@ export async function getInboxEmails(
     const collection = db.collection("emails");
     const filter: Record<string, unknown> = { user_id: userId };
     if (folderType === "INBOX") {
-      filter.labels = { $in: ["INBOX"] };
+      // BUG-15: $in alone silently excludes emails where the labels field is
+      // missing. Use $or so legacy/unsynchronised docs are still returned.
+      filter.$or = [{ labels: { $in: ["INBOX"] } }, { labels: { $exists: false } }];
     } else if (folderType === "SENT") {
       filter.labels = { $in: ["SENT"] };
     } else if (folderType === "DRAFT") {

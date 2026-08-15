@@ -54,14 +54,6 @@ function parseCommandLocally(command: string): PlannedAction[] {
   const actions: PlannedAction[] = [];
   const lower = command.toLowerCase();
 
-  if (lower.includes("send") || lower.includes("email") || lower.includes("mail")) {
-    actions.push({
-      tool: "gmail_send",
-      description: `Send email: ${command}`,
-      parameters: { to: "recipient@example.com", subject: "Follow-up", body: command },
-    });
-  }
-
   if (lower.includes("meeting") || lower.includes("event") || lower.includes("calendar") || lower.includes("schedule")) {
     const start = new Date(Date.now() + 3600 * 1000);
     const end = new Date(start.getTime() + 3600 * 1000);
@@ -80,29 +72,23 @@ function parseCommandLocally(command: string): PlannedAction[] {
     });
   }
 
-  if (actions.length === 0) {
-    actions.push({
-      tool: "gmail_send",
-      description: `Send email note: ${command}`,
-      parameters: { to: "recipient@example.com", subject: "Note", body: command },
-    });
-  }
+  // BUG-11: Never produce actions with a hardcoded placeholder recipient.
+  // Email and catch-all fallback actions have been removed; the main agent
+  // flow (processCommand / analyzeCommand) handles email intents correctly.
 
   return actions;
 }
 
 async function executeFallbackActions(actions: PlannedAction[], command: string) {
   for (const action of actions) {
-    if (action.tool === "gmail_send") {
-      const p = action.parameters as Record<string, string>;
-      await sendEmail({ to: p.to, subject: p.subject, body: p.body });
-    } else if (action.tool === "calendar_create") {
+    if (action.tool === "calendar_create") {
       const p = action.parameters as Record<string, string>;
       await createCalendarEvent({ title: p.title || command, startAt: p.startAt, endAt: p.endAt, attendees: [] });
     } else if (action.tool === "github_create_issue") {
       const p = action.parameters as Record<string, string>;
       await createGithubIssue({ title: p.title || command, body: p.body || "" });
     }
+    // BUG-11: gmail_send removed — never execute a send to a placeholder address.
   }
 }
 
@@ -133,8 +119,12 @@ export async function processAgentCommand(
 
       if (res.ok) {
         const json = await res.json();
-        const result = json.result as Record<string, unknown> | undefined;
-        const rawActions = (result?.plannedActions ?? []) as PlannedAction[];
+        // BUG-02: Anthropic Messages API response shape is
+        // { content: [{ type: "text", text: "..." }] }, NOT { result: { ... } }.
+        const text = json.content?.[0]?.text ?? "{}";
+        let parsed: Record<string, unknown> = {};
+        try { parsed = JSON.parse(text); } catch { /* fallback to empty */ }
+        const rawActions = (parsed?.plannedActions ?? []) as PlannedAction[];
 
         const db = await getDb();
         if (db) {

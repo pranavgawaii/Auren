@@ -37,7 +37,9 @@ function trimEmailBody(body: string): string {
     /^On .+ wrote:$/m,
     /^-{2,}\s*Original Message\s*-{2,}/im,
     /^_{5,}/m,
-    /^From:\s.+$/m,
+    // Only treat "From:" as a quote marker when it appears after at least one
+    // non-empty line of content so we don't strip single-block forwarded bodies.
+    /(?:^|\n).{5,}\n(?:From:\s.+)$/m,
   ];
   let cut = plain.length;
   for (const marker of quoteMarkers) {
@@ -146,7 +148,14 @@ IF THE USER ASKS FOR A DAILY BRIEFING/SUMMARY/"what's my day look like":
 
   try {
     const responseText = await reasonWithAI(systemPrompt, command);
-    const result = JSON.parse(responseText.trim()) as any;
+
+    // BUG-01: Guard against empty or whitespace-only AI responses before parsing.
+    const trimmedResponse = responseText.trim();
+    if (!trimmedResponse) {
+      return { actions: [], explanation: "No response from AI. Please try again.", requiresConfirmation: false };
+    }
+
+    const result = JSON.parse(trimmedResponse) as any;
 
     // Normalize actions parameter format (LLMs like Llama often name it 'params', 'args', or 'input')
     if (result && Array.isArray(result.actions)) {
@@ -208,10 +217,11 @@ IF THE USER ASKS FOR A DAILY BRIEFING/SUMMARY/"what's my day look like":
     const errMsg = error instanceof Error ? error.message : "";
     return {
       actions: [],
-      explanation: errMsg.includes("429") || errMsg.includes("Quota") 
-        ? "Google Gemini API Quota exceeded. Please try again later."
+      explanation: errMsg.includes("429") || errMsg.includes("Quota")
+        ? "Groq API quota exceeded. Please try again later."
         : "Failed to understand command or API error. Please try again.",
-      requiresConfirmation: true,
+      // BUG-01: No actions to confirm — don't show an empty confirmation panel.
+      requiresConfirmation: false,
     };
   }
 }

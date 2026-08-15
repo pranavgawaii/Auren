@@ -26,7 +26,8 @@ export type AdminUser = {
 
 export async function getSystemStatus() {
   const user = await currentUser();
-  const adminEmail = user?.emailAddresses[0]?.emailAddress;
+  // BUG-07: Use optional chaining on the array index — emailAddresses could be empty.
+  const adminEmail = user?.emailAddresses?.[0]?.emailAddress;
 
   if (adminEmail !== "pranvgg@gmail.com") {
     return { success: false, error: "Unauthorized." };
@@ -54,7 +55,8 @@ export async function getSystemStatus() {
 export async function getAdminAnalytics() {
   try {
     const user = await currentUser();
-    const adminEmail = user?.emailAddresses[0]?.emailAddress;
+    // BUG-07: Use optional chaining on the array index.
+    const adminEmail = user?.emailAddresses?.[0]?.emailAddress;
 
     if (adminEmail !== "pranvgg@gmail.com") {
       return { success: false, error: "Unauthorized. You are not the admin." };
@@ -209,7 +211,8 @@ export async function getAdminAnalytics() {
 export async function toggleAurenPro(clerkUserId: string, targetStatus: boolean) {
   try {
     const user = await currentUser();
-    const adminEmail = user?.emailAddresses[0]?.emailAddress;
+    // BUG-07: Use optional chaining on the array index.
+    const adminEmail = user?.emailAddresses?.[0]?.emailAddress;
 
     if (adminEmail !== "pranvgg@gmail.com") {
       return { success: false, error: "Unauthorized." };
@@ -234,7 +237,8 @@ export async function toggleAurenPro(clerkUserId: string, targetStatus: boolean)
 export async function resetUserRateLimit(supabaseUserId: string) {
   try {
     const user = await currentUser();
-    const adminEmail = user?.emailAddresses[0]?.emailAddress;
+    // BUG-07: Use optional chaining on the array index.
+    const adminEmail = user?.emailAddresses?.[0]?.emailAddress;
     if (adminEmail !== "pranvgg@gmail.com") {
       return { success: false, error: "Unauthorized." };
     }
@@ -260,7 +264,8 @@ export async function resetUserRateLimit(supabaseUserId: string) {
 export async function deleteUserAccount(clerkUserId: string) {
   try {
     const user = await currentUser();
-    const adminEmail = user?.emailAddresses[0]?.emailAddress;
+    // BUG-07: Use optional chaining on the array index.
+    const adminEmail = user?.emailAddresses?.[0]?.emailAddress;
     if (adminEmail !== "pranvgg@gmail.com") {
       return { success: false, error: "Unauthorized." };
     }

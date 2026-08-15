@@ -140,7 +140,7 @@ export function DashboardClient() {
 
   const [folderType, setFolderType] = useState<"INBOX" | "SENT" | "DRAFT">("INBOX");
   const [isCalendarOpen, setIsCalendarOpen] = useState(true);
-  const [isZenMode, setIsZenMode] = useState(true);
+  const [isZenMode, setIsZenMode] = useState(false); // BUG-18: was true, hid inbox on first load
   const [isConsoleOpen, setIsConsoleOpen] = useState(false);
   const [selectedEmailId, setSelectedEmailId] = useState<string>("");
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
@@ -227,9 +227,14 @@ export function DashboardClient() {
           setSelectedEmailId("");
         }
       }
+    } else if (!res.success) {
+      // BUG-09: Surface fetch errors so users aren't shown stale data silently.
+      showToast.error(`Inbox error: ${res.error || "Failed to load emails."}`);
     }
     setIsLoading(false);
-  }, [selectedEmailId, user, folderType]);
+  // BUG-04: selectedEmailId removed from deps — setting it inside fetchEmails
+  // was recreating the callback and re-triggering the effect (infinite loop).
+  }, [user, folderType]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     fetchEmails();
@@ -438,14 +443,7 @@ export function DashboardClient() {
         </div>
       ) : null}
 
-      {/* Example trigger for the action confirmation - hidden in production */}
-      <div 
-        className="fixed bottom-12 right-12 w-10 h-10 bg-[#E8593C] rounded-full text-white flex items-center justify-center cursor-pointer shadow-lg z-50 opacity-0 hover:opacity-100"
-        onClick={() => setIsConfirmOpen(true)}
-        title="Test Action Confirmation"
-      >
-        A
-      </div>
+      {/* BUG-19: Debug trigger removed — was visible on hover in production. */}
 
       <ActionConfirmation 
         isOpen={isConfirmOpen} 
@@ -453,26 +451,29 @@ export function DashboardClient() {
         isExecuting={isExecuting}
         onConfirm={async (finalPlan) => {
           if (!finalPlan) return;
-          setIsExecuting(true);
-          const res = await executePlan(finalPlan, currentCommand);
-          setIsExecuting(false);
-          setIsConfirmOpen(false);
-          
-          if (res.success) {
-            // Check if any action produced a Google Meet link
-            const meetResult = res.results?.find(
-              (r: any) => r.tool === "calendar_create" && r.data?.meetLink
-            ) as any;
-            if (meetResult?.data?.meetLink) {
-              showToast.success(`✅ Event created! 📹 Meet: ${meetResult.data.meetLink}`);
+          // BUG-05: Wrap in try/finally so isExecuting always clears even if
+          // executePlan throws an unexpected error (spinner was freezing forever).
+          try {
+            setIsExecuting(true);
+            const res = await executePlan(finalPlan, currentCommand);
+
+            if (res.success) {
+              // Check if any action produced a Google Meet link
+              const meetResult = res.results?.find(
+                (r: any) => r.tool === "calendar_create" && r.data?.meetLink
+              ) as any;
+              if (meetResult?.data?.meetLink) {
+                showToast.success(`✅ Event created! 📹 Meet: ${meetResult.data.meetLink}`);
+              } else {
+                showToast.success("Actions executed successfully!");
+              }
+              setTimeout(() => router.refresh(), 1500);
             } else {
-              showToast.success("Actions executed successfully!");
+              showToast.error(`Execution failed: ${res.error || "Unknown error"}`);
             }
+          } finally {
             setIsExecuting(false);
             setIsConfirmOpen(false);
-            setTimeout(() => router.refresh(), 1500); // Reload to sync state after toast without unmounting client
-          } else {
-            showToast.error(`Execution failed: ${res.error || "Unknown error"}`);
           }
         }} 
         onCancel={() => setIsConfirmOpen(false)}

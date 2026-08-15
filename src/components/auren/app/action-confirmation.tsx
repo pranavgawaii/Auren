@@ -81,6 +81,19 @@ export function ActionConfirmation({
     }
   }, [plan]);
 
+  // BUG-13: Track active resize handlers in refs so they can be cleaned up
+  // if the panel unmounts mid-drag (e.g. user presses Escape). Without this
+  // the mousemove/mouseup listeners persist permanently on document.
+  const doResizeRef = React.useRef<((e: MouseEvent) => void) | null>(null);
+  const stopResizeRef = React.useRef<(() => void) | null>(null);
+
+  React.useEffect(() => {
+    return () => {
+      if (doResizeRef.current) document.removeEventListener("mousemove", doResizeRef.current);
+      if (stopResizeRef.current) document.removeEventListener("mouseup", stopResizeRef.current);
+    };
+  }, []);
+
   const startResize = React.useCallback((e: React.MouseEvent, direction: 'tl' | 'tr' | 't') => {
     e.preventDefault();
     setIsResizing(true);
@@ -109,8 +122,12 @@ export function ActionConfirmation({
       setIsResizing(false);
       document.removeEventListener("mousemove", doResize);
       document.removeEventListener("mouseup", stopResize);
+      doResizeRef.current = null;
+      stopResizeRef.current = null;
     };
 
+    doResizeRef.current = doResize;
+    stopResizeRef.current = stopResize;
     document.addEventListener("mousemove", doResize);
     document.addEventListener("mouseup", stopResize);
   }, [panelSize]);

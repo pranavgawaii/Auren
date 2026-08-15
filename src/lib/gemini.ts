@@ -1,3 +1,11 @@
+/**
+ * BUG-20: This file is named gemini.ts for historical reasons but calls the
+ * Groq API (llama-3.3-70b-versatile), NOT Google Gemini. The _responseMimeType
+ * parameter is accepted for API-compatibility but is not forwarded to Groq
+ * (Groq's chat-completion endpoint uses response_format.type instead).
+ *
+ * TODO: Rename to groq.ts and update all imports if/when refactoring.
+ */
 export async function reasonWithAI(
   systemInstruction: string,
   userMessage: string,

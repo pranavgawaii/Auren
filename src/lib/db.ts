@@ -28,7 +28,12 @@ export async function getDb(): Promise<Db | null> {
     } else {
       if (!clientPromise) {
         client = new MongoClient(uri);
-        clientPromise = client.connect();
+        // BUG-14: If connect() rejects, reset clientPromise so the next call
+        // can retry instead of re-awaiting the permanently rejected promise.
+        clientPromise = client.connect().catch((err) => {
+          clientPromise = null;
+          throw err;
+        });
       }
     }
 

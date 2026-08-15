@@ -81,27 +81,25 @@ export async function checkSyncRateLimit(): Promise<{ success: boolean; error?: 
     const data = await collection.findOne({ user_id: userId });
     const now = new Date();
 
-    if (!data) {
-      await collection.insertOne({
-        user_id: userId,
-        last_sync_at: now.toISOString(),
-      });
-      return { success: true };
-    }
-
-    if (data.last_sync_at) {
+    if (data?.last_sync_at) {
       const lastSync = new Date(data.last_sync_at);
       if (now.getTime() - lastSync.getTime() < RATE_LIMITS.SYNC_COOLDOWN_MS) {
-        return { 
-          success: false, 
-          error: `Sync is on cooldown. Please wait before syncing again.` 
+        return {
+          success: false,
+          error: `Sync is on cooldown. Please wait before syncing again.`,
         };
       }
     }
 
+    // BUG-12: Use upsert so the insert-or-update is atomic — concurrent calls
+    // can no longer both see !data, both insertOne, and race past the cooldown.
     await collection.updateOne(
       { user_id: userId },
-      { $set: { last_sync_at: now.toISOString() } }
+      {
+        $set: { last_sync_at: now.toISOString() },
+        $setOnInsert: { user_id: userId },
+      },
+      { upsert: true }
     );
 
     return { success: true };
