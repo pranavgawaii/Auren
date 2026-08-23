@@ -111,7 +111,7 @@ export function EmailDetail({ email, thread = [], onAction, isAgentLoading }: Em
           <div className="relative shrink-0" ref={menuRef}>
             <button
               onClick={() => setIsMenuOpen((v) => !v)}
-              className="w-8 h-8 rounded-[8px] flex items-center justify-center text-[rgba(36,27,20,0.4)] dark:text-[rgba(255,255,255,0.4)] hover:bg-[rgba(36,27,20,0.04)] dark:bg-[rgba(255,255,255,0.04)] hover:text-[#241B14] dark:text-[#F4F4F5] transition-colors"
+              className="w-8 h-8 rounded-[8px] flex items-center justify-center text-[rgba(36,27,20,0.4)] dark:text-[rgba(255,255,255,0.4)] hover:bg-[rgba(36,27,20,0.04)] dark:hover:bg-[rgba(255,255,255,0.04)] hover:text-[#241B14] dark:hover:text-[#F4F4F5] transition-colors"
               title="More actions"
             >
               <MoreHorizontal size={18} />
@@ -122,7 +122,7 @@ export function EmailDetail({ email, thread = [], onAction, isAgentLoading }: Em
                 <button
                   onClick={() => handleMenuAction("Create a GitHub issue about this email")}
                   disabled={isAgentLoading}
-                  className="w-full flex items-center gap-3 px-4 py-3 font-sans text-[13px] text-[#241B14] dark:text-[#F4F4F5] hover:bg-[rgba(36,27,20,0.03)] dark:bg-[rgba(255,255,255,0.03)] transition-colors disabled:opacity-50 text-left"
+                  className="w-full flex items-center gap-3 px-4 py-3 font-sans text-[13px] text-[#241B14] dark:text-[#F4F4F5] hover:bg-[rgba(36,27,20,0.03)] dark:hover:bg-[rgba(255,255,255,0.06)] transition-colors disabled:opacity-50 text-left"
                 >
                   <GitBranch size={15} className="text-[rgba(36,27,20,0.4)] dark:text-[rgba(255,255,255,0.4)]" />
                   Create GitHub Issue
@@ -131,7 +131,7 @@ export function EmailDetail({ email, thread = [], onAction, isAgentLoading }: Em
                 <button
                   onClick={() => handleMenuAction("Archive this email")}
                   disabled={isAgentLoading}
-                  className="w-full flex items-center gap-3 px-4 py-3 font-sans text-[13px] text-[#241B14] dark:text-[#F4F4F5] hover:bg-[rgba(36,27,20,0.03)] dark:bg-[rgba(255,255,255,0.03)] transition-colors disabled:opacity-50 text-left"
+                  className="w-full flex items-center gap-3 px-4 py-3 font-sans text-[13px] text-[#241B14] dark:text-[#F4F4F5] hover:bg-[rgba(36,27,20,0.03)] dark:hover:bg-[rgba(255,255,255,0.06)] transition-colors disabled:opacity-50 text-left"
                 >
                   <Archive size={15} className="text-[rgba(36,27,20,0.4)] dark:text-[rgba(255,255,255,0.4)]" />
                   Archive
@@ -212,12 +212,12 @@ export function EmailDetail({ email, thread = [], onAction, isAgentLoading }: Em
             <Reply size={14} />
             Reply
           </div>
-          <kbd className="ml-1 px-1.5 py-0.5 rounded-[4px] bg-white dark:bg-[#383838]/20 text-[#E8593C] dark:text-[rgba(255,255,255,0.7)] text-[10px] font-mono group-hover:bg-white dark:bg-[#383838]/30 transition-colors">R</kbd>
+          <kbd className="ml-1 px-1.5 py-0.5 rounded-[4px] bg-white/20 text-white text-[10px] font-mono group-hover:bg-white/30 transition-colors">R</kbd>
         </button>
         <button
           onClick={() => onAction?.("Schedule a 30 minute meeting based on this email")}
           disabled={isAgentLoading}
-          className="h-9 pl-4 pr-2 border border-[rgba(36,27,20,0.08)] dark:border-[rgba(255,255,255,0.08)] text-[rgba(36,27,20,0.6)] dark:text-[rgba(255,255,255,0.6)] rounded-[8px] font-sans font-semibold text-[13px] hover:bg-[rgba(36,27,20,0.02)] dark:bg-[rgba(255,255,255,0.02)] transition-colors bg-white dark:bg-[#383838] disabled:opacity-50 flex items-center gap-3 group"
+          className="h-9 pl-4 pr-2 border border-[rgba(36,27,20,0.08)] dark:border-[rgba(255,255,255,0.08)] text-[rgba(36,27,20,0.6)] dark:text-[rgba(255,255,255,0.6)] rounded-[8px] font-sans font-semibold text-[13px] hover:bg-[rgba(36,27,20,0.02)] dark:hover:bg-[rgba(255,255,255,0.04)] transition-colors bg-white dark:bg-[#383838] disabled:opacity-50 flex items-center gap-3 group"
         >
           <div className="flex items-center gap-2">
             <CalendarPlus size={14} />
@@ -248,7 +248,7 @@ export function EmailDetail({ email, thread = [], onAction, isAgentLoading }: Em
             }
           }}
           disabled={isAgentLoading || isSavingDraft || !email}
-          className="h-9 pl-4 pr-2 border border-[rgba(36,27,20,0.08)] dark:border-[rgba(255,255,255,0.08)] text-[rgba(36,27,20,0.6)] dark:text-[rgba(255,255,255,0.6)] rounded-[8px] font-sans font-semibold text-[13px] hover:bg-[rgba(36,27,20,0.02)] dark:bg-[rgba(255,255,255,0.02)] transition-colors bg-white dark:bg-[#383838] disabled:opacity-50 flex items-center gap-2"
+          className="h-9 pl-4 pr-2 border border-[rgba(36,27,20,0.08)] dark:border-[rgba(255,255,255,0.08)] text-[rgba(36,27,20,0.6)] dark:text-[rgba(255,255,255,0.6)] rounded-[8px] font-sans font-semibold text-[13px] hover:bg-[rgba(36,27,20,0.02)] dark:hover:bg-[rgba(255,255,255,0.04)] transition-colors bg-white dark:bg-[#383838] disabled:opacity-50 flex items-center gap-2"
         >
           {isSavingDraft ? (
             <span className="w-3 h-3 border-2 border-current/30 border-t-current rounded-full animate-spin" />

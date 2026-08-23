@@ -161,7 +161,7 @@ export function InboxPanel({
           <button 
             onClick={() => onRefresh(true)}
             disabled={isLoading}
-            className="h-[28px] px-3 border border-[rgba(36,27,20,0.08)] dark:border-[rgba(255,255,255,0.08)] rounded-[8px] font-sans text-[11px] text-[#241B14] dark:text-[#F4F4F5] hover:bg-[#FBF3EC] transition-colors disabled:opacity-50"
+            className="h-[28px] px-3 border border-[rgba(36,27,20,0.08)] dark:border-[rgba(255,255,255,0.08)] rounded-[8px] font-sans text-[11px] text-[#241B14] dark:text-[#F4F4F5] hover:bg-[#FBF3EC] dark:hover:bg-[#4F4F4F] transition-colors disabled:opacity-50"
           >
             {isLoading ? "Syncing..." : "Sync"}
           </button>
@@ -196,7 +196,7 @@ export function InboxPanel({
               "font-sans text-[11.5px] pb-[10px] pt-[12px] px-2.5 relative transition-all flex items-center gap-1.5",
               activeTab === tab.name 
                 ? "text-[#241B14] dark:text-[#F4F4F5] font-semibold" 
-                : "text-[rgba(36,27,20,0.4)] dark:text-[rgba(255,255,255,0.4)] hover:text-[#241B14] dark:text-[#F4F4F5]"
+                : "text-[rgba(36,27,20,0.4)] dark:text-[rgba(255,255,255,0.4)] hover:text-[#241B14] dark:hover:text-[#F4F4F5]"
             )}
             title={tab.desc}
           >

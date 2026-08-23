@@ -371,7 +371,7 @@ export function DashboardClient() {
           {isZenMode && !selectedEmail && (
             <button
               onClick={() => setIsZenMode(false)}
-              className="absolute left-0 top-1/2 -translate-y-1/2 bg-white dark:bg-[#383838] border border-[rgba(36,27,20,0.12)] dark:border-[rgba(255,255,255,0.12)] border-l-0 rounded-r-xl p-2 shadow-[0_4px_12px_rgba(0,0,0,0.05)] text-[rgba(36,27,20,0.5)] dark:text-[rgba(255,255,255,0.5)] hover:text-[#E8593C] hover:bg-[#FAF8F5] dark:bg-[#2C2C2C] transition-all z-40"
+              className="absolute left-0 top-1/2 -translate-y-1/2 bg-white dark:bg-[#383838] border border-[rgba(36,27,20,0.12)] dark:border-[rgba(255,255,255,0.12)] border-l-0 rounded-r-xl p-2 shadow-[0_4px_12px_rgba(0,0,0,0.05)] text-[rgba(36,27,20,0.5)] dark:text-[rgba(255,255,255,0.5)] hover:text-[#E8593C] hover:bg-[#FAF8F5] dark:hover:bg-[#2C2C2C] transition-all z-40"
               title="Open Inbox"
             >
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>

@@ -194,7 +194,7 @@ export function Pricing({
                   "group relative w-full gap-2 overflow-hidden text-[12px] font-bold tracking-wide h-9 rounded-[8px]",
                   "transform-gpu ring-offset-current transition-all duration-200 ease-out hover:scale-[1.02] active:scale-95",
                   plan.isPopular
-                    ? "bg-[#E8593C] text-white border-transparent hover:bg-[#E8593C]-hover hover:text-white shadow-sm"
+                    ? "bg-[#E8593C] text-white border-transparent hover:bg-[#D14F31] hover:text-white shadow-sm"
                     : "bg-[#FAF8F5] dark:bg-[#2C2C2C] text-[#241B14] dark:text-[#F4F4F5] hover:bg-[#EBE5DE] border border-[rgba(36,27,20,0.08)] dark:border-[rgba(255,255,255,0.08)]"
                 )}
               >

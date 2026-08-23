@@ -575,7 +575,7 @@ export function SettingsView() {
                 <div className="flex justify-end pt-6 border-t border-[rgba(36,27,20,0.08)] dark:border-[rgba(255,255,255,0.08)]">
                   <button 
                     onClick={saveGeneralSettings}
-                    className="h-9 px-6 bg-[#E8593C] hover:bg-[#E8593C]-hover active:scale-95 text-white rounded-[8px] font-sans font-bold text-[12px] transition-all shadow-sm hover:shadow-md"
+                    className="h-9 px-6 bg-[#E8593C] hover:bg-[#D14F31] active:scale-95 text-white rounded-[8px] font-sans font-bold text-[12px] transition-all shadow-sm hover:shadow-md"
                   >
                     Save Preferences
                   </button>

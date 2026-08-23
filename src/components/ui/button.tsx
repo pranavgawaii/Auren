@@ -11,9 +11,9 @@ const buttonVariants = cva(
       variant: {
         default: "bg-[#241B14] dark:bg-[#4D4D4D] text-white hover:bg-[#241B14]/90 dark:hover:bg-[#4D4D4D]/90 shadow-sm",
         destructive: "bg-[#EF4444] text-white hover:bg-[#EF4444]/90 shadow-sm",
-        outline: "border border-[rgba(36,27,20,0.08)] dark:border-[rgba(255,255,255,0.08)] bg-white dark:bg-[#383838] hover:bg-[rgba(36,27,20,0.04)] dark:bg-[rgba(255,255,255,0.04)] dark:hover:bg-[rgba(255,255,255,0.04)] text-[#241B14] dark:text-[#F4F4F5] shadow-sm",
-        secondary: "bg-[rgba(36,27,20,0.04)] dark:bg-[rgba(255,255,255,0.04)] text-[#241B14] dark:text-[#F4F4F5] hover:bg-[rgba(36,27,20,0.08)] dark:bg-[rgba(255,255,255,0.08)] dark:hover:bg-[rgba(255,255,255,0.08)]",
-        ghost: "hover:bg-[rgba(36,27,20,0.04)] dark:bg-[rgba(255,255,255,0.04)] dark:hover:bg-[rgba(255,255,255,0.04)] text-[#241B14] dark:text-[#F4F4F5]",
+        outline: "border border-[rgba(36,27,20,0.08)] dark:border-[rgba(255,255,255,0.08)] bg-white dark:bg-[#383838] hover:bg-[rgba(36,27,20,0.04)] dark:hover:bg-[rgba(255,255,255,0.04)] text-[#241B14] dark:text-[#F4F4F5] shadow-sm",
+        secondary: "bg-[rgba(36,27,20,0.04)] dark:bg-[rgba(255,255,255,0.04)] text-[#241B14] dark:text-[#F4F4F5] hover:bg-[rgba(36,27,20,0.08)] dark:hover:bg-[rgba(255,255,255,0.08)]",
+        ghost: "hover:bg-[rgba(36,27,20,0.04)] dark:hover:bg-[rgba(255,255,255,0.04)] text-[#241B14] dark:text-[#F4F4F5]",
         link: "text-[#241B14] dark:text-[#F4F4F5] underline-offset-4 hover:underline",
       },
       size: {
