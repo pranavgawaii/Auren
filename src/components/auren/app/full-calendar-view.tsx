@@ -452,7 +452,7 @@ export function FullCalendarView() {
               </h2>
               <button 
                 onClick={() => setIsCreateModalOpen(false)}
-                className="p-1.5 rounded-full hover:bg-[rgba(36,27,20,0.08)] dark:bg-[rgba(255,255,255,0.08)] text-[rgba(36,27,20,0.5)] dark:text-[rgba(255,255,255,0.5)] transition-colors"
+                className="p-1.5 rounded-full hover:bg-[rgba(36,27,20,0.08)] dark:hover:bg-[rgba(255,255,255,0.08)] text-[rgba(36,27,20,0.5)] dark:text-[rgba(255,255,255,0.5)] transition-colors"
               >
                 <X size={16} />
               </button>
@@ -493,7 +493,7 @@ export function FullCalendarView() {
                 <button 
                   type="button"
                   onClick={() => setIsCreateModalOpen(false)}
-                  className="px-4 py-2 font-sans font-medium text-[13px] text-[rgba(36,27,20,0.6)] dark:text-[rgba(255,255,255,0.6)] hover:bg-[rgba(36,27,20,0.04)] dark:bg-[rgba(255,255,255,0.04)] rounded-[8px] transition-colors"
+                  className="px-4 py-2 font-sans font-medium text-[13px] text-[rgba(36,27,20,0.6)] dark:text-[rgba(255,255,255,0.6)] hover:bg-[rgba(36,27,20,0.04)] dark:hover:bg-[rgba(255,255,255,0.04)] rounded-[8px] transition-colors"
                 >
                   Cancel
                 </button>

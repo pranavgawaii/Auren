@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Search, ChevronRight, RotateCcw, Clock, Mail, Calendar, GitBranch, Terminal } from "lucide-react";
+import { Search, ChevronRight, RotateCcw, Clock, Mail, Calendar, GitBranch, Terminal, Copy, Check } from "lucide-react";
 import { getAgentHistory } from "@/app/actions/history";
 import type { AgentAction } from "@/types";
 import { AurenLoading } from "@/components/ui/auren-loading";
@@ -51,50 +51,68 @@ function StatusPill({ status }: { status: string }) {
 function RunRow({ action, defaultOpen }: { action: AgentAction; defaultOpen: boolean }) {
   const [open, setOpen] = useState(defaultOpen);
   const [inspecting, setInspecting] = useState<number | null>(null);
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    navigator.clipboard.writeText(action.command);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
 
   const created = new Date(action.createdAt);
   const tools = Array.from(new Set(action.actionsTaken.map((s) => s.tool?.toLowerCase()).filter(Boolean)));
 
   return (
     <div>
-      <button
-        onClick={() => setOpen((v) => !v)}
-        className="w-full text-left flex items-center gap-3 px-5 py-3.5 hover:bg-[rgba(36,27,20,0.02)] dark:hover:bg-[rgba(255,255,255,0.02)] transition-colors group"
-      >
-        <span className={`font-sans text-[12px] font-medium ${MUTED} w-[52px] shrink-0 tabular-nums`}>
-          {hhmm(created)}
-        </span>
-
-        <span className="flex-1 min-w-0">
-          <span className="block font-sans font-semibold text-[13.5px] text-[#241B14] dark:text-[#F4F4F5] truncate group-hover:text-[#E8593C] transition-colors">
-            {action.command}
+      <div className="flex items-center hover:bg-[rgba(36,27,20,0.02)] dark:hover:bg-[rgba(255,255,255,0.02)] transition-colors group">
+        <button
+          onClick={() => setOpen((v) => !v)}
+          className="flex-1 text-left flex items-center gap-3 px-5 py-3.5 min-w-0"
+        >
+          <span className={`font-sans text-[12px] font-medium ${MUTED} w-[52px] shrink-0 tabular-nums`}>
+            {hhmm(created)}
           </span>
-          <span className="flex items-center gap-2 mt-1">
-            <span className={`font-sans text-[11px] ${FAINT}`}>
-              {created.toLocaleDateString([], { month: "short", day: "numeric" })}
+
+          <span className="flex-1 min-w-0">
+            <span className="block font-sans font-semibold text-[13.5px] text-[#241B14] dark:text-[#F4F4F5] truncate group-hover:text-[#E8593C] transition-colors">
+              {action.command}
             </span>
-            {tools.map((t) => {
-              const m = meta(t!);
-              return (
-                <span
-                  key={t}
-                  className="inline-flex items-center gap-1 font-sans text-[10px] font-semibold px-1.5 py-0.5 rounded-md"
-                  style={{ background: `${m.color}15`, color: m.color }}
-                >
-                  {m.icon}
-                  {m.label}
-                </span>
-              );
-            })}
+            <span className="flex items-center gap-2 mt-1">
+              <span className={`font-sans text-[11px] ${FAINT}`}>
+                {created.toLocaleDateString([], { month: "short", day: "numeric" })}
+              </span>
+              {tools.map((t) => {
+                const m = meta(t!);
+                return (
+                  <span
+                    key={t}
+                    className="inline-flex items-center gap-1 font-sans text-[10px] font-semibold px-1.5 py-0.5 rounded-md"
+                    style={{ background: `${m.color}15`, color: m.color }}
+                  >
+                    {m.icon}
+                    {m.label}
+                  </span>
+                );
+              })}
+            </span>
           </span>
-        </span>
 
-        <StatusPill status={action.status} />
+          <StatusPill status={action.status} />
 
-        <motion.span animate={{ rotate: open ? 90 : 0 }} transition={{ duration: 0.18 }} className={`${FAINT} shrink-0`}>
-          <ChevronRight size={14} />
-        </motion.span>
-      </button>
+          <motion.span animate={{ rotate: open ? 90 : 0 }} transition={{ duration: 0.18 }} className={`${FAINT} shrink-0`}>
+            <ChevronRight size={14} />
+          </motion.span>
+        </button>
+
+        <button
+          onClick={handleCopy}
+          title={copied ? "Copied!" : "Copy command"}
+          className="mr-4 p-1.5 rounded-md text-[rgba(36,27,20,0.3)] dark:text-[rgba(255,255,255,0.3)] hover:text-[#E8593C] dark:hover:text-[#E8593C] hover:bg-[rgba(36,27,20,0.04)] dark:hover:bg-[rgba(255,255,255,0.04)] transition-all shrink-0"
+        >
+          {copied ? <Check size={13} className="text-emerald-500" /> : <Copy size={13} />}
+        </button>
+      </div>
 
       <AnimatePresence initial={false}>
         {open && (
