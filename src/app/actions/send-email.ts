@@ -18,10 +18,21 @@ export async function sendEmail(payload: SendEmailPayload) {
     // SEC-FIX: Resolve authenticated caller on the server — never trust client-supplied userId.
     const userId = await getUserId();
 
+    if (!payload || !payload.to || typeof payload.to !== "string" || !payload.to.trim()) {
+      return {
+        success: false,
+        error: {
+          code: "INVALID_RECIPIENT",
+          message: "Recipient email is required.",
+          statusCode: 400,
+        },
+      };
+    }
+
     const result = await gmailSend({
-      to: payload.to,
-      subject: payload.subject,
-      body: payload.body,
+      to: payload.to.trim(),
+      subject: payload.subject || "(No Subject)",
+      body: payload.body || "",
       threadId: payload.threadId,
     });
 
