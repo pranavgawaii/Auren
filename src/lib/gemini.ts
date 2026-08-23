@@ -54,13 +54,21 @@ export async function reasonWithAI(
       const data = await response.json();
       let text: string = data.choices?.[0]?.message?.content ?? "";
       
-      // Robust JSON extractor — free models often wrap output in prose
+      // Robust JSON extractor — models often wrap output in markdown fences or prose
+      text = text.trim();
+      if (text.includes("```")) {
+        const match = text.match(/```(?:json)?\s*([\s\S]*?)\s*```/i);
+        if (match && match[1]) {
+          text = match[1].trim();
+        }
+      }
+
       const firstBrace = text.indexOf('{');
       const lastBrace = text.lastIndexOf('}');
       if (firstBrace !== -1 && lastBrace !== -1 && lastBrace >= firstBrace) {
         text = text.substring(firstBrace, lastBrace + 1);
       } else {
-        text = text.replace(/^```(json)?/, "").replace(/```$/, "").trim();
+        text = text.replace(/^```(json)?/i, "").replace(/```$/, "").trim();
       }
       
       return text;

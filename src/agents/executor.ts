@@ -149,13 +149,30 @@ IF THE USER ASKS FOR A DAILY BRIEFING/SUMMARY/"what's my day look like":
   try {
     const responseText = await reasonWithAI(systemPrompt, command);
 
-    // BUG-01: Guard against empty or whitespace-only AI responses before parsing.
-    const trimmedResponse = responseText.trim();
-    if (!trimmedResponse) {
+    // Guard against empty or whitespace-only AI responses before parsing.
+    let cleanJson = responseText.trim();
+    if (!cleanJson) {
       return { actions: [], explanation: "No response from AI. Please try again.", requiresConfirmation: false };
     }
 
-    const result = JSON.parse(trimmedResponse) as any;
+    // Strip markdown code fences if present (e.g. ```json ... ```)
+    if (cleanJson.includes("```")) {
+      const codeBlockMatch = cleanJson.match(/```(?:json)?\s*([\s\S]*?)\s*```/i);
+      if (codeBlockMatch && codeBlockMatch[1]) {
+        cleanJson = codeBlockMatch[1].trim();
+      } else {
+        cleanJson = cleanJson.replace(/^```(?:json)?/i, "").replace(/```$/, "").trim();
+      }
+    }
+
+    // Find JSON boundaries
+    const firstBrace = cleanJson.indexOf("{");
+    const lastBrace = cleanJson.lastIndexOf("}");
+    if (firstBrace !== -1 && lastBrace !== -1 && lastBrace >= firstBrace) {
+      cleanJson = cleanJson.substring(firstBrace, lastBrace + 1);
+    }
+
+    const result = JSON.parse(cleanJson) as any;
 
     // Normalize actions parameter format (LLMs like Llama often name it 'params', 'args', or 'input')
     if (result && Array.isArray(result.actions)) {
@@ -191,6 +208,18 @@ IF THE USER ASKS FOR A DAILY BRIEFING/SUMMARY/"what's my day look like":
             if (meetAlias !== undefined) parameters.withMeetLink = meetAlias === true || meetAlias === "true";
           } else if (typeof parameters.withMeetLink === "string") {
             parameters.withMeetLink = parameters.withMeetLink === "true";
+          }
+
+          // Validate date strings
+          if (parameters.startAt && isNaN(Date.parse(String(parameters.startAt)))) {
+            const now = new Date();
+            now.setMinutes(Math.ceil(now.getMinutes() / 30) * 30);
+            parameters.startAt = now.toISOString();
+          }
+          if (parameters.endAt && isNaN(Date.parse(String(parameters.endAt)))) {
+            const start = parameters.startAt ? new Date(String(parameters.startAt)) : new Date();
+            const end = new Date(start.getTime() + 60 * 60 * 1000);
+            parameters.endAt = end.toISOString();
           }
         }
 
