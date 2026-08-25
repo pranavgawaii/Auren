@@ -23,8 +23,13 @@ export function CommandMenu({ onSelectView, onAction }: CommandMenuProps) {
         setIsOpen(false);
       }
     };
+    const handleCustomOpen = () => setIsOpen(true);
+    window.addEventListener("open-command-menu", handleCustomOpen);
     document.addEventListener("keydown", handleKeyDown);
-    return () => document.removeEventListener("keydown", handleKeyDown);
+    return () => {
+      window.removeEventListener("open-command-menu", handleCustomOpen);
+      document.removeEventListener("keydown", handleKeyDown);
+    };
   }, []);
 
   if (!isOpen) return null;
@@ -45,21 +50,21 @@ export function CommandMenu({ onSelectView, onAction }: CommandMenuProps) {
   );
 
   return (
-    <div className="fixed inset-0 z-[100] bg-[rgba(255,255,255,0.6)] backdrop-blur-sm flex items-start justify-center pt-[15vh]">
+    <div className="fixed inset-0 z-[100] bg-[rgba(36,27,20,0.2)] dark:bg-black/60 backdrop-blur-sm flex items-start justify-center pt-[15vh]">
       <div 
-        className="w-full max-w-lg bg-white dark:bg-[#383838] rounded-xl shadow-[0_16px_60px_rgba(36,27,20,0.1)] border border-[rgba(36,27,20,0.08)] dark:border-[rgba(255,255,255,0.08)] overflow-hidden animate-in fade-in zoom-in-95 duration-200"
+        className="w-full max-w-lg bg-white dark:bg-[#383838] rounded-xl shadow-[0_16px_60px_rgba(36,27,20,0.15)] border border-[rgba(36,27,20,0.08)] dark:border-[rgba(255,255,255,0.08)] overflow-hidden animate-in fade-in zoom-in-95 duration-200"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center px-4 py-3 border-b border-[rgba(36,27,20,0.06)] dark:border-[rgba(255,255,255,0.06)]">
           <Search size={18} className="text-[rgba(36,27,20,0.4)] dark:text-[rgba(255,255,255,0.4)] mr-3" />
           <input 
             autoFocus
-            className="flex-1 bg-transparent border-none outline-none font-sans text-[15px] text-[#241B14] dark:text-[#F4F4F5] placeholder:text-[rgba(36,27,20,0.3)] dark:text-[rgba(255,255,255,0.3)]"
+            className="flex-1 bg-transparent border-none outline-none font-sans text-[15px] text-[#241B14] dark:text-[#F4F4F5] placeholder:text-[rgba(36,27,20,0.3)] dark:placeholder:text-[rgba(255,255,255,0.3)]"
             placeholder="Type a command or search..."
             value={query}
             onChange={(e) => setQuery(e.target.value)}
           />
-          <div className="text-[10px] font-sans font-medium text-[rgba(36,27,20,0.3)] dark:text-[rgba(255,255,255,0.3)] bg-[rgba(36,27,20,0.04)] dark:bg-[rgba(255,255,255,0.04)] px-1.5 py-0.5 rounded border border-[rgba(36,27,20,0.06)] dark:border-[rgba(255,255,255,0.06)]">
+          <div className="text-[10px] font-sans font-medium text-[rgba(36,27,20,0.3)] dark:text-[rgba(255,255,255,0.3)] bg-[rgba(36,27,20,0.04)] dark:bg-[rgba(255,255,255,0.06)] px-1.5 py-0.5 rounded border border-[rgba(36,27,20,0.06)] dark:border-[rgba(255,255,255,0.06)]">
             ESC
           </div>
         </div>
@@ -74,7 +79,7 @@ export function CommandMenu({ onSelectView, onAction }: CommandMenuProps) {
               }}
               className={cn(
                 "w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left transition-colors mb-1",
-                "hover:bg-[rgba(36,27,20,0.04)] dark:bg-[rgba(255,255,255,0.04)] text-[#E8593C]"
+                "hover:bg-[rgba(36,27,20,0.04)] dark:hover:bg-[rgba(255,255,255,0.04)] text-[#E8593C]"
               )}
             >
               <Activity size={16} />
@@ -87,7 +92,7 @@ export function CommandMenu({ onSelectView, onAction }: CommandMenuProps) {
               No results found.
             </div>
           ) : (
-            filteredOptions.map((opt, i) => {
+            filteredOptions.map((opt) => {
               const Icon = opt.icon;
               return (
                 <button
@@ -103,7 +108,7 @@ export function CommandMenu({ onSelectView, onAction }: CommandMenuProps) {
                   }}
                   className={cn(
                     "w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left transition-colors",
-                    "hover:bg-[rgba(36,27,20,0.04)] dark:bg-[rgba(255,255,255,0.04)] text-[#241B14] dark:text-[#F4F4F5]"
+                    "hover:bg-[rgba(36,27,20,0.04)] dark:hover:bg-[rgba(255,255,255,0.04)] text-[#241B14] dark:text-[#F4F4F5]"
                   )}
                 >
                   <Icon size={16} className="text-[rgba(36,27,20,0.5)] dark:text-[rgba(255,255,255,0.5)]" />

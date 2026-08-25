@@ -131,7 +131,7 @@ export function AppShell({
               {/* Inbox with urgent badge */}
               <button 
                 onClick={() => onViewChange?.("inbox")}
-                className={`p-1.5 rounded-[8px] flex items-center justify-center transition-colors relative ${currentView === "inbox" ? "bg-white dark:bg-[#383838] shadow-sm text-[#E8593C]" : "text-[rgba(36,27,20,0.4)] dark:text-[rgba(255,255,255,0.4)] hover:text-[#241B14] dark:text-[#F4F4F5]"}`}
+                className={`p-1.5 rounded-[8px] flex items-center justify-center transition-colors relative ${currentView === "inbox" ? "bg-white dark:bg-[#383838] shadow-sm text-[#E8593C]" : "text-[rgba(36,27,20,0.4)] dark:text-[rgba(255,255,255,0.4)] hover:text-[#241B14] dark:hover:text-[#F4F4F5]"}`}
                 title="Inbox"
               >
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
@@ -144,7 +144,7 @@ export function AppShell({
               {/* Calendar */}
               <button 
                 onClick={() => onViewChange?.("calendar")}
-                className={`p-1.5 rounded-[8px] flex items-center justify-center transition-colors ${currentView === "calendar" ? "bg-white dark:bg-[#383838] shadow-sm text-[#E8593C]" : "text-[rgba(36,27,20,0.4)] dark:text-[rgba(255,255,255,0.4)] hover:text-[#241B14] dark:text-[#F4F4F5]"}`}
+                className={`p-1.5 rounded-[8px] flex items-center justify-center transition-colors ${currentView === "calendar" ? "bg-white dark:bg-[#383838] shadow-sm text-[#E8593C]" : "text-[rgba(36,27,20,0.4)] dark:text-[rgba(255,255,255,0.4)] hover:text-[#241B14] dark:hover:text-[#F4F4F5]"}`}
                 title="Calendar"
               >
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/></svg>
@@ -152,20 +152,25 @@ export function AppShell({
               {/* GitHub */}
               <button
                 onClick={() => onViewChange?.("github")}
-                className={`p-1.5 rounded-[8px] flex items-center justify-center transition-colors ${currentView === "github" ? "bg-white dark:bg-[#383838] shadow-sm text-[#E8593C]" : "text-[rgba(36,27,20,0.4)] dark:text-[rgba(255,255,255,0.4)] hover:text-[#241B14] dark:text-[#F4F4F5]"}`}
+                className={`p-1.5 rounded-[8px] flex items-center justify-center transition-colors ${currentView === "github" ? "bg-white dark:bg-[#383838] shadow-sm text-[#E8593C]" : "text-[rgba(36,27,20,0.4)] dark:text-[rgba(255,255,255,0.4)] hover:text-[#241B14] dark:hover:text-[#F4F4F5]"}`}
                 title="GitHub"
               >
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M15 22v-4a4.8 4.8 0 0 0-1-3.5c3 0 6-2 6-5.5.08-1.25-.27-2.48-1-3.5.28-1.15.28-2.35 0-3.5 0 0-1 0-3 1.5-2.64-.5-5.36-.5-8 0C6 2 5 2 5 2c-.3 1.15-.3 2.35 0 3.5A5.403 5.403 0 0 0 4 9c0 3.5 3 5.5 6 5.5-.39.49-.68 1.05-.85 1.65-.17.6-.22 1.23-.15 1.85v4"/><path d="M9 18c-4.51 2-5-2-7-2"/></svg>
               </button>
             </div>
 
-            <div className="h-[32px] flex-1 bg-[#FBF3EC] dark:bg-[#202020] rounded-[10px] border border-[rgba(36,27,20,0.04)] dark:border-[rgba(255,255,255,0.04)] flex items-center px-3 gap-2">
+            <div 
+              onClick={() => {
+                if (typeof window !== "undefined") {
+                  window.dispatchEvent(new Event("open-command-menu"));
+                }
+              }}
+              className="h-[32px] flex-1 bg-[#FBF3EC] dark:bg-[#202020] rounded-[10px] border border-[rgba(36,27,20,0.04)] dark:border-[rgba(255,255,255,0.04)] flex items-center px-3 gap-2 cursor-pointer hover:border-[rgba(232,89,60,0.2)] transition-colors"
+            >
               <Search size={14} className="text-[rgba(36,27,20,0.35)] dark:text-[rgba(255,255,255,0.35)]" />
-              <input 
-                type="text" 
-                placeholder="Type a command..." 
-                className="bg-transparent border-none outline-none font-mono text-[12px] text-[#241B14] dark:text-[#F4F4F5] placeholder:text-[rgba(36,27,20,0.35)] dark:text-[rgba(255,255,255,0.35)] dark:placeholder:text-[rgba(255,255,255,0.35)] w-full"
-              />
+              <span className="font-mono text-[12px] text-[rgba(36,27,20,0.35)] dark:text-[rgba(255,255,255,0.35)] flex-1 select-none">
+                Type a command...
+              </span>
               <span className="font-mono text-[10px] text-[rgba(36,27,20,0.35)] dark:text-[rgba(255,255,255,0.35)]">(⌘K)</span>
             </div>
           </div>
@@ -189,21 +194,21 @@ export function AppShell({
           <div className="flex items-center gap-1 bg-[rgba(36,27,20,0.04)] dark:bg-[rgba(255,255,255,0.1)] p-1 rounded-[10px]">
             <button
               onClick={() => onViewChange?.("team")}
-              className={`p-1.5 rounded-[8px] flex items-center justify-center transition-colors ${currentView === "team" ? "bg-white dark:bg-[#383838] shadow-sm text-[#E8593C]" : "text-[rgba(36,27,20,0.4)] dark:text-[rgba(255,255,255,0.4)] hover:text-[#241B14] dark:text-[#F4F4F5]"}`}
+              className={`p-1.5 rounded-[8px] flex items-center justify-center transition-colors ${currentView === "team" ? "bg-white dark:bg-[#383838] shadow-sm text-[#E8593C]" : "text-[rgba(36,27,20,0.4)] dark:text-[rgba(255,255,255,0.4)] hover:text-[#241B14] dark:hover:text-[#F4F4F5]"}`}
               title="Team"
             >
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>
             </button>
             <button
               onClick={() => onViewChange?.("history")}
-              className={`p-1.5 rounded-[8px] flex items-center justify-center transition-colors ${currentView === "history" ? "bg-white dark:bg-[#383838] shadow-sm text-[#E8593C]" : "text-[rgba(36,27,20,0.4)] dark:text-[rgba(255,255,255,0.4)] hover:text-[#241B14] dark:text-[#F4F4F5]"}`}
+              className={`p-1.5 rounded-[8px] flex items-center justify-center transition-colors ${currentView === "history" ? "bg-white dark:bg-[#383838] shadow-sm text-[#E8593C]" : "text-[rgba(36,27,20,0.4)] dark:text-[rgba(255,255,255,0.4)] hover:text-[#241B14] dark:hover:text-[#F4F4F5]"}`}
               title="History"
             >
               <History size={18} />
             </button>
             <button
               onClick={() => onViewChange?.("settings")}
-              className={`p-1.5 rounded-[8px] flex items-center justify-center transition-colors ${currentView === "settings" ? "bg-white dark:bg-[#383838] shadow-sm text-[#E8593C]" : "text-[rgba(36,27,20,0.4)] dark:text-[rgba(255,255,255,0.4)] hover:text-[#241B14] dark:text-[#F4F4F5]"}`}
+              className={`p-1.5 rounded-[8px] flex items-center justify-center transition-colors ${currentView === "settings" ? "bg-white dark:bg-[#383838] shadow-sm text-[#E8593C]" : "text-[rgba(36,27,20,0.4)] dark:text-[rgba(255,255,255,0.4)] hover:text-[#241B14] dark:hover:text-[#F4F4F5]"}`}
               title="Settings"
             >
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>
