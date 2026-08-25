@@ -101,7 +101,7 @@ export function CalendarPanel({ onClose }: { onClose?: () => void }) {
         {onClose && (
           <button 
             onClick={onClose}
-            className="p-1.5 rounded-[8px] text-[rgba(36,27,20,0.4)] dark:text-[rgba(255,255,255,0.4)] hover:bg-[rgba(36,27,20,0.04)] dark:bg-[rgba(255,255,255,0.04)] hover:text-[#241B14] dark:text-[#F4F4F5] transition-colors"
+            className="p-1.5 rounded-[8px] text-[rgba(36,27,20,0.4)] dark:text-[rgba(255,255,255,0.4)] hover:bg-[rgba(36,27,20,0.04)] dark:hover:bg-[rgba(255,255,255,0.06)] hover:text-[#241B14] dark:hover:text-[#F4F4F5] transition-colors"
           >
             <X size={16} />
           </button>
