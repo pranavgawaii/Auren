@@ -267,7 +267,7 @@ export function ActionConfirmation({
                       <button
                         type="button"
                         onClick={() => toggleExpand(i)}
-                        className="flex items-center gap-1.5 px-2 py-1 rounded-[6px] transition-colors hover:bg-[rgba(36,27,20,0.04)] dark:bg-[rgba(255,255,255,0.04)] text-[11px] font-sans font-semibold text-[rgba(36,27,20,0.45)] dark:text-[rgba(255,255,255,0.45)] hover:text-[rgba(36,27,20,0.7)] dark:text-[rgba(255,255,255,0.7)]"
+                        className="flex items-center gap-1.5 px-2 py-1 rounded-[6px] transition-colors hover:bg-[rgba(36,27,20,0.04)] dark:hover:bg-[rgba(255,255,255,0.06)] text-[11px] font-sans font-semibold text-[rgba(36,27,20,0.45)] dark:text-[rgba(255,255,255,0.55)] hover:text-[rgba(36,27,20,0.7)] dark:hover:text-[rgba(255,255,255,0.85)]"
                       >
                         {expandedActions[i] ? (
                           <>Hide Details <ChevronUp className="w-3.5 h-3.5" /></>
@@ -659,10 +659,11 @@ export function ActionConfirmation({
             <Play className="w-3.5 h-3.5 fill-current" />
             {isExecuting ? "Executing..." : "Confirm & Execute"}
           </button>
-          <button 
+          <button
+            type="button"
             onClick={onCancel}
             disabled={isExecuting}
-            className="flex-1 h-[44px] border border-[rgba(36,27,20,0.08)] dark:border-[rgba(255,255,255,0.08)] text-[rgba(36,27,20,0.5)] dark:text-[rgba(255,255,255,0.5)] rounded-[10px] font-sans font-bold text-[13px] hover:bg-[rgba(36,27,20,0.02)] dark:bg-[rgba(255,255,255,0.02)] transition-colors bg-white dark:bg-[#383838]"
+            className="flex-1 h-[44px] border border-[rgba(36,27,20,0.08)] dark:border-[rgba(255,255,255,0.08)] text-[rgba(36,27,20,0.6)] dark:text-[rgba(255,255,255,0.6)] rounded-[10px] font-sans font-bold text-[13px] hover:bg-[rgba(36,27,20,0.04)] dark:hover:bg-[rgba(255,255,255,0.06)] transition-colors bg-white dark:bg-[#383838] disabled:opacity-40 disabled:cursor-not-allowed"
           >
             Cancel
           </button>
