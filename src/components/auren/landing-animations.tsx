@@ -674,7 +674,7 @@ export function HowItWorksSection() {
                   className={`group cursor-pointer p-6 rounded-2xl transition-all duration-300 flex gap-5 items-start ${
                     isActive 
                       ? "bg-white dark:bg-[#383838] shadow-[0_12px_36px_rgba(36,27,20,0.05)] border border-[rgba(232,89,60,0.12)]" 
-                      : "bg-transparent border border-transparent hover:bg-white dark:bg-[#383838]/40"
+                      : "bg-transparent border border-transparent hover:bg-white dark:hover:bg-[#383838]/40"
                   }`}
                 >
                   {/* Vertical Progress Rail */}
@@ -682,12 +682,12 @@ export function HowItWorksSection() {
                     <div className={`w-8 h-8 rounded-full flex items-center justify-center font-mono text-xs font-semibold transition-all duration-300 ${
                       isActive 
                         ? "bg-[#E8593C] text-white shadow-[0_4px_10px_rgba(232,89,60,0.2)]" 
-                        : "bg-neutral-100 text-[rgba(36,27,20,0.4)] dark:text-[rgba(255,255,255,0.4)] group-hover:text-[rgba(36,27,20,0.6)] dark:text-[rgba(255,255,255,0.6)]"
+                        : "bg-neutral-100 dark:bg-neutral-800 text-[rgba(36,27,20,0.4)] dark:text-[rgba(255,255,255,0.4)] group-hover:text-[rgba(36,27,20,0.7)] dark:group-hover:text-[rgba(255,255,255,0.7)]"
                     }`}>
                       {step.num}
                     </div>
                     
-                    <div className="flex-1 w-[2px] bg-[rgba(36,27,20,0.05)] mt-3 rounded-full overflow-hidden relative min-h-[50px]">
+                    <div className="flex-1 w-[2px] bg-[rgba(36,27,20,0.05)] dark:bg-[rgba(255,255,255,0.05)] mt-3 rounded-full overflow-hidden relative min-h-[50px]">
                       {isActive && (
                         <motion.div 
                           initial={{ height: "0%" }}
@@ -702,12 +702,12 @@ export function HowItWorksSection() {
                   <div className="flex-1 pt-0.5">
                     <h3 
                       className={`font-sans font-semibold text-lg mb-2 transition-colors duration-300 ${
-                        isActive ? "text-[#241B14] dark:text-[#F4F4F5]" : "text-[rgba(36,27,20,0.7)] dark:text-[rgba(255,255,255,0.7)] group-hover:text-[#241B14] dark:text-[#F4F4F5]"
+                        isActive ? "text-[#241B14] dark:text-[#F4F4F5]" : "text-[rgba(36,27,20,0.7)] dark:text-[rgba(255,255,255,0.7)] group-hover:text-[#241B14] dark:group-hover:text-[#F4F4F5]"
                       }`}
                     >
                       {step.title}
                     </h3>
-                    <p className="font-sans text-[14px] leading-relaxed text-[rgba(36,27,20,0.55)]">
+                    <p className="font-sans text-[14px] leading-relaxed text-[rgba(36,27,20,0.55)] dark:text-[rgba(255,255,255,0.6)]">
                       {step.desc}
                     </p>
                   </div>
@@ -717,7 +717,7 @@ export function HowItWorksSection() {
           </div>
 
           {/* Right Column: Sleek interactive IDE window */}
-          <div className="lg:col-span-7 w-full bg-[#FDFBF9] rounded-3xl border border-[rgba(36,27,20,0.08)] dark:border-[rgba(255,255,255,0.08)] shadow-[0_24px_60px_rgba(36,27,20,0.06),0_4px_16px_rgba(36,27,20,0.02)] overflow-hidden flex flex-col justify-between relative min-h-[460px]">
+          <div className="lg:col-span-7 w-full bg-[#FDFBF9] dark:bg-[#2C2C2C] rounded-3xl border border-[rgba(36,27,20,0.08)] dark:border-[rgba(255,255,255,0.08)] shadow-[0_24px_60px_rgba(36,27,20,0.06),0_4px_16px_rgba(36,27,20,0.02)] overflow-hidden flex flex-col justify-between relative min-h-[460px]">
             
             {/* Topbar Chrome */}
             <div className="flex items-center justify-between px-6 py-4 border-b border-[rgba(36,27,20,0.06)] dark:border-[rgba(255,255,255,0.06)] bg-[#FAF8F5] dark:bg-[#2C2C2C]">
@@ -727,7 +727,7 @@ export function HowItWorksSection() {
                 <div className="w-2.5 h-2.5 rounded-full bg-[#27C93F]" />
               </div>
               
-              <span className="text-[12px] font-medium text-[rgba(36,27,20,0.58)] select-none" style={{ fontFamily: FONT_CIVANE }}>
+              <span className="text-[12px] font-medium text-[rgba(36,27,20,0.58)] dark:text-[rgba(255,255,255,0.65)] select-none" style={{ fontFamily: FONT_CIVANE }}>
                 {steps[activeStep].fileTab}
               </span>
               
@@ -738,7 +738,7 @@ export function HowItWorksSection() {
             </div>
 
             {/* Input Prompt Section */}
-            <div className="px-6 py-3 border-b border-[rgba(36,27,20,0.04)] dark:border-[rgba(255,255,255,0.04)] bg-[#FDFBF9] flex items-center gap-3">
+            <div className="px-6 py-3 border-b border-[rgba(36,27,20,0.04)] dark:border-[rgba(255,255,255,0.04)] bg-[#FDFBF9] dark:bg-[#262626] flex items-center gap-3">
               <span className="text-[#E8593C] font-mono text-xs font-bold select-none">auren &gt;</span>
               <div className="text-[12px] font-mono text-[#241B14] dark:text-[#F4F4F5] truncate flex-1">
                 {steps[activeStep].command}
