@@ -99,8 +99,8 @@ export function DailyBrief() {
     <div className="flex-1 w-full h-full flex flex-col items-center justify-center bg-[#FAF8F5] dark:bg-[#2C2C2C] relative overflow-hidden">
       <div
         aria-hidden
-        className="absolute inset-0 pointer-events-none opacity-[0.03]"
-        style={{ backgroundImage: "radial-gradient(#241B14 1px, transparent 1px)", backgroundSize: "24px 24px" }}
+        className="absolute inset-0 pointer-events-none opacity-[0.03] dark:opacity-[0.05] text-[#241B14] dark:text-white"
+        style={{ backgroundImage: "radial-gradient(currentColor 1px, transparent 1px)", backgroundSize: "24px 24px" }}
       />
 
       <div className="relative z-10 flex flex-col items-center text-center w-full max-w-[520px] px-6">
