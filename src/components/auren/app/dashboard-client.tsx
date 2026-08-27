@@ -418,7 +418,7 @@ export function DashboardClient() {
           {!isCalendarOpen && (
             <button
               onClick={() => setIsCalendarOpen(true)}
-              className="absolute right-0 top-1/2 -translate-y-1/2 bg-white dark:bg-[#383838] border border-[rgba(36,27,20,0.12)] dark:border-[rgba(255,255,255,0.12)] border-r-0 rounded-l-xl p-2 shadow-[0_4px_12px_rgba(0,0,0,0.05)] text-[rgba(36,27,20,0.5)] dark:text-[rgba(255,255,255,0.5)] hover:text-[#E8593C] hover:bg-[#FAF8F5] dark:bg-[#2C2C2C] transition-all z-40"
+              className="absolute right-0 top-1/2 -translate-y-1/2 bg-white dark:bg-[#383838] border border-[rgba(36,27,20,0.12)] dark:border-[rgba(255,255,255,0.12)] border-r-0 rounded-l-xl p-2 shadow-[0_4px_12px_rgba(0,0,0,0.05)] text-[rgba(36,27,20,0.5)] dark:text-[rgba(255,255,255,0.5)] hover:text-[#E8593C] hover:bg-[#FAF8F5] dark:hover:bg-[#2C2C2C] transition-all z-40"
               title="Open Calendar"
             >
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/></svg>

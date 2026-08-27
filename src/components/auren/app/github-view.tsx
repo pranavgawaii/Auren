@@ -231,7 +231,7 @@ export function GitHubIntegrationView() {
             <button 
               onClick={() => fetchGithubData()}
               disabled={isLoading}
-              className="h-[36px] px-4 bg-white dark:bg-[#383838] border border-[rgba(36,27,20,0.12)] dark:border-[rgba(255,255,255,0.12)] text-[#241B14] dark:text-[#F4F4F5] rounded-[8px] font-sans font-medium text-[13px] flex items-center gap-2 hover:bg-[#FAF8F5] dark:bg-[#2C2C2C] shadow-sm transition-colors disabled:opacity-50"
+              className="h-[36px] px-4 bg-white dark:bg-[#383838] border border-[rgba(36,27,20,0.12)] dark:border-[rgba(255,255,255,0.12)] text-[#241B14] dark:text-[#F4F4F5] rounded-[8px] font-sans font-medium text-[13px] flex items-center gap-2 hover:bg-[#FAF8F5] dark:hover:bg-[#2C2C2C] shadow-sm transition-colors disabled:opacity-50"
             >
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={isLoading ? "animate-spin" : ""}><path d="M21 2v6h-6"/><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/><path d="M3 22v-6h6"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16"/></svg>
               {isLoading ? "Syncing..." : "Sync Now"}
@@ -330,14 +330,14 @@ export function GitHubIntegrationView() {
                 <div className="flex items-center gap-2 pl-9 mt-1">
                   <button 
                     onClick={() => openAskAI(`Approve PR #${pr.number} in ${pr.repository_url.split('/').slice(-2).join('/')} with comment "LGTM!"`)}
-                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-[rgba(36,27,20,0.08)] dark:border-[rgba(255,255,255,0.08)] bg-white dark:bg-[#383838] hover:border-[#E8593C]/30 hover:bg-[#E8593C]/5 text-[11.5px] font-sans font-medium text-[rgba(36,27,20,0.7)] dark:text-[rgba(255,255,255,0.7)] hover:text-[#E8593C] transition-all shadow-[0_1px_2px_rgba(36,27,20,0.02)]"
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-[rgba(36,27,20,0.08)] dark:border-[rgba(255,255,255,0.08)] bg-white dark:bg-[#383838] hover:border-[#E8593C]/30 hover:bg-[#E8593C]/5 dark:hover:bg-[#E8593C]/10 text-[11.5px] font-sans font-medium text-[rgba(36,27,20,0.7)] dark:text-[rgba(255,255,255,0.7)] hover:text-[#E8593C] dark:hover:text-[#E8593C] transition-all shadow-[0_1px_2px_rgba(36,27,20,0.02)]"
                   >
                     <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
                     Approve PR
                   </button>
                   <button 
                     onClick={() => openAskAI(`Draft a review comment for PR #${pr.number} in ${pr.repository_url.split('/').slice(-2).join('/')} saying...`)}
-                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-[rgba(36,27,20,0.08)] dark:border-[rgba(255,255,255,0.08)] bg-white dark:bg-[#383838] hover:border-[#E8593C]/30 hover:bg-[#E8593C]/5 text-[11.5px] font-sans font-medium text-[rgba(36,27,20,0.7)] dark:text-[rgba(255,255,255,0.7)] hover:text-[#E8593C] transition-all shadow-[0_1px_2px_rgba(36,27,20,0.02)]"
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-[rgba(36,27,20,0.08)] dark:border-[rgba(255,255,255,0.08)] bg-white dark:bg-[#383838] hover:border-[#E8593C]/30 hover:bg-[#E8593C]/5 dark:hover:bg-[#E8593C]/10 text-[11.5px] font-sans font-medium text-[rgba(36,27,20,0.7)] dark:text-[rgba(255,255,255,0.7)] hover:text-[#E8593C] dark:hover:text-[#E8593C] transition-all shadow-[0_1px_2px_rgba(36,27,20,0.02)]"
                   >
                     <MessageSquare size={11} className="mt-[1px]" />
                     Draft Comment
@@ -393,14 +393,14 @@ export function GitHubIntegrationView() {
                 <div className="flex items-center gap-2 pl-9 mt-1">
                   <button 
                     onClick={() => openAskAI(`Close issue #${issue.number} in ${issue.repository_url.split('/').slice(-2).join('/')} as completed`)}
-                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-[rgba(36,27,20,0.08)] dark:border-[rgba(255,255,255,0.08)] bg-white dark:bg-[#383838] hover:border-[#E8593C]/30 hover:bg-[#E8593C]/5 text-[11.5px] font-sans font-medium text-[rgba(36,27,20,0.7)] dark:text-[rgba(255,255,255,0.7)] hover:text-[#E8593C] transition-all shadow-[0_1px_2px_rgba(36,27,20,0.02)]"
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-[rgba(36,27,20,0.08)] dark:border-[rgba(255,255,255,0.08)] bg-white dark:bg-[#383838] hover:border-[#E8593C]/30 hover:bg-[#E8593C]/5 dark:hover:bg-[#E8593C]/10 text-[11.5px] font-sans font-medium text-[rgba(36,27,20,0.7)] dark:text-[rgba(255,255,255,0.7)] hover:text-[#E8593C] dark:hover:text-[#E8593C] transition-all shadow-[0_1px_2px_rgba(36,27,20,0.02)]"
                   >
                     <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
                     Close Issue
                   </button>
                   <button 
                     onClick={() => openAskAI(`Assign issue #${issue.number} in ${issue.repository_url.split('/').slice(-2).join('/')} to me`)}
-                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-[rgba(36,27,20,0.08)] dark:border-[rgba(255,255,255,0.08)] bg-white dark:bg-[#383838] hover:border-[#E8593C]/30 hover:bg-[#E8593C]/5 text-[11.5px] font-sans font-medium text-[rgba(36,27,20,0.7)] dark:text-[rgba(255,255,255,0.7)] hover:text-[#E8593C] transition-all shadow-[0_1px_2px_rgba(36,27,20,0.02)]"
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-[rgba(36,27,20,0.08)] dark:border-[rgba(255,255,255,0.08)] bg-white dark:bg-[#383838] hover:border-[#E8593C]/30 hover:bg-[#E8593C]/5 dark:hover:bg-[#E8593C]/10 text-[11.5px] font-sans font-medium text-[rgba(36,27,20,0.7)] dark:text-[rgba(255,255,255,0.7)] hover:text-[#E8593C] dark:hover:text-[#E8593C] transition-all shadow-[0_1px_2px_rgba(36,27,20,0.02)]"
                   >
                     <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" x2="19" y1="8" y2="14"/><line x1="22" x2="16" y1="11" y2="11"/></svg>
                     Assign to Me
